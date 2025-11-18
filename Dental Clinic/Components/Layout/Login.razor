@@ -1,0 +1,1134 @@
+﻿@page "/auth"
+@page "/login"
+@page "/signup"
+@page "/"
+@inject NavigationManager Navigation
+
+<style>
+    /* Global reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+    }
+
+    .auth-container {
+        display: flex;
+        min-height: 100vh;
+        background: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    }
+
+    /* Left Section – tighter spacing */
+    .left-section {
+        flex: 1;
+        background: linear-gradient(135deg, #0052D9 0%, #0070F3 50%, #00B4D8 100%);
+        padding: 56px 40px; /* was 80px 60px */
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .left-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveBackground 30s linear infinite;
+            opacity: 0.35; /* slightly reduced */
+        }
+
+    @@keyframes moveBackground {
+        0% {
+            transform: translate(0, 0);
+        }
+
+        100% {
+            transform: translate(50px, 50px);
+        }
+    }
+
+    .clinic-logo {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        margin-bottom: 28px; /* was 40px */
+    }
+
+    .logo-placeholder {
+        width: 140px; /* was 155px */
+        height: 140px;
+        background: white;
+        border-radius: 20px; /* was 24px */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px; /* was 24px */
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+        transition: transform 0.3s ease;
+    }
+
+        .logo-placeholder:hover {
+            transform: translateY(-4px); /* was -6px */
+        }
+
+    .clinic-logo-img {
+        width: 65%;
+        height: 70%;
+        object-fit: contain;
+        transform: scale(1.4); /* was 1.5 */
+    }
+
+    .clinic-logo h1 {
+        font-size: 30px; /* was 32px */
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin: 0 0 2px 0;
+    }
+
+    .clinic-logo .studio-text {
+        font-size: 22px; /* was 24px */
+        font-weight: 700;
+        letter-spacing: 3px;
+        margin: 0 0 10px 0; /* was 12px */
+        opacity: 0.95;
+    }
+
+    .tagline {
+        font-size: 12px;
+        letter-spacing: 2px;
+        opacity: 0.85;
+        font-weight: 500;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 520px;
+        margin-bottom: 28px; /* was 40px */
+    }
+
+        .hero-content h2 {
+            font-size: 48px; /* was 56px */
+            font-weight: 800;
+            line-height: 1.1; /* was 1.15 */
+            margin-bottom: 12px; /* was 16px */
+        }
+
+    .gradient-text {
+        background: linear-gradient(90deg, #00D4FF 0%, #00E5FF 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-subtitle {
+        font-size: 18px; /* was 20px */
+        font-weight: 600; /* was 500 */
+        margin-bottom: 14px; /* was 20px */
+        opacity: 0.95;
+    }
+
+    .hero-description {
+        font-size: 14px; /* was 15px */
+        line-height: 1.55; /* was 1.6 */
+        opacity: 0.85;
+    }
+
+    .stats {
+        display: flex;
+        gap: 14px; /* was 20px */
+        position: relative;
+        z-index: 1;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.14); /* was 0.15 */
+        backdrop-filter: blur(8px);
+        padding: 18px 28px; /* was 24px 40px */
+        border-radius: 14px; /* was 16px */
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px); /* was -4px */
+            background: rgba(255, 255, 255, 0.18); /* was 0.2 */
+        }
+
+    .stat-number {
+        font-size: 32px; /* was 38px */
+        font-weight: 800;
+        margin-bottom: 4px; /* was 6px */
+    }
+
+    .stat-label {
+        font-size: 13px; /* was 14px */
+        opacity: 0.9;
+        font-weight: 500;
+    }
+
+    /* Right Section – tighter spacing */
+    .right-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px; /* was 40px */
+        position: relative;
+        background: #f8f9fa;
+    }
+
+    .theme-toggle {
+        position: absolute;
+        top: 16px; /* was 30px */
+        right: 16px; /* was 30px */
+        width: 40px; /* was 44px */
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        color: #0066FF;
+    }
+
+        .theme-toggle:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.18);
+        }
+
+    /* Auth Card – reduced padding and width */
+    .auth-card {
+        background: white;
+        border-radius: 14px; /* was 16px */
+        padding: 24px; /* was 32px */
+        width: 100%;
+        max-width: 400px; /* was 440px */
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        animation: slideUp 0.35s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Progress Indicator - Tab Style */
+    .progress-indicator {
+        display: flex;
+        gap: 6px; /* was 8px */
+        margin-bottom: 16px; /* was 24px */
+        justify-content: center;
+    }
+
+    .progress-line {
+        height: 3px;
+        width: 50%;
+        background: #e8e8e8;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .progress-line.active {
+            background: linear-gradient(90deg, #0066FF 0%, #0052D9 100%);
+        }
+
+    .auth-card h3 {
+        font-size: 24px; /* was 26px */
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0 0 6px 0; /* was 8px */
+        text-align: center;
+    }
+
+    .auth-subtitle {
+        font-size: 13px; /* was 14px */
+        color: #666;
+        margin: 0 0 18px 0; /* was 24px */
+        text-align: center;
+    }
+
+    /* Form Styles – tighter vertical spacing */
+    .form-content {
+        animation: fadeIn 0.25s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .form-row {
+        display: flex;
+        gap: 10px; /* was 12px */
+    }
+
+    .form-group {
+        margin-bottom: 12px; /* was 16px */
+        width: 100%;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 12px; /* was 13px */
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 6px; /* was 8px */
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 10px; /* was 12px */
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.7;
+    }
+
+    .input-wrapper input {
+        width: 100%;
+        padding: 10px 12px 10px 34px; /* was 11px 14px 11px 36px */
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.25s ease;
+        outline: none;
+        background: #fafafa;
+    }
+
+        .input-wrapper input:focus {
+            border-color: #0066FF;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.08);
+        }
+
+        .input-wrapper input::placeholder {
+            color: #aaa;
+        }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px; /* was 12px */
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #999;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s ease;
+        z-index: 2;
+    }
+
+        .password-toggle:hover {
+            color: #0066FF;
+        }
+
+    .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px; /* was 18px */
+        gap: 12px; /* was 16px */
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #666;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #0066FF;
+        }
+
+    .forgot-link {
+        font-size: 13px;
+        color: #0066FF;
+        text-decoration: none;
+        font-weight: 600;
+        transition: opacity 0.2s ease;
+        white-space: nowrap;
+    }
+
+        .forgot-link:hover {
+            opacity: 0.85;
+            text-decoration: underline;
+        }
+
+    /* Buttons – compact */
+    .btn-primary {
+        width: 100%;
+        padding: 12px 16px; /* was 13px 20px */
+        background: linear-gradient(135deg, #0066FF 0%, #0052D9 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-1px); /* was -2px */
+            box-shadow: 0 6px 18px rgba(0, 102, 255, 0.28);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 14px 0; /* was 18px */
+        color: #999;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            padding: 0 12px; /* was 14px */
+        }
+
+    .btn-google {
+        width: 100%;
+        padding: 11px; /* was 12px */
+        background: white;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-google:hover {
+            border-color: #0066FF;
+            color: #0066FF;
+            transform: translateY(-1px); /* was -2px */
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.1);
+        }
+
+    .switch-text {
+        text-align: center;
+        margin-top: 12px; /* was 16px */
+        font-size: 13px;
+        color: #666;
+    }
+
+    .link-button {
+        color: #0066FF;
+        background: none;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        font-size: 13px;
+    }
+
+        .link-button:hover {
+            opacity: 0.85;
+            text-decoration: underline;
+        }
+
+    .staff-login {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 12px; /* was 16px */
+        padding: 8px; /* was 10px */
+        color: #666;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        background: none;
+        border: none;
+        width: 100%;
+    }
+
+        .staff-login:hover {
+            background: rgba(0, 102, 255, 0.06);
+            color: #0066FF;
+        }
+
+    /* Modal – slightly tighter */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeInOverlay 0.25s ease-out;
+        padding: 12px; /* add small padding so it doesn't touch screen edges */
+    }
+
+    @@keyframes fadeInOverlay {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 14px; /* was 16px */
+        padding: 24px; /* was 32px */
+        width: 100%;
+        max-width: 460px; /* was 480px */
+        box-shadow: 0 18px 56px rgba(0, 0, 0, 0.28);
+        position: relative;
+        animation: slideUpModal 0.25s ease-out;
+    }
+
+    @@keyframes slideUpModal {
+        from {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* was 12px */
+        margin-bottom: 6px; /* was 8px */
+    }
+
+    .modal-icon {
+        width: 38px; /* was 40px */
+        height: 38px;
+        background: linear-gradient(135deg, #0066FF 0%, #0052D9 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .modal-header h3 {
+        font-size: 22px; /* was 24px */
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0;
+        text-align: left;
+    }
+
+    .modal-subtitle {
+        font-size: 12px; /* was 13px */
+        color: #666;
+        margin: 0 0 18px 48px; /* was 24px and 52px */
+    }
+
+    .close-button {
+        position: absolute;
+        top: 14px; /* was 20px */
+        right: 14px; /* was 20px */
+        background: #f5f5f5;
+        border: none;
+        width: 30px; /* was 32px */
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #666;
+    }
+
+        .close-button:hover {
+            background: #e8e8e8;
+            color: #333;
+            transform: rotate(90deg);
+        }
+
+    .access-level {
+        background: #f8f9fa;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px 12px; /* was 12px 16px */
+        margin-bottom: 16px; /* was 20px */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: #666;
+    }
+
+    .access-dropdown {
+        width: 100%;
+        padding: 9px 12px; /* was 10px 14px */
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #fafafa;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+        .access-dropdown:focus {
+            border-color: #0066FF;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.08);
+        }
+
+    /* Responsive – keep things compact */
+    @@media (max-width: 1024px) {
+        .auth-container {
+            flex-direction: column;
+        }
+
+        .left-section {
+            min-height: 50vh;
+            padding: 40px 28px; /* was 50px 40px */
+        }
+
+        .right-section {
+            min-height: 50vh;
+            padding: 28px; /* was 40px 30px */
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .form-options {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px; /* was 12px */
+        }
+
+        .forgot-link {
+            width: 100%;
+            text-align: center;
+        }
+
+        .modal-content {
+            width: 96%; /* was 95% */
+            padding: 20px 18px; /* was 28px 24px */
+        }
+
+        .theme-toggle {
+            width: 38px; /* was 42px */
+            height: 38px;
+            top: 16px; /* was 24px */
+            right: 16px;
+        }
+
+        .hero-content h2 {
+            font-size: 40px; /* was 56/42 */
+        }
+    }
+</style>
+
+<div class="auth-container">
+    <div class="left-section">
+        <div class="clinic-logo">
+            <div class="logo-placeholder">
+                <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Studio Logo" class="clinic-logo-img" />
+            </div>
+            <h1>AURELIA DENTAL</h1>
+            <h2 class="studio-text">CLINIC</h2>
+            <p class="tagline">YOUR SMILE. OUR MASTERPIECE</p>
+        </div>
+
+        <div class="hero-content">
+            <h2>Smile with <span class="gradient-text">Confidence</span></h2>
+            <p class="hero-subtitle">Your trusted partner in dental health</p>
+            <p class="hero-description">
+                Experience exceptional dental care with our modern facilities, expert team, and personalized treatment plans designed just for you.
+            </p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Happy Patients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Years Experience</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-section">
+        <button class="theme-toggle" @onclick="ToggleTheme" title="Toggle theme">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 15C12.7614 15 15 12.7614 15 10C15 7.23858 12.7614 5 10 5C7.23858 5 5 7.23858 5 10C5 12.7614 7.23858 15 10 15Z" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+        </button>
+
+        <div class="auth-card">
+            <div class="progress-indicator">
+                <div class="progress-line @(isLoginMode ? "active" : "")" @onclick="SwitchToLogin"></div>
+                <div class="progress-line @(!isLoginMode ? "active" : "")" @onclick="SwitchToSignUp"></div>
+            </div>
+
+            @if (isLoginMode)
+            {
+                <!-- LOGIN FORM -->
+                <h3>Welcome Back</h3>
+                <p class="auth-subtitle">Sign in to your patient portal</p>
+
+                <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                    <div class="form-content">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 6L10 11L17 6M3 6V14C3 14.5523 3.44772 15 4 15H16C16.5523 15 17 14.5523 17 14V6M3 6C3 5.44772 3.44772 5 4 5H16C16.5523 5 17 5.44772 17 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <InputText id="email" @bind-Value="loginModel.Email" placeholder="your.email@gmail.com" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                                <InputText id="password" type="@loginPasswordType" @bind-Value="loginModel.Password" placeholder="Enter your password" />
+                                <button type="button" class="password-toggle" @onclick="ToggleLoginPassword">
+                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        @if (showLoginPassword)
+                                        {
+                                            <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
+                                            <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
+                                        }
+                                        else
+                                        {
+                                            <path d="M3 3L17 17M10 7C11.6569 7 13 8.34315 13 10C13 10.3506 12.9398 10.6872 12.8293 11M7 10C7 8.34315 8.34315 7 10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                        }
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <InputCheckbox @bind-Value="loginModel.RememberMe" />
+                                <span>Remember me</span>
+                            </label>
+                            <a href="/forgot-password" class="forgot-link">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="white" stroke-width="1.5" />
+                                <path d="M10 6V10L13 13" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                            Access My Portal
+                        </button>
+                    </div>
+                </EditForm>
+            }
+            else
+            {
+                <!-- SIGNUP FORM -->
+                <h3>Join Our Family</h3>
+                <p class="auth-subtitle">Create your patient account today</p>
+
+                <EditForm Model="@signUpModel" OnValidSubmit="@HandleSignUp">
+                    <div class="form-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
+                                    </svg>
+                                    <InputText id="firstName" @bind-Value="signUpModel.FirstName" placeholder="First Name" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
+                                    </svg>
+                                    <InputText id="lastName" @bind-Value="signUpModel.LastName" placeholder="Last Name" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signupEmail">Email Address</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 6L10 11L17 6M3 6V14C3 14.5523 3.44772 15 4 15H16C16.5523 15 17 14.5523 17 14V6M3 6C3 5.44772 3.44772 5 4 5H16C16.5523 5 17 5.44772 17 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <InputText id="signupEmail" @bind-Value="signUpModel.Email" placeholder="your.email@gmail.com" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 5C3 3.89543 3.89543 3 5 3H8.27924C8.70967 3 9.09181 3.27543 9.22792 3.68377L10.7257 8.17721C10.8831 8.64932 10.6694 9.16531 10.2243 9.38787L8.96701 10.0165C9.31925 11.4018 10.5982 12.6808 11.9835 13.033L12.6121 11.7757C12.8347 11.3306 13.3507 11.1169 13.8228 11.2743L18.3162 12.7721C18.7246 12.9082 19 13.2903 19 13.7208V17C19 18.1046 18.1046 19 17 19H15C8.37258 19 3 13.6274 3 7V5Z" stroke="currentColor" stroke-width="1.5" />
+                                </svg>
+                                <InputText id="phone" @bind-Value="signUpModel.Phone" placeholder="+63 9XX XXX XXXX" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="signupPassword">Password</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                </svg>
+                                <InputText id="signupPassword" type="@signupPasswordType" @bind-Value="signUpModel.Password" placeholder="Enter your password" />
+                                <button type="button" class="password-toggle" @onclick="ToggleSignupPassword">
+                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        @if (showSignupPassword)
+                                        {
+                                            <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
+                                            <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
+                                        }
+                                        else
+                                        {
+                                            <path d="M3 3L17 17M10 7C11.6569 7 13 8.34315 13 10C13 10.3506 12.9398 10.6872 12.8293 11M7 10C7 8.34315 8.34315 7 10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                        }
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <InputCheckbox @bind-Value="signUpModel.RememberMe" />
+                                <span>Remember me</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="white" stroke-width="1.5" />
+                                <path d="M10 6V10L13 13" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                            Join Our Family
+                        </button>
+                    </div>
+                </EditForm>
+            }
+
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+
+            <button class="btn-google" @onclick="HandleGoogleAuth">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
+                    <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.184l-2.909-2.258c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
+                    <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
+                    <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.428 0 9.002 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335" />
+                </svg>
+                Continue with Google
+            </button>
+
+            <p class="switch-text">
+                @if (isLoginMode)
+                {
+                    <text>Don't have an account? <button type="button" class="link-button" @onclick="SwitchToSignUp">Sign Up</button></text>
+                }
+                else
+                {
+                    <text>Already have an account? <button type="button" class="link-button" @onclick="SwitchToLogin">Sign In</button></text>
+                }
+            </p>
+
+            <button class="staff-login" @onclick="OpenStaffModal">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 8C10.21 8 12 6.21 12 4C12 1.79 10.21 0 8 0C5.79 0 4 1.79 4 4C4 6.21 5.79 8 8 8ZM8 10C5.33 10 0 11.34 0 14V16H16V14C16 11.34 10.67 10 8 10Z" fill="currentColor" />
+                </svg>
+                Staff / Admin Login
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Staff/Admin Login Modal -->
+@if (showStaffModal)
+{
+    <div class="modal-overlay" @onclick="CloseStaffModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <button class="close-button" @onclick="CloseStaffModal">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 6L14 14M6 14L14 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" fill="white" />
+                        <path d="M10 12.5C5 12.5 0 15 0 17.5V20H20V17.5C20 15 15 12.5 10 12.5Z" fill="white" />
+                    </svg>
+                </div>
+                <h3>Staff & Admin Portal</h3>
+            </div>
+            <p class="modal-subtitle">Access restricted to authorized staff and administrators only</p>
+
+            <div class="access-level">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 2C11.1046 2 12 2.89543 12 4V8H8V4C8 2.89543 8.89543 2 10 2ZM14 8V4C14 1.79086 12.2091 0 10 0C7.79086 0 6 1.79086 6 4V8H4C2.89543 8 2 8.89543 2 10V18C2 19.1046 2.89543 20 4 20H16C17.1046 20 18 19.1046 18 18V10C18 8.89543 17.1046 8 16 8H14Z" fill="currentColor" />
+                </svg>
+                <div>
+                    <strong>Access Level</strong>
+                    <select class="access-dropdown" @bind="staffModel.AccessLevel">
+                        <option value="receptionist">🧑‍💼 Receptionist</option>
+                        <option value="staff">👨‍⚕️ Staff / Dentist</option>
+                        <option value="admin">👨‍💻 Administrator</option>
+                    </select>
+                </div>
+            </div>
+
+            <EditForm Model="@staffModel" OnValidSubmit="@HandleStaffLogin">
+                <div class="form-content">
+                    <div class="form-group">
+                        <label for="staffEmail">Staff ID or Email</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
+                            </svg>
+                            <InputText id="staffEmail" @bind-Value="staffModel.Email" placeholder="Enter your staff credentials" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="staffPassword">Password</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                            <InputText id="staffPassword" type="@staffPasswordType" @bind-Value="staffModel.Password" placeholder="Enter your password" />
+                            <button type="button" class="password-toggle" @onclick="ToggleStaffPassword">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    @if (showStaffPassword)
+                                    {
+                                        <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
+                                        <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
+                                    }
+                                    else
+                                    {
+                                        <path d="M3 3L17 17M10 7C11.6569 7 13 8.34315 13 10C13 10.3506 12.9398 10.6872 12.8293 11M7 10C7 8.34315 8.34315 7 10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                    }
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <InputCheckbox @bind-Value="staffModel.RememberMe" />
+                            <span>Keep me signed in</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 2L3 7V13C3 16.31 5.84 19.27 10 20C14.16 19.27 17 16.31 17 13V7L10 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round" />
+                        </svg>
+                        Access Dashboard
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+@code {
+    private bool isLoginMode = true;
+    private bool showLoginPassword = false;
+    private bool showSignupPassword = false;
+    private bool showStaffPassword = false;
+    private bool showStaffModal = false;
+
+    private LoginModel loginModel = new LoginModel();
+    private SignUpModel signUpModel = new SignUpModel();
+    private StaffLoginModel staffModel = new StaffLoginModel();
+
+    private string loginPasswordType => showLoginPassword ? "text" : "password";
+    private string signupPasswordType => showSignupPassword ? "text" : "password";
+    private string staffPasswordType => showStaffPassword ? "text" : "password";
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (uri.AbsolutePath.Contains("/signup") || uri.AbsolutePath.Contains("/auth"))
+        {
+            isLoginMode = uri.AbsolutePath.Contains("/login") || uri.AbsolutePath == "/";
+        }
+    }
+
+    private void SwitchToLogin() => isLoginMode = true;
+    private void SwitchToSignUp() => isLoginMode = false;
+
+    private void ToggleLoginPassword() => showLoginPassword = !showLoginPassword;
+    private void ToggleSignupPassword() => showSignupPassword = !showSignupPassword;
+    private void ToggleStaffPassword() => showStaffPassword = !showStaffPassword;
+
+    private void ToggleTheme()
+    {
+        // Implement theme toggle logic
+    }
+
+    private void OpenStaffModal() => showStaffModal = true;
+
+    private void CloseStaffModal()
+    {
+        showStaffModal = false;
+        staffModel = new StaffLoginModel(); // Reset form
+    }
+
+    private void HandleLogin()
+    {
+        // Implement login logic
+        Navigation.NavigateTo("/dashboard");
+    }
+
+    private void HandleSignUp()
+    {
+        // Implement sign up logic
+        Navigation.NavigateTo("/dashboard");
+    }
+
+    private void HandleGoogleAuth()
+    {
+        // Implement Google authentication logic
+    }
+
+    private void HandleStaffLogin()
+    {
+        // Implement staff/admin login logic
+        if (staffModel.AccessLevel == "admin")
+        {
+            Navigation.NavigateTo("/admin-dashboard");
+        }
+        else
+        {
+            Navigation.NavigateTo("/staff-dashboard");
+        }
+        CloseStaffModal();
+        staffModel = new StaffLoginModel(); // Reset form
+    }
+
+    public class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
+    }
+
+    public class SignUpModel
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
+    }
+
+    public class StaffLoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string AccessLevel { get; set; } = "staff";
+        public bool RememberMe { get; set; }
+    }
+}
