@@ -1,0 +1,1061 @@
+﻿@page "/dashboard"
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .dashboard-page {
+        background: #f6f8fb;
+        padding: 24px 40px;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    .dashboard-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Hero Card */
+    .hero-card {
+        background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%);
+        border-radius: 16px;
+        padding: 32px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 40px rgba(13, 110, 253, 0.15);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+    .hero-content {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+        .hero-content h1 {
+            font-size: 28px;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+            .hero-content h1 span {
+                font-weight: 800;
+            }
+
+        .hero-content .muted {
+            opacity: 0.95;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+    .next-appointment {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(10px);
+        padding: 18px 20px;
+        border-radius: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .next-info .label {
+        font-size: 12px;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .next-info .title {
+        font-weight: 700;
+        margin-top: 6px;
+        font-size: 16px;
+    }
+
+    .next-info .meta {
+        font-size: 13px;
+        opacity: 0.9;
+        margin-top: 4px;
+    }
+
+    .next-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-outline {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline.ghost {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+    .hero-deco {
+        position: relative;
+        z-index: 1;
+        margin-left: 20px;
+    }
+
+    /* Stats Row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin: 0 0 24px 0;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.2s ease;
+        border: 1px solid #f1f5f9;
+    }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .icon {
+            font-size: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            min-height: 48px;
+        }
+
+            .stat-card .icon.blue {
+                background: #eff6ff;
+                color: #3b82f6;
+            }
+
+            .stat-card .icon.success {
+                background: #ecfdf5;
+                color: #10b981;
+            }
+
+            .stat-card .icon.warning {
+                background: #fef3c7;
+                color: #f59e0b;
+            }
+
+            .stat-card .icon.purple {
+                background: #f5f3ff;
+                color: #8b5cf6;
+            }
+
+    .stat-text {
+        flex: 1;
+    }
+
+        .stat-text .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .stat-text .stat-value {
+            font-weight: 700;
+            font-size: 20px;
+            color: #0f172a;
+        }
+
+    /* Panels */
+    .panels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .panel {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        padding: 20px;
+        border: 1px solid #f1f5f9;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+    .view-all {
+        color: #0d6efd;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 14px;
+        transition: opacity 0.2s;
+    }
+
+        .view-all:hover {
+            opacity: 0.8;
+        }
+
+    /* Appointment Items */
+    .appt-item {
+        background: #f8fafc;
+        padding: 14px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        transition: all 0.2s ease;
+        border: 1px solid #f1f5f9;
+    }
+
+        .appt-item:hover {
+            background: #f1f5f9;
+            transform: translateX(2px);
+        }
+
+        .appt-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .appt-item .left {
+            flex-shrink: 0;
+        }
+
+        .appt-item .avatar {
+            width: 48px;
+            height: 48px;
+            background: #eff6ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .appt-item .center {
+            flex: 1;
+        }
+
+    .appt-title {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .appt-meta {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .appt-item .right {
+        flex-shrink: 0;
+    }
+
+    .status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+        .status.confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.scheduled {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+    /* Treatment Items */
+    .treat-item {
+        background: #f8fafc;
+        padding: 14px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        transition: all 0.2s ease;
+        border: 1px solid #f1f5f9;
+    }
+
+        .treat-item:hover {
+            background: #f1f5f9;
+            transform: translateX(2px);
+        }
+
+        .treat-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .t-left {
+        flex-shrink: 0;
+    }
+
+    .t-icon {
+        width: 48px;
+        height: 48px;
+        background: #ecfdf5;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .t-center {
+        flex: 1;
+    }
+
+    .t-title {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .t-meta {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .t-right {
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .amount {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+
+    .stars {
+        font-size: 11px;
+        line-height: 1;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 16px 40px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .navbar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+    }
+
+    .navbar-logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: white;
+        padding: 6px;
+        box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+    }
+
+        .navbar-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scale(1.12);
+            transition: transform 0.18s ease;
+            display: block;
+        }
+
+            .navbar-logo img:hover {
+                transform: scale(1.15);
+            }
+
+    .navbar-brand-text h1 {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0d6efd;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+
+    .navbar-brand-text p {
+        font-size: 10px;
+        color: #64748b;
+        margin: 0;
+        letter-spacing: 1px;
+    }
+
+    .navbar-menu {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 24px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+        .nav-link:hover {
+            color: #0d6efd;
+            background: #f0f6ff;
+        }
+
+        .nav-link.active {
+            color: #0d6efd;
+            background: #eff6ff;
+            font-weight: 600;
+        }
+
+    .navbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .search-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+        .search-box input {
+            padding: 8px 12px 8px 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            width: 220px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+            .search-box input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        color: #9ca3af;
+    }
+
+    .notification-btn {
+        position: relative;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+        color: #64748b;
+    }
+
+        .notification-btn:hover {
+            background: #f3f4f6;
+        }
+
+    .notification-badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 10px;
+        min-width: 16px;
+        text-align: center;
+    }
+
+    /* Settings Button - Perfect Circle */
+    .settings-btn {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+        padding: 0;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%; /* Perfect circle */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: #64748b;
+        flex-shrink: 0;
+    }
+
+        .settings-btn:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+            transform: translateY(-2px);
+        }
+
+            .settings-btn:hover .settings-icon svg {
+                transform: rotate(90deg);
+                color: #0d6efd;
+            }
+
+        .settings-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(13, 110, 253, 0.15);
+        }
+
+    .settings-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .settings-icon svg {
+            width: 100%;
+            height: 100%;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+    /* User Profile - Improved Design */
+    .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 14px 6px 6px;
+        border-radius: 50px; /* Pill shape */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        background: #f8fafc;
+    }
+
+        .user-profile:hover {
+            background: #ffffff;
+            border-color: #e5e7eb;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
+        }
+
+    .user-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%; /* Perfect circle */
+        background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+        .user-avatar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 100%);
+            opacity: 1;
+        }
+
+        .user-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+    .user-profile:hover .user-avatar {
+        transform: scale(1.08);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+    }
+
+        .user-profile:hover .user-avatar::after {
+            opacity: 1;
+        }
+
+    .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0; /* Allow text truncation */
+    }
+
+    .user-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-role {
+        font-size: 11px;
+        color: #64748b;
+        line-height: 1.2;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Responsive */
+    @@media (max-width: 900px) {
+        .stats-row
+
+    {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .panels {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero-deco {
+        margin-left: 0;
+        margin-top: 16px;
+        align-self: flex-end;
+    }
+
+    .next-appointment {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .next-actions {
+        width: 100%;
+    }
+
+    .btn-outline {
+        flex: 1;
+    }
+
+    }
+
+    @@media (max-width: 600px) {
+        .dashboard-page
+
+    {
+        padding: 16px;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-card {
+        padding: 24px;
+    }
+
+    .hero-content h1 {
+        font-size: 24px;
+    }
+
+    }
+</style>
+
+<div class="dashboard-page">
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="navbar-brand">
+                <div class="navbar-logo">
+                    <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Logo" />
+                </div>
+                <div class="navbar-brand-text">
+                    <h1>AURELIA DENTAL CLINIC</h1>
+                    <p>YOUR SMILE. OUR MASTERPIECE</p>
+                </div>
+            </a>
+
+            <div class="navbar-menu">
+                <ul class="nav-links">
+                    <li>
+                        <a href="/dashboard" class="nav-link active">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            Overview
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/appointments" class="nav-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Appointments
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/history" class="nav-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            History
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/billing" class="nav-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
+                            Billing
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="navbar-actions">
+                    <div class="search-box">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" placeholder="Search services, appointments..." />
+                    </div>
+
+                    <button class="notification-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-badge">2</span>
+                    </button>
+
+                    <button class="settings-btn" title="Settings" aria-label="Open settings">
+                        <span class="settings-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m13.2 5.2l-4.2-4.2m0-6l-4.2-4.2"></path>
+                            </svg>
+                        </span>
+                    </button>
+
+                    <div class="user-profile">
+                        <div class="user-avatar">@patientName.Substring(0, 1).ToUpper()</div>
+                        <div class="user-info">
+                            <div class="user-name">@patientName</div>
+                            <div class="user-role">Patient Portal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-inner">
+        <!-- Hero / Greeting -->
+        <section class="hero-card">
+            <div class="hero-content">
+                <h1>Good morning, <span>@(string.IsNullOrWhiteSpace(patientName) ? "Patient" : patientName)</span>!</h1>
+                <p class="muted">Welcome to your AURELIA Dental Clinic portal</p>
+
+                <div class="next-appointment">
+                    <div class="next-info">
+                        <div class="label">Next Appointment</div>
+                        <div class="title">@nextAppointment.Title</div>
+                        <div class="meta">@nextAppointment.Date.ToString("dd/MM/yyyy") at @nextAppointment.Date.ToString("hh:mm tt")</div>
+                    </div>
+                    <div class="next-actions">
+                        <button class="btn-outline">📅 Book Appointment</button>
+                        <button class="btn-outline ghost">📞 Call Clinic</button>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-deco">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="rgba(255,255,255,0.2)">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+            </div>
+        </section>
+
+        <!-- Stats Row -->
+        <section class="stats-row">
+            <div class="stat-card">
+                <div class="icon blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="stat-text">
+                    <div class="stat-label">Next Visit</div>
+                    <div class="stat-value">@nextVisitDays days</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon success">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-text">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value">@completedCount</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon warning">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="stat-text">
+                    <div class="stat-label">Outstanding</div>
+                    <div class="stat-value">₱@outstanding.ToString("N0")</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-text">
+                    <div class="stat-label">Total Spent</div>
+                    <div class="stat-value">₱@totalSpent.ToString("N0")</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Panels -->
+        <section class="panels">
+            <div class="panel appointments">
+                <div class="panel-header">
+                    <h3>📅 Upcoming Appointments</h3>
+                    <a class="view-all" href="#">View All</a>
+                </div>
+                <div class="panel-body">
+                    @foreach (var a in upcoming)
+                    {
+                        <div class="appt-item">
+                            <div class="left">
+                                <div class="avatar">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="center">
+                                <div class="appt-title">@a.Title</div>
+                                <div class="appt-meta">@a.Provider — @a.Date.ToString("dd/MM/yyyy") • @a.Date.ToString("hh:mm tt")</div>
+                            </div>
+                            <div class="right">
+                                <span class="status @a.Status.ToString().ToLower()">@a.Status</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="panel treatments">
+                <div class="panel-header">
+                    <h3>📋 Recent Treatments</h3>
+                    <a class="view-all" href="#">View All</a>
+                </div>
+                <div class="panel-body">
+                    @foreach (var t in recentTreatments)
+                    {
+                        <div class="treat-item">
+                            <div class="t-left">
+                                <div class="t-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="t-center">
+                                <div class="t-title">@t.Title</div>
+                                <div class="t-meta">@t.Provider — @t.Date.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <div class="t-right">
+                                <div class="amount">₱@t.Price.ToString("N0")</div>
+                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+@code {
+    private string patientName = "Juan";
+    private Appointment nextAppointment = new Appointment
+    {
+        Title = "Teeth Cleaning with Dr. Maria Santos",
+        Provider = "Dr. Maria Santos",
+        Date = new DateTime(2025, 9, 20, 10, 0, 0),
+        Status = ApptStatus.Confirmed
+    };
+
+    private int nextVisitDays = 5;
+    private int completedCount = 3;
+    private int outstanding = 2500;
+    private int totalSpent = 15800;
+
+    private List<Appointment> upcoming = new List<Appointment>
+    {
+        new Appointment { Title = "Teeth Cleaning", Provider = "Dr. Maria Santos", Date = new DateTime(2025,9,20,10,0,0), Status = ApptStatus.Confirmed },
+        new Appointment { Title = "Root Canal Follow-up", Provider = "Dr. Juan Dela Cruz", Date = new DateTime(2025,9,25,14,30,0), Status = ApptStatus.Scheduled }
+    };
+
+    private List<Treatment> recentTreatments = new List<Treatment>
+    {
+        new Treatment { Title = "Initial Consultation", Provider = "Dr. Maria Santos", Date = new DateTime(2025,8,15), Price = 1500 },
+        new Treatment { Title = "X-Ray", Provider = "Dr. Maria Santos", Date = new DateTime(2025,8,15), Price = 800 }
+    };
+
+    private enum ApptStatus { Confirmed, Scheduled, Pending }
+
+    private class Appointment
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public ApptStatus Status { get; set; }
+    }
+
+    private class Treatment
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public int Price { get; set; }
+    }
+}
