@@ -219,14 +219,14 @@
     height: auto;
     border-radius: 6px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
     transition: all 0.2s ease;
     color: #64748b;
     flex-shrink: 0;
 }
 
-    .settings-btn:hover {
+  .settings-btn:hover {
         background: #f3f4f6;
         color: #374151;
     }
@@ -236,17 +236,25 @@
     }
 
     .settings-btn:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
     }
 
-/* Settings Icon - Simple Clean Look */
+/* Settings Icon - SVG with Animation */
 .settings-icon {
     display: flex;
-    align-items: center;
+  align-items: center;
     justify-content: center;
     width: 20px;
     height: 20px;
+}
+
+.settings-icon svg {
+    transition: transform 0.5s ease;
+}
+
+.settings-btn:hover .settings-icon svg {
+    transform: rotate(90deg);
 }
 
 /* ============================================
@@ -761,6 +769,7 @@
     .next-actions {
         width: 100%;
     }
+
 
     .btn-outline {
         flex: 1;

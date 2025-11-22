@@ -1096,13 +1096,17 @@
     {
         // Implement staff/admin login logic
         if (staffModel.AccessLevel == "admin")
+      {
+      Navigation.NavigateTo("/admin-dashboard");
+        }
+        else if (staffModel.AccessLevel == "receptionist")
         {
-            Navigation.NavigateTo("/admin-dashboard");
+          Navigation.NavigateTo("/receptionist-dashboard");
         }
         else
         {
-            Navigation.NavigateTo("/staff-dashboard");
-        }
+ Navigation.NavigateTo("/dentist-dashboard");
+   }
         CloseStaffModal();
         staffModel = new StaffLoginModel(); // Reset form
     }
