@@ -1,0 +1,191 @@
+﻿@page "/dentist-dashboard"
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Navigation
+
+<div class="dashboard-page">
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <!-- Brand -->
+       <a href="#" class="navbar-brand">
+        <div class="navbar-logo">
+       <img src="images/zns-logo.png" alt="ZNS Logo" />
+                </div>
+           <div class="navbar-brand-text">
+       <h1>ZNS DENTAL CLINIC DR. SALAMANTE</h1>
+          <p>Orthodontics & General Dentistry</p>
+   </div>
+  </a>
+
+            <!-- Nav Links -->
+          <div class="navbar-menu">
+                <ul class="nav-links">
+          <li>
+             <a href="#" class="nav-link active">
+    <span>📊</span> Overview
+             </a>
+          </li>
+      <li>
+       <a href="#" class="nav-link">
+                  <span>📅</span> Schedule
+ </a>
+      </li>
+  <li>
+  <a href="#" class="nav-link">
+   <span>👥</span> Patients
+  </a>
+  </li>
+         </ul>
+    </div>
+
+            <!-- Actions -->
+ <div class="navbar-actions">
+       <div class="search-box">
+           <span class="search-icon">🔍</span>
+ <input type="text" placeholder="Search patients, appointments..." />
+            </div>
+        
+    <button class="icon-btn notification-btn">
+          <span>🔔</span>
+  </button>
+
+       <button class="icon-btn settings-btn">
+   <span>⚙️</span>
+        </button>
+
+              <div class="user-profile">
+        <div class="user-avatar">DS</div>
+    <div class="user-info">
+      <div class="user-name">Dr. Staff</div>
+   <div class="user-role">Staff Portal</div>
+    </div>
+     </div>
+            </div>
+     </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+        <!-- Hero Card -->
+        <div class="hero-card">
+            <div class="hero-content">
+         <h1>Good morning, Dr. Dr.!</h1>
+         <p class="subtitle">Ready to make smiles brighter today?</p>
+
+     <div class="stats-grid">
+      <div class="stat-box stat-primary">
+         <div class="stat-label">Today's Appointments</div>
+   <div class="stat-value">4</div>
+      </div>
+     <div class="stat-box stat-success">
+              <div class="stat-label">Completed</div>
+             <div class="stat-value">1</div>
+           </div>
+                    <div class="stat-box stat-info">
+              <div class="stat-label">Total Patients</div>
+                   <div class="stat-value">156</div>
+                </div>
+       <div class="stat-box stat-teal">
+  <div class="stat-label">Pending Treatments</div>
+     <div class="stat-value">12</div>
+  </div>
+ </div>
+         </div>
+       <div class="hero-deco">
+                🦷
+     </div>
+        </div>
+
+ <!-- Today's Schedule Section -->
+   <div class="schedule-section">
+        <div class="section-header">
+         <div class="section-title">
+     <span class="title-icon">📅</span>
+              <h2>Today's Schedule</h2>
+       </div>
+      <div class="appointment-badge">4 appointments</div>
+            </div>
+
+  <div class="schedule-list">
+     <!-- Appointment Item 1 -->
+              <div class="appointment-item">
+        <div class="appt-time">
+     <span class="time-icon">🕘</span>
+           <div class="time-info">
+           <div class="time">9:00 AM</div>
+        </div>
+    </div>
+        <div class="appt-details">
+     <div class="patient-name">Maria Rodriguez</div>
+  <div class="treatment-info">Teeth Cleaning • 60 min</div>
+   </div>
+              <div class="appt-status">
+            <span class="status-badge status-confirmed">confirmed</span>
+<button class="menu-btn">⋮</button>
+     </div>
+  </div>
+
+        <!-- Appointment Item 2 -->
+    <div class="appointment-item">
+       <div class="appt-time">
+    <span class="time-icon">🕘</span>
+                <div class="time-info">
+            <div class="time">10:30 AM</div>
+           </div>
+           </div>
+       <div class="appt-details">
+         <div class="patient-name">Juan Santos</div>
+             <div class="treatment-info">Root Canal Follow-up • 45 min</div>
+       </div>
+        <div class="appt-status">
+            <span class="status-badge status-progress">in-progress</span>
+     <button class="menu-btn">⋮</button>
+   </div>
+                </div>
+
+         <!-- Appointment Item 3 -->
+        <div class="appointment-item">
+       <div class="appt-time">
+         <span class="time-icon">🕐</span>
+         <div class="time-info">
+            <div class="time">2:00 PM</div>
+     </div>
+          </div>
+         <div class="appt-details">
+      <div class="patient-name">Ana Dela Cruz</div>
+ <div class="treatment-info">Dental Consultation • 30 min</div>
+  </div>
+           <div class="appt-status">
+    <span class="status-badge status-confirmed">confirmed</span>
+  <button class="menu-btn">⋮</button>
+         </div>
+         </div>
+
+       <!-- Appointment Item 4 -->
+        <div class="appointment-item">
+   <div class="appt-time">
+            <span class="time-icon">🕒</span>
+           <div class="time-info">
+  <div class="time">3:30 PM</div>
+          </div>
+        </div>
+<div class="appt-details">
+  <div class="patient-name">Carlos Martinez</div>
+         <div class="treatment-info">Dental Check-up • 30 min</div>
+         </div>
+     <div class="appt-status">
+         <span class="status-badge status-confirmed">confirmed</span>
+                  <button class="menu-btn">⋮</button>
+ </div>
+   </div>
+   </div>
+ </div>
+    </div>
+</div>
+
+@code {
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
