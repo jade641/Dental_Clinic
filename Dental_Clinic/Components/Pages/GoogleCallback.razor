@@ -1,0 +1,49 @@
+@page "/google-callback"
+
+<div class="auth-container">
+    <div class="left-section">
+ <div class="clinic-logo">
+            <div class="logo-placeholder">
+      <img src="css/bootstrap/Dental_Logo.png" alt="Jade Dental Clinic Logo" class="clinic-logo-img" />
+       </div>
+        <h1>JADE DENTAL</h1>
+            <h2 class="studio-text">CLINIC</h2>
+     <p class="tagline">YOUR SMILE. OUR MASTERPIECE</p>
+      </div>
+
+        <div class="hero-content">
+ <h2>Signing in with <span class="gradient-text">Google</span></h2>
+      <p class="hero-subtitle">Please wait while we complete your authentication...</p>
+        </div>
+    </div>
+
+    <div class="right-section">
+      <div class="auth-card">
+  <div class="loading-spinner">
+         <svg width="50" height="50" viewBox="0 0 50 50">
+             <circle cx="25" cy="25" r="20" stroke="#0066FF" stroke-width="4" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round">
+         <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/>
+        </circle>
+         </svg>
+   </div>
+<p style="text-align: center; margin-top: 20px;">Authenticating with Google...</p>
+            
+    @if (!string.IsNullOrEmpty(errorMessage))
+            {
+        <div class="error-message" style="margin-top: 20px;">@errorMessage</div>
+       <button class="btn-primary" @onclick="BackToLogin">
+        Back to Login
+                </button>
+         }
+    </div>
+    </div>
+</div>
+
+<style>
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+    }
+</style>

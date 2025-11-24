@@ -1,4 +1,7 @@
 ﻿@page "/dashboard"
+@using System.Diagnostics
+@inject Dental_Clinic.Services.SessionService SessionService
+@inject NavigationManager Navigation
 
 <style>
     * {
@@ -1015,7 +1018,30 @@
 </div>
 
 @code {
-    private string patientName = "Juan";
+    private string patientName = "Patient";
+    
+    protected override async Task OnInitializedAsync()
+    {
+   try
+        {
+   var session = await SessionService.GetCurrentSessionAsync();
+          if (session == null)
+       {
+    // No session, redirect to login
+         Navigation.NavigateTo("/login", true);
+     return;
+      }
+   
+  // Set patient name from session
+         patientName = session.UserName ?? "Patient";
+    }
+     catch (Exception ex)
+       {
+     Debug.WriteLine($"[Dashboard] Error loading session: {ex.Message}");
+            patientName = "Patient";
+    }
+    }
+
     private Appointment nextAppointment = new Appointment
     {
         Title = "Teeth Cleaning with Dr. Maria Santos",

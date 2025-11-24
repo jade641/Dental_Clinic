@@ -30,6 +30,13 @@ namespace Dental_Clinic
             // Register Session Service
             builder.Services.AddSingleton<SessionService>();
 
+            // Register Email Service
+            builder.Services.AddSingleton<EmailService>();
+
+            // Register HttpClient and Google Auth Service
+            builder.Services.AddSingleton<HttpClient>();
+            builder.Services.AddSingleton<GoogleAuthService>();
+
 #if DEBUG
         		builder.Services.AddBlazorWebViewDeveloperTools();
         		builder.Logging.AddDebug();
