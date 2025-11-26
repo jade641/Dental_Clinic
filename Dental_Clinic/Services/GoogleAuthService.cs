@@ -12,7 +12,7 @@ namespace Dental_Clinic.Services
     {
         private readonly DatabaseService _databaseService;
         private readonly HttpClient _httpClient;
- private readonly IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
 
  // Load from configuration instead of hardcoding
         private string GoogleClientId => _configuration["GoogleOAuth:ClientId"] ?? throw new InvalidOperationException("Google Client ID not configured");
@@ -24,6 +24,42 @@ namespace Dental_Clinic.Services
    _databaseService = databaseService;
             _httpClient = httpClient;
             _configuration = configuration;
+
+ // Validate config early and log a masked client id for troubleshooting
+            try
+            {
+                ValidateConfiguration();
+                Debug.WriteLine($"[GoogleAuthService] Loaded GoogleOAuth ClientId: {MaskClientId(GoogleClientId)} RedirectUri: {RedirectUri}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[GoogleAuthService] Configuration error: {ex.Message}");
+ // rethrow so failure is obvious during startup
+                throw;
+            }
+        }
+
+        private void ValidateConfiguration()
+        {
+            if (string.IsNullOrWhiteSpace(GoogleClientId) || GoogleClientId.Contains("YOUR_") || GoogleClientId.Contains("@"))
+            {
+                throw new InvalidOperationException("Google ClientId looks invalid. Make sure appsettings.Development.json contains the correct web application client ID.");
+            }
+            if (string.IsNullOrWhiteSpace(GoogleClientSecret) || GoogleClientSecret.Length <10)
+            {
+                throw new InvalidOperationException("Google ClientSecret missing or too short. Make sure appsettings.Development.json contains the client secret for a Web application credential.");
+            }
+            if (!RedirectUri.StartsWith("http://127.0.0.1") && !RedirectUri.StartsWith("http://localhost"))
+            {
+                Debug.WriteLine("[GoogleAuthService] Warning: RedirectUri is not a localhost/loopback URL. Ensure it matches the one registered in Google Console.");
+            }
+        }
+
+        private string MaskClientId(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return "(empty)";
+            if (id.Length <=8) return new string('*', id.Length);
+            return id.Substring(0,4) + new string('*', Math.Max(0, id.Length -8)) + id.Substring(id.Length -4);
         }
 
         public string GetGoogleAuthUrl()
