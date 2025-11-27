@@ -1,10 +1,7 @@
-@page "/auth"
+﻿@page "/auth"
 @page "/login"
 @page "/signup"
 @page "/"
-@inject NavigationManager Navigation
-@inject Dental_Clinic.Services.AuthService AuthService
-@inject Dental_Clinic.Services.DatabaseService DatabaseService
 @using Dental_Clinic.Models
 @using Dental_Clinic.Services
 @implements IDisposable
@@ -21,195 +18,195 @@
         </div>
 
         <div class="hero-content">
-       <h2>Smile with <span class="gradient-text">Confidence</span></h2>
+ <h2>Smile with <span class="gradient-text">Confidence</span></h2>
 <p class="hero-subtitle">Your trusted partner in dental health</p>
  <p class="hero-description">
         Experience exceptional dental care with our modern facilities, expert team, and personalized treatment plans designed just for you.
-            </p>
+     </p>
 </div>
 
  <div class="stats">
-            <div class="stat-card">
+  <div class="stat-card">
     <div class="stat-number">500+</div>
-        <div class="stat-label">Happy Patients</div>
+  <div class="stat-label">Happy Patients</div>
  </div>
   <div class="stat-card">
-                <div class="stat-number">15+</div>
-     <div class="stat-label">Years Experience</div>
+         <div class="stat-number">15+</div>
+ <div class="stat-label">Years Experience</div>
  </div>
-        </div>
+ </div>
     </div>
 
     <div class="right-section">
-        <!-- Connection Status Indicator with Offline Mode Toggle -->
+     <!-- Connection Status Indicator with Offline Mode Toggle -->
         <div class="connection-status">
-  <div class="status-dot @(DatabaseService.IsOnline && !AuthService.IsOfflineMode ? "online" : "offline")"></div>
-      <span>@(AuthService.IsOfflineMode ? "Offline Mode" : (DatabaseService.IsOnline ? "Online" : "Offline"))</span>
-      
-            @if (DatabaseService.IsOnline)
-            {
-          <button class="sync-btn" @onclick="ToggleOfflineMode" title="@(AuthService.IsOfflineMode ? "Switch to Online" : "Switch to Offline")">
-        @if (AuthService.IsOfflineMode)
+  <div class="status-dot @(DatabaseService != null && DatabaseService.IsOnline && AuthService != null && !AuthService.IsOfflineMode ? "online" : "offline")"></div>
+      <span>@(AuthService != null && AuthService.IsOfflineMode ? "Offline Mode" : (DatabaseService != null && DatabaseService.IsOnline ? "Online" : "Offline"))</span>
+  
+          @if (DatabaseService != null && DatabaseService.IsOnline)
+     {
+   <button class="sync-btn" @onclick="ToggleOfflineMode" title="@(AuthService != null && AuthService.IsOfflineMode ? "Switch to Online" : "Switch to Offline")">
+        @if (AuthService != null && AuthService.IsOfflineMode)
    {
-             <span>??</span>
-        }
+   <span>🌐</span>
+    }
       else
     {
-                 <span>??</span>
+       <span>📱</span>
     }
        </button>
-          }
-        </div>
+  }
+ </div>
 
-        <!-- Sync Button (only show when online) -->
-        @if (DatabaseService.IsOnline && !AuthService.IsOfflineMode)
-        {
+<!-- Sync Button (only show when online) -->
+@if (DatabaseService != null && DatabaseService.IsOnline && AuthService != null && !AuthService.IsOfflineMode)
+     {
    <button class="sync-action-btn" @onclick="StartFullSync" title="Sync with server">
      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-       </svg>
+     </svg>
   </button>
      }
 
-        <button class="theme-toggle" @onclick="ToggleTheme" title="Toggle theme">
+   <button class="theme-toggle" @onclick="ToggleTheme" title="Toggle theme">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M10 15C12.7614 15 15 12.7614 15 10C15 7.23858 12.7614 5 10 5C7.23858 5 5 7.23858 5 10C5 12.7614 7.23858 15 10 15Z" stroke="currentColor" stroke-width="1.5" />
-            </svg>
+ </svg>
         </button>
 
-     <div class="auth-card">
-            <div class="progress-indicator">
-                <div class="progress-line @(isLoginMode ? "active" : "")" @onclick="SwitchToLogin"></div>
+ <div class="auth-card">
+       <div class="progress-indicator">
+   <div class="progress-line @(isLoginMode ? "active" : "")" @onclick="SwitchToLogin"></div>
    <div class="progress-line @(!isLoginMode ? "active" : "")" @onclick="SwitchToSignUp"></div>
-            </div>
+  </div>
 
             @if (!string.IsNullOrEmpty(errorMessage))
-            {
+   {
  <div class="error-message">@errorMessage</div>
-            }
+    }
 
    @if (!string.IsNullOrEmpty(successMessage))
     {
      <div class="success-message">@successMessage</div>
  }
 
-            @if (isLoginMode)
+     @if (isLoginMode)
             {
     <!-- LOGIN FORM -->
-                <h3>Welcome Back</h3>
+         <h3>Welcome Back</h3>
            <p class="auth-subtitle">Sign in to your patient portal</p>
 
     <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
               <DataAnnotationsValidator />
-       <div class="form-content">
-        <div class="form-group">
-    <label for="emailOrUsername">Email or Username</label>
+     <div class="form-content">
+      <div class="form-group">
+ <label for="emailOrUsername">Email or Username</label>
      <div class="input-wrapper">
-             <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-             <path d="M3 6L10 11L17 6M3 6V14C3 14.5523 3.44772 15 4 15H16C16.5523 15 17 14.5523 17 14V6M3 6C3 5.44772 3.44772 5 4 5H16C16.5523 5 17 5.44772 17 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 6L10 11L17 6M3 6V14C3 14.5523 3.44772 15 4 15H16C16.5523 15 17 14.5523 17 14V6M3 6C3 5.44772 3.44772 5 4 5H16C16.5523 5 17 5.44772 17 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-        <InputText id="emailOrUsername" @bind-Value="loginModel.EmailOrUsername" placeholder="Email or Username" />
+    <InputText id="emailOrUsername" @bind-Value="loginModel.EmailOrUsername" placeholder="Email or Username" />
       </div>
           <ValidationMessage For="@(() => loginModel.EmailOrUsername)" />
 </div>
 
-     <div class="form-group">
+  <div class="form-group">
            <label for="password">Password</label>
-          <div class="input-wrapper">
+ <div class="input-wrapper">
          <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
  </svg>
-          <InputText id="password" type="@loginPasswordType" @bind-Value="loginModel.Password" placeholder="Enter your password" />
-           <button type="button" class="password-toggle" @onclick="ToggleLoginPassword">
+    <InputText id="password" type="@loginPasswordType" @bind-Value="loginModel.Password" placeholder="Enter your password" />
+    <button type="button" class="password-toggle" @onclick="ToggleLoginPassword">
   <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              @if (showLoginPassword)
+   @if (showLoginPassword)
       {
-             <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
+           <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
  <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
-                 }
+       }
          else
-            {
+    {
           <path d="M3 3L17 17M10 7C11.6569 7 13 8.34315 13 10C13 10.3506 12.9398 10.6872 12.8293 11M7 10C7 8.34315 8.34315 7 10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       }
-       </svg>
+  </svg>
      </button>
     </div>
-      <ValidationMessage For="@(() => loginModel.Password)" />
-      </div>
+  <ValidationMessage For="@(() => loginModel.Password)" />
+  </div>
 
-          <div class="form-options">
+   <div class="form-options">
  <label class="checkbox-container">
-          <InputCheckbox @bind-Value="loginModel.RememberMe" />
-             <span>Remember me</span>
+        <InputCheckbox @bind-Value="loginModel.RememberMe" />
+      <span>Remember me</span>
     </label>
-        <a href="/forgot-password" class="forgot-link">Forgot Password?</a>
-     </div>
+    <a href="/forgot-password" class="forgot-link">Forgot Password?</a>
+ </div>
 
           <button type="submit" class="btn-primary" disabled="@isLoading">
     @if (isLoading)
-          {
+    {
  <span>Signing in...</span>
-        }
-            else
-            {
+      }
+        else
+          {
        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="white" stroke-width="1.5" />
               <path d="M10 6V10L13 13" stroke="white" stroke-width="1.5" stroke-linecap="round" />
-              </svg>
+          </svg>
           <span>Access My Portal</span>
        }
-              </button>
+   </button>
      </div>
     </EditForm>
-          }
+   }
        else
  {
   <!-- SIGNUP FORM -->
     <h3>Join Our Family</h3>
    <p class="auth-subtitle">Create your patient account today</p>
 
-             <EditForm Model="@signUpModel" OnValidSubmit="@HandleSignUp">
+  <EditForm Model="@signUpModel" OnValidSubmit="@HandleSignUp">
         <DataAnnotationsValidator />
-   <div class="form-content">
-       <div class="form-row">
-        <div class="form-group">
+ <div class="form-content">
+    <div class="form-row">
+    <div class="form-group">
        <label for="firstName">First Name</label>
-              <div class="input-wrapper">
-                  <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
+   <div class="input-wrapper">
+<svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
     </svg>
-           <InputText id="firstName" @bind-Value="signUpModel.FirstName" placeholder="First Name" />
-              </div>
+       <InputText id="firstName" @bind-Value="signUpModel.FirstName" placeholder="First Name" />
+       </div>
          <ValidationMessage For="@(() => signUpModel.FirstName)" />
     </div>
        <div class="form-group">
-        <label for="lastName">Last Name</label>
+ <label for="lastName">Last Name</label>
   <div class="input-wrapper">
         <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
    </svg>
       <InputText id="lastName" @bind-Value="signUpModel.LastName" placeholder="Last Name" />
-      </div>
-              <ValidationMessage For="@(() => signUpModel.LastName)" />
-      </div>
-           </div>
+ </div>
+     <ValidationMessage For="@(() => signUpModel.LastName)" />
+   </div>
+       </div>
 
   <div class="form-group">
-        <label for="username">Username</label>
-    <div class="input-wrapper">
+    <label for="username">Username</label>
+ <div class="input-wrapper">
    <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
+     <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
      </svg>
-       <InputText id="username" @bind-Value="signUpModel.UserName" placeholder="Choose a username" />
-      </div>
-          <ValidationMessage For="@(() => signUpModel.UserName)" />
-           </div>
+  <InputText id="username" @bind-Value="signUpModel.UserName" placeholder="Choose a username" />
+ </div>
+  <ValidationMessage For="@(() => signUpModel.UserName)" />
+       </div>
 
     <div class="form-group">
     <label for="signupEmail">Email Address</label>
    <div class="input-wrapper">
-             <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 6L10 11L17 6M3 6V14C3 14.5523 3.44772 15 4 15H16C16.5523 15 17 14.5523 17 14V6M3 6C3 5.44772 3.44772 5 4 5H16C16.5523 5 17 5.44772 17 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+       <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 6L10 11L17 6M3 6V14C3 14.5523 3.44772 15 4 15H16C16.5523 15 17 14.5523 17 14V6M3 6C3 5.44772 3.44772 5 4 5H16C16.5523 5 17 5.44772 17 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
    </svg>
        <InputText id="signupEmail" @bind-Value="signUpModel.Email" placeholder="your.email@gmail.com" />
             </div>
@@ -217,70 +214,78 @@
     </div>
 
          <div class="form-group">
-    <label for="phone">Phone Number</label>
-           <div class="input-wrapper">
+ <label for="phone">Phone Number</label>
+   <div class="input-wrapper">
   <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M3 5C3 3.89543 3.89543 3 5 3H8.27924C8.70967 3 9.09181 3.27543 9.22792 3.68377L10.7257 8.17721C10.8831 8.64932 10.6694 9.16531 10.2243 9.38787L8.96701 10.0165C9.31925 11.4018 10.5982 12.6808 11.9835 13.033L12.6121 11.7757C12.8347 11.3306 13.3507 11.1169 13.8228 11.2743L18.3162 12.7721C18.7246 12.9082 19 13.2903 19 13.7208V17C19 18.1046 18.1046 19 17 19H15C8.37258 19 3 13.6274 3 7V5Z" stroke="currentColor" stroke-width="1.5" />
-             </svg>
-           <InputText id="phone" @bind-Value="signUpModel.PhoneNumber" placeholder="+63 9XX XXX XXXX" />
-             </div>
+  </svg>
+   <InputText id="phone" @bind-Value="signUpModel.PhoneNumber" placeholder="+63 9XX XXX XXXX" />
+    </div>
  </div>
 
-        <div class="form-group">
+   <div class="form-group">
       <label for="signupPassword">Password</label>
-         <div class="input-wrapper">
-        <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+ <div class="input-wrapper">
+      <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-               </svg>
-      <InputText id="signupPassword" type="@signupPasswordType" @bind-Value="signUpModel.Password" placeholder="Enter your password" />
+   </svg>
+    <InputText id="signupPassword" type="@signupPasswordType" @bind-Value="signUpModel.Password" placeholder="Enter your password" />
    <button type="button" class="password-toggle" @onclick="ToggleSignupPassword">
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-           @if (showSignupPassword)
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      @if (showSignupPassword)
     {
            <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
  <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
-              }
-           else
+          }
+        else
       {
      <path d="M3 3L17 17M10 7C11.6569 7 13 8.34315 13 10C13 10.3506 12.9398 10.6872 12.8293 11M7 10C7 8.34315 8.34315 7 10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          }
-        </svg>
-             </button>
-           </div>
+   }
+ </svg>
+     </button>
+  </div>
      <ValidationMessage For="@(() => signUpModel.Password)" />
     </div>
 
-             <button type="submit" class="btn-primary" disabled="@isLoading">
-         @if (isLoading)
-           {
-        <span>Creating account...</span>
+ <button type="submit" class="btn-primary" disabled="@isLoading">
+       @if (isLoading)
+  {
+      <span>Creating account...</span>
      }
         else
   {
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-           <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="white" stroke-width="1.5" />
+ <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="white" stroke-width="1.5" />
      <path d="M10 6V10L13 13" stroke="white" stroke-width="1.5" stroke-linecap="round" />
-         </svg>
-               <span>Join Our Family</span>
+    </svg>
+     <span>Join Our Family</span>
  }
-            </button>
+       </button>
 </div>
   </EditForm>
-            }
+   }
 
-        <div class="divider">
-     <span>Or continue with</span>
-         </div>
+    <div class="divider">
+  <span>Or continue with</span>
+</div>
 
-    <button class="btn-google" @onclick="HandleGoogleAuth">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
-           <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.184l-2.909-2.258c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
-             <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
-     <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.428 0 9.002 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335" />
-    </svg>
-      Continue with Google
-        </button>
+    <button class="btn-google" @onclick="HandleGoogleAuth" disabled="@isAuthenticatingWithGoogle">
+        @if (!isAuthenticatingWithGoogle)
+   {
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
+          <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.184l-2.909-2.258c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853" />
+  <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
+      <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.428 0 9.002 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335" />
+      </svg>
+            <span>Continue with Google</span>
+        }
+        else
+     {
+            <div class="spinner"></div>
+            <span>@successMessage</span>
+        }
+    </button>
 
   <p class="switch-text">
      @if (isLoginMode)
@@ -288,18 +293,18 @@
     <text>Don't have an account? <button type="button" class="link-button" @onclick="SwitchToSignUp">Sign Up</button></text>
            }
      else
-                {
+     {
       <text>Already have an account? <button type="button" class="link-button" @onclick="SwitchToLogin">Sign In</button></text>
-        }
+}
       </p>
 
 <button class="staff-login" @onclick="OpenStaffModal">
-       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 8C10.21 8 12 6.21 12 4C12 1.79 10.21 0 8 0C5.79 0 4 1.79 4 4C4 6.21 5.79 8 8 8ZM8 10C5.33 10 0 11.34 0 14V16H16V14C16 11.34 10.67 10 8 10Z" fill="currentColor" />
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 8C10.21 8 12 6.21 12 4C12 1.79 10.21 0 8 0C5.79 0 4 1.79 4 4C4 6.21 5.79 8 8 8ZM8 10C5.33 10 0 11.34 0 14V16H16V14C16 11.34 10.67 10 8 10Z" fill="currentColor" />
         </svg>
        Staff / Admin Login
       </button>
-        </div>
+   </div>
     </div>
 </div>
 
@@ -307,101 +312,101 @@
 @if (showStaffModal)
 {
     <div class="modal-overlay" @onclick="CloseStaffModal">
-        <div class="modal-content" @onclick:stopPropagation="true">
+  <div class="modal-content" @onclick:stopPropagation="true">
       <button class="close-button" @onclick="CloseStaffModal">
  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 6L14 14M6 14L14 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    <path d="M6 6L14 14M6 14L14 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
    </button>
 
-            <div class="modal-header">
+     <div class="modal-header">
     <div class="modal-icon">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" fill="white" />
-                 <path d="M10 12.5C5 12.5 0 15 0 17.5V20H20V17.5C20 15 15 12.5 10 12.5Z" fill="white" />
+       <path d="M10 12.5C5 12.5 0 15 0 17.5V20H20V17.5C20 15 15 12.5 10 12.5Z" fill="white" />
  </svg>
    </div>
-            <h3>Staff & Admin Portal</h3>
+     <h3>Staff & Admin Portal</h3>
      </div>
   <p class="modal-subtitle">Access restricted to authorized staff and administrators only</p>
 
        @if (!string.IsNullOrEmpty(staffErrorMessage))
-            {
+        {
   <div class="error-message">@staffErrorMessage</div>
       }
 
   <div class="access-level">
-      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+   <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M10 2C11.1046 2 12 2.89543 12 4V8H8V4C8 2.89543 8.89543 2 10 2ZM14 8V4C14 1.79086 12.2091 0 10 0C7.79086 0 6 1.79086 6 4V8H4C2.89543 8 2 8.89543 2 10V18C2 19.1046 2.89543 20 4 20H16C17.1046 20 18 19.1046 18 18V10C18 8.89543 17.1046 8 16 8H14Z" fill="currentColor" />
     </svg>
     <div>
-           <strong>Access Level</strong>
-          <select class="access-dropdown" @bind="staffModel.AccessLevel">
-         <option value="receptionist"> Receptionist</option>
-           <option value="staff"> Dentist</option>
-                 <option value="admin"> Administrator</option>
+ <strong>Access Level</strong>
+ <select class="access-dropdown" @bind="staffModel.AccessLevel">
+      <option value="receptionist">🧑‍💼 Receptionist</option>
+           <option value="staff">👨‍⚕️ Dentist</option>
+    <option value="admin">👨‍💻 Administrator</option>
  </select>
  </div>
-          </div>
+    </div>
 
             <EditForm Model="@staffModel" OnValidSubmit="@HandleStaffLogin">
-                <div class="form-content">
-         <div class="form-group">
+       <div class="form-content">
+    <div class="form-group">
  <label for="staffEmailOrUsername">Staff ID, Email or Username</label>
-             <div class="input-wrapper">
-         <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-             <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
-     </svg>
-           <InputText id="staffEmailOrUsername" @bind-Value="staffModel.EmailOrUsername" placeholder="Enter your credentials" />
+     <div class="input-wrapper">
+    <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+   <path d="M10 10C12.21 10 14 8.21 14 6C14 3.79 12.21 2 10 2C7.79 2 6 3.79 6 6C6 8.21 7.79 10 10 10ZM10 12C7.33 12 2 13.34 2 16V18H18V16C18 13.34 12.67 12 10 12Z" stroke="currentColor" stroke-width="1.5" />
+   </svg>
+<InputText id="staffEmailOrUsername" @bind-Value="staffModel.EmailOrUsername" placeholder="Enter your credentials" />
  </div>
            </div>
 
-                <div class="form-group">
+          <div class="form-group">
          <label for="staffPassword">Password</label>
-           <div class="input-wrapper">
+    <div class="input-wrapper">
         <svg class="input-icon" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
-          <InputText id="staffPassword" type="@staffPasswordType" @bind-Value="staffModel.Password" placeholder="Enter your password" />
+<path d="M5 9V6C5 3.79086 6.79086 2 9 2H11C13.2091 2 15 3.79086 15 6V9M4 9H16C16.5523 9 17 9.44772 17 10V16C17 16.5523 16.5523 17 16 17H4C3.44772 17 3 16.5523 3 16V10C3 9.44772 3.44772 9 4 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+     </svg>
+    <InputText id="staffPassword" type="@staffPasswordType" @bind-Value="staffModel.Password" placeholder="Enter your password" />
         <button type="button" class="password-toggle" @onclick="ToggleStaffPassword">
-         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        @if (showStaffPassword)
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  @if (showStaffPassword)
        {
    <path d="M3 10C3 10 6 4 10 4C14 4 17 10 17 10C17 10 14 16 10 16C6 16 3 10 3 10Z" stroke="currentColor" stroke-width="1.5" />
-              <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
-    }
+        <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5" />
+  }
      else
       {
     <path d="M3 3L17 17M10 7C11.6569 7 13 8.34315 13 10C13 10.3506 12.9398 10.6872 12.8293 11M7 10C7 8.34315 8.34315 7 10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-               }
-     </svg>
+       }
+   </svg>
   </button>
-       </div>
+     </div>
      </div>
 
-            <div class="form-options">
+   <div class="form-options">
     <label class="checkbox-container">
         <InputCheckbox @bind-Value="staffModel.RememberMe" />
-          <span>Keep me signed in</span>
-                 </label>
-           </div>
+     <span>Keep me signed in</span>
+   </label>
+    </div>
 
 <button type="submit" class="btn-primary" disabled="@isLoading">
 @if (isLoading)
   {
-           <span>Verifying...</span>
+     <span>Verifying...</span>
    }
     else
    {
            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M10 2L3 7V13C3 16.31 5.84 19.27 10 20C14.16 19.27 17 16.31 17 13V7L10 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round" />
-            </svg>
+      <path d="M10 2L3 7V13C3 16.31 5.84 19.27 10 20C14.16 19.27 17 16.31 17 13V7L10 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round" />
+      </svg>
   <span>Access Dashboard</span>
-               }
-          </button>
+      }
+</button>
        </div>
             </EditForm>
-        </div>
+     </div>
     </div>
 }
 
@@ -410,22 +415,25 @@
 {
     <div class="modal-overlay">
  <div class="modal-content">
-       <div class="modal-header">
+    <div class="modal-header">
  <div class="modal-icon">
        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                 <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
   </svg>
       </div>
-                <h3>Synchronizing Data</h3>
-            </div>
-         
+   <h3>Synchronizing Data</h3>
+   </div>
+      
    <div class="sync-progress-container">
-             <div class="progress-bar">
+      <div class="progress-bar">
    <div class="progress-fill" style="width: @(syncProgress)%"></div>
-        </div>
-        <p class="sync-status">@syncMessage</p>
-                <p class="sync-percentage">@syncProgress%</p>
+   </div>
+  <p class="sync-status">@syncMessage</p>
+     <p class="sync-percentage">@syncProgress%</p>
       </div>
 </div>
 </div>
-}
+}}
+
+
+

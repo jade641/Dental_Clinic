@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Successful</title>
+    <style>
+        * {
+            margin: 0;
+      padding: 0;
+        box-sizing: border-box;
+        }
+      
+        body {
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+       background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%);
+    display: flex;
+            align-items: center;
+            justify-content: center;
+     min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+          text-align: center;
+            padding: 40px;
+            max-width: 500px;
+ }
+      
+        .success-icon {
+            width: 100px;
+      height: 100px;
+            margin: 0 auto 24px;
+      background: rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+  display: flex;
+            align-items: center;
+            justify-content: center;
+    animation: scaleIn 0.5s ease-out;
+   }
+   
+        .checkmark {
+            width: 50px;
+          height: 50px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+    animation: draw 0.8s ease-out 0.3s forwards;
+     stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+   }
+  
+        h1 {
+  font-size: 32px;
+       font-weight: 700;
+            margin-bottom: 12px;
+animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+        
+        p {
+       font-size: 18px;
+opacity: 0.95;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.6s ease-out 0.5s both;
+    }
+        
+ .info {
+   background: rgba(255, 255, 255, 0.15);
+ backdrop-filter: blur(10px);
+            border-radius: 12px;
+      padding: 20px;
+   margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.6s ease-out 0.6s both;
+     }
+        
+        .info-text {
+      font-size: 15px;
+   line-height: 1.6;
+    }
+        
+        .btn {
+            display: inline-block;
+        background: white;
+            color: #0d6efd;
+            padding: 14px 32px;
+            border-radius: 8px;
+        text-decoration: none;
+  font-weight: 600;
+      font-size: 16px;
+   transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out 0.7s both;
+          cursor: pointer;
+ border: none;
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+   }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes scaleIn {
+            from {
+        transform: scale(0);
+    opacity: 0;
+   }
+to {
+     transform: scale(1);
+                opacity: 1;
+        }
+   }
+   
+        @keyframes draw {
+         to {
+        stroke-dashoffset: 0;
+        }
+ }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+        transform: translateY(20px);
+        }
+            to {
+                opacity: 1;
+    transform: translateY(0);
+        }
+        }
+        
+        .auto-close {
+  font-size: 13px;
+            opacity: 0.8;
+ margin-top: 16px;
+  animation: fadeInUp 0.6s ease-out 0.8s both;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">
+          <svg class="checkmark" viewBox="0 0 52 52">
+     <path d="M14 27l7 7 16-16"/>
+  </svg>
+   </div>
+        
+ <h1>Successfully Authenticated!</h1>
+    <p>Your Google account has been linked</p>
+        
+        <div class="info">
+            <p class="info-text">
+          You can now close this window and return to the Dental Clinic app.
+      <br><br>
+            Your session is being set up...
+            </p>
+        </div>
+        
+      <button class="btn" onclick="window.close()">Close Window</button>
+    
+        <p class="auto-close">This window will close automatically in <span id="countdown">5</span> seconds</p>
+    </div>
+    
+    <script>
+   // Auto-close after 5 seconds
+      let seconds = 5;
+    const countdownEl = document.getElementById('countdown');
+    
+        const interval = setInterval(() => {
+    seconds--;
+      countdownEl.textContent = seconds;
+            
+   if (seconds <= 0) {
+        clearInterval(interval);
+     window.close();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
