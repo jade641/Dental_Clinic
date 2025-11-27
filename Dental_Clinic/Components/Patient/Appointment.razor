@@ -1,0 +1,557 @@
+﻿@page "/appointments"
+@inject NavigationManager Navigation
+
+<link href="css/PatientAppoinment.css" rel="stylesheet" />
+
+<div class="dashboard-page">
+    <header class="main-header">
+        <div class="logo-section">
+            <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic" class="logo">
+            <div class="clinic-info">
+                <h1 class="clinic-name">AURELIA DENTAL CLINIC - DR JADE</h1>
+                <p class="tagline">YOUR SMILE, OUR MASTERPIECE</p>
+            </div>
+        </div>
+        
+        <nav class="main-nav">
+            <a href="/dashboard" class="nav-link">
+                <span class="nav-icon">📊</span> Overview
+            </a>
+            <a href="/appointments" class="nav-link active">
+                <span class="nav-icon">📅</span> Appointments
+            </a>
+            <a href="/history" class="nav-link">
+                <span class="nav-icon">📋</span> History
+            </a>
+            <a href="/billing" class="nav-link">
+                <span class="nav-icon">💳</span> Billing
+            </a>
+        </nav>
+        
+        <div class="header-actions">
+            <div class="search-bar">
+                <input type="text" placeholder="Search services, appointments..." class="search-input">
+            </div>
+            <div class="notification-bell">
+                <span class="bell-icon">🔔</span>
+                <span class="notification-badge">2</span>
+            </div>
+            <div class="settings-icon">⚙️</div>
+            <div class="patient-portal">
+                <span>Patient Portal</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        @if (!showBookingModal)
+        {
+            <div class="page-header">
+                <h1 class="page-title">My Appointments</h1>
+                <button class="btn-book-appointment" @onclick="BookNewAppointment">
+                    <span class="btn-icon">➕</span>
+                    Book New Appointment
+                </button>
+            </div>
+
+            <section class="appointments-section">
+                <h2 class="section-title">Upcoming Appointments</h2>
+                
+                <div class="appointments-list">
+                    @if (appointments != null && appointments.Any())
+                    {
+                        @foreach (var appointment in appointments)
+                        {
+                            <div class="appointment-card">
+                                <div class="appointment-favorite">
+                                    <span class="heart-icon">❤️</span>
+                                </div>
+                                
+                                <div class="appointment-details">
+                                    <h3 class="appointment-title">@appointment.Title</h3>
+                                    <p class="appointment-doctor">Dr. @appointment.DoctorName</p>
+                                    
+                                    <div class="appointment-meta">
+                                        <div class="meta-item">
+                                            <span class="meta-icon">📅</span>
+                                            <span>@appointment.Date.ToString("MMMM dd, yyyy")</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-icon">🕐</span>
+                                            <span>@appointment.Date.ToString("hh:mm tt")</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-icon">📍</span>
+                                            <span>@appointment.Location</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="appointment-actions">
+                                    <span class="status-badge status-@appointment.Status.ToLower()">@appointment.Status</span>
+                                    <button class="btn-reschedule" @onclick="() => RescheduleAppointment(appointment.Id)">
+                                        Reschedule
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <h4>No appointments scheduled</h4>
+                            <p>Book your first appointment to get started</p>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+        else
+        {
+            <!-- Booking Modal -->
+            <div class="booking-modal-overlay" @onclick="CloseBookingModal">
+                <div class="booking-modal" @onclick:stopPropagation="true">
+                    <!-- Step Indicator -->
+                    <div class="step-indicator">
+                        <div class="step @(currentStep >= 1 ? "active" : "") @(currentStep > 1 ? "completed" : "")">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Service</div>
+                        </div>
+                        <div class="step-line @(currentStep > 1 ? "completed" : "")"></div>
+                        <div class="step @(currentStep >= 2 ? "active" : "") @(currentStep > 2 ? "completed" : "")">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Date & Time</div>
+                        </div>
+                        <div class="step-line @(currentStep > 2 ? "completed" : "")"></div>
+                        <div class="step @(currentStep >= 3 ? "active" : "")">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Information</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Choose Service -->
+                    @if (currentStep == 1)
+                    {
+                        <div class="booking-step">
+                            <h2 class="booking-title">Choose Your Service</h2>
+                            <p class="booking-subtitle">Select the dental service you'd like to book</p>
+
+                            <div class="services-grid">
+                                @foreach (var service in services)
+                                {
+                                    <div class="service-card @(selectedService?.Id == service.Id ? "selected" : "")" 
+                                         @onclick="() => SelectService(service)">
+                                        @if (service.IsPopular)
+                                        {
+                                            <span class="popular-badge">Popular</span>
+                                        }
+                                        <h3 class="service-name">@service.Name</h3>
+                                        <p class="service-description">@service.Description</p>
+                                        <div class="service-info">
+                                            <span class="service-duration">⏱️ @service.Duration mins</span>
+                                            <span class="service-type">@service.Type</span>
+                                        </div>
+                                        <div class="service-price">₱@service.Price.ToString("N0")</div>
+                                        <button class="btn-select-service">Select</button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Step 2: Select Date & Time -->
+                    @if (currentStep == 2)
+                    {
+                        <div class="booking-step">
+                            <h2 class="booking-title">Select Date & Time</h2>
+                            <p class="booking-subtitle">Choose your preferred appointment date and time for @selectedService?.Name</p>
+
+                            <div class="datetime-container">
+                                <div class="calendar-section">
+                                    <div class="calendar-header">
+                                        <button class="btn-calendar-nav" @onclick="PreviousMonth">‹</button>
+                                        <span class="calendar-month">@currentMonth.ToString("MMMM yyyy")</span>
+                                        <button class="btn-calendar-nav" @onclick="NextMonth">›</button>
+                                    </div>
+
+                                    <div class="calendar-grid">
+                                        <div class="calendar-weekdays">
+                                            <div class="weekday">Sun</div>
+                                            <div class="weekday">Mon</div>
+                                            <div class="weekday">Tue</div>
+                                            <div class="weekday">Wed</div>
+                                            <div class="weekday">Thu</div>
+                                            <div class="weekday">Fri</div>
+                                            <div class="weekday">Sat</div>
+                                        </div>
+                                        <div class="calendar-days">
+                                            @foreach (var day in GetCalendarDays())
+                                            {
+                                                <div class="calendar-day @(day.IsCurrentMonth ? "" : "other-month") 
+                                                           @(day.Date == selectedDate ? "selected" : "") 
+                                                           @(day.Date < DateTime.Today ? "disabled" : "")"
+                                                     @onclick="() => SelectDate(day.Date)">
+                                                    @day.Date.Day
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="timeslots-section">
+                                    <h3 class="timeslots-title">Available Times</h3>
+                                    <p class="timeslots-date">@selectedDate.ToString("dddd, MMMM dd, yyyy")</p>
+
+                                    <div class="timeslots-list">
+                                        @foreach (var slot in GetAvailableTimeSlots())
+                                        {
+                                            <div class="timeslot @(slot.IsAvailable ? "" : "booked") @(selectedTimeSlot == slot.Time ? "selected" : "")"
+                                                 @onclick="() => SelectTimeSlot(slot.Time, slot.IsAvailable)">
+                                                <div class="timeslot-time">@slot.Time</div>
+                                                <div class="timeslot-doctor">Dr. @slot.Doctor</div>
+                                                <span class="timeslot-status">@(slot.IsAvailable ? "Available" : "Booked")</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Step 3: Patient Information -->
+                    @if (currentStep == 3)
+                    {
+                        <div class="booking-step">
+                            <h2 class="booking-title">Confirm Your Information</h2>
+                            <p class="booking-subtitle">Review and confirm your appointment details</p>
+
+                            <div class="confirmation-container">
+                                <div class="appointment-summary">
+                                    <h3>Appointment Summary</h3>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Service:</span>
+                                        <span class="summary-value">@selectedService?.Name</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Date:</span>
+                                        <span class="summary-value">@selectedDate.ToString("MMMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Time:</span>
+                                        <span class="summary-value">@selectedTimeSlot</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Duration:</span>
+                                        <span class="summary-value">@selectedService?.Duration mins</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Price:</span>
+                                        <span class="summary-value">₱@selectedService?.Price.ToString("N0")</span>
+                                    </div>
+                                </div>
+
+                                <div class="patient-form">
+                                    <h3>Your Information</h3>
+                                    <div class="form-group">
+                                        <label>Full Name</label>
+                                        <input type="text" @bind="patientName" placeholder="Enter your full name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Email Address</label>
+                                        <input type="email" @bind="patientEmail" placeholder="your.email@example.com" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Phone Number</label>
+                                        <input type="tel" @bind="patientPhone" placeholder="+63 XXX XXX XXXX" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Notes (Optional)</label>
+                                        <textarea @bind="appointmentNotes" placeholder="Any special requests or concerns?" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Modal Footer -->
+                    <div class="booking-footer">
+                        <button class="btn-secondary" @onclick="HandlePrevious">
+                            @(currentStep == 1 ? "Cancel" : "Previous")
+                        </button>
+                        <button class="btn-primary" @onclick="HandleNext" disabled="@(!CanProceed())">
+                            @(currentStep == 3 ? "Confirm Booking" : "Next")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </main>
+</div>
+
+@code {
+    private List<AppointmentModel> appointments = new();
+    private bool showBookingModal = false;
+    private int currentStep = 1;
+
+    // Step 1: Service Selection
+    private List<ServiceModel> services = new();
+    private ServiceModel? selectedService;
+
+    // Step 2: Date & Time Selection
+    private DateTime currentMonth = DateTime.Today;
+    private DateTime selectedDate = DateTime.Today;
+    private string selectedTimeSlot = "";
+
+    // Step 3: Patient Information
+    private string patientName = "";
+    private string patientEmail = "";
+    private string patientPhone = "";
+    private string appointmentNotes = "";
+
+    protected override void OnInitialized()
+    {
+        // Sample appointments data
+        appointments = new List<AppointmentModel>
+        {
+            new AppointmentModel
+            {
+                Id = 1,
+                Title = "Routine Dental Checkup",
+                DoctorName = "Jade",
+                Date = DateTime.Now.AddDays(3),
+                Location = "Main Clinic - Room 101",
+                Status = "Confirmed"
+            },
+            new AppointmentModel
+            {
+                Id = 2,
+                Title = "Teeth Cleaning",
+                DoctorName = "Jade",
+                Date = DateTime.Now.AddDays(10),
+                Location = "Main Clinic - Room 102",
+                Status = "Scheduled"
+            }
+        };
+
+        // Sample services data
+        services = new List<ServiceModel>
+        {
+            new ServiceModel { Id = 1, Name = "General Cleaning", Description = "Regular teeth cleaning and polishing", Duration = 60, Type = "Preventive", Price = 2500, IsPopular = true },
+            new ServiceModel { Id = 2, Name = "Dental Consultation", Description = "Initial dental check and treatment planning", Duration = 30, Type = "Consultation", Price = 1500, IsPopular = false },
+            new ServiceModel { Id = 3, Name = "Teeth Filling", Description = "Cavity treatment and amalgam tooth restoration", Duration = 90, Type = "Restorative", Price = 3500, IsPopular = false },
+            new ServiceModel { Id = 4, Name = "Teeth Whitening", Description = "Professional in-office teeth whitening", Duration = 120, Type = "Cosmetic", Price = 8000, IsPopular = true },
+            new ServiceModel { Id = 5, Name = "Root Canal Treatment", Description = "Endodontic treatment for infected teeth", Duration = 180, Type = "Endodontic", Price = 15000, IsPopular = false },
+            new ServiceModel { Id = 6, Name = "Dental Braces Consultation", Description = "Orthodontic evaluation and treatment planning", Duration = 45, Type = "Orthodontic", Price = 2000, IsPopular = true }
+        };
+    }
+
+    private void BookNewAppointment()
+    {
+        showBookingModal = true;
+        currentStep = 1;
+        ResetBookingData();
+    }
+
+    private void CloseBookingModal()
+    {
+        showBookingModal = false;
+        ResetBookingData();
+    }
+
+    private void ResetBookingData()
+    {
+        currentStep = 1;
+        selectedService = null;
+        selectedDate = DateTime.Today;
+        selectedTimeSlot = "";
+        patientName = "";
+        patientEmail = "";
+        patientPhone = "";
+        appointmentNotes = "";
+    }
+
+    private void SelectService(ServiceModel service)
+    {
+        selectedService = service;
+    }
+
+    private void SelectDate(DateTime date)
+    {
+        if (date >= DateTime.Today)
+        {
+            selectedDate = date;
+            selectedTimeSlot = ""; // Reset time slot when date changes
+        }
+    }
+
+    private void SelectTimeSlot(string time, bool isAvailable)
+    {
+        if (isAvailable)
+        {
+            selectedTimeSlot = time;
+        }
+    }
+
+    private void PreviousMonth()
+    {
+        currentMonth = currentMonth.AddMonths(-1);
+    }
+
+    private void NextMonth()
+    {
+        currentMonth = currentMonth.AddMonths(1);
+    }
+
+    private List<CalendarDay> GetCalendarDays()
+    {
+        var days = new List<CalendarDay>();
+        var firstDay = new DateTime(currentMonth.Year, currentMonth.Month, 1);
+        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        var startDate = firstDay.AddDays(-(int)firstDay.DayOfWeek);
+
+        for (int i = 0; i < 42; i++)
+        {
+            var date = startDate.AddDays(i);
+            days.Add(new CalendarDay
+            {
+                Date = date,
+                IsCurrentMonth = date.Month == currentMonth.Month
+            });
+        }
+
+        return days;
+    }
+
+    private List<TimeSlot> GetAvailableTimeSlots()
+    {
+        var slots = new List<TimeSlot>
+        {
+            new TimeSlot { Time = "8:00 AM", Doctor = "Maria Santos", IsAvailable = true },
+            new TimeSlot { Time = "9:00 AM", Doctor = "Juan Dela Cruz", IsAvailable = true },
+            new TimeSlot { Time = "10:00 AM", Doctor = "Maria Santos", IsAvailable = false },
+            new TimeSlot { Time = "11:00 AM", Doctor = "Sarah Johnson", IsAvailable = true },
+            new TimeSlot { Time = "1:00 PM", Doctor = "Maria Santos", IsAvailable = true },
+            new TimeSlot { Time = "2:00 PM", Doctor = "Juan Dela Cruz", IsAvailable = true },
+            new TimeSlot { Time = "3:00 PM", Doctor = "Sarah Johnson", IsAvailable = true },
+            new TimeSlot { Time = "4:00 PM", Doctor = "Maria Santos", IsAvailable = false },
+            new TimeSlot { Time = "5:00 PM", Doctor = "Juan Dela Cruz", IsAvailable = true }
+        };
+
+        return slots;
+    }
+
+    private bool CanProceed()
+    {
+        return currentStep switch
+        {
+            1 => selectedService != null,
+            2 => !string.IsNullOrEmpty(selectedTimeSlot),
+            3 => !string.IsNullOrEmpty(patientName) && 
+                 !string.IsNullOrEmpty(patientEmail) && 
+                 !string.IsNullOrEmpty(patientPhone),
+            _ => false
+        };
+    }
+
+    private void HandlePrevious()
+    {
+        if (currentStep == 1)
+        {
+            CloseBookingModal();
+        }
+        else
+        {
+            currentStep--;
+        }
+    }
+
+    private void HandleNext()
+    {
+        if (currentStep < 3)
+        {
+            currentStep++;
+        }
+        else
+        {
+            // Confirm booking
+            ConfirmBooking();
+        }
+    }
+
+    private void ConfirmBooking()
+    {
+        // Create new appointment
+        var newAppointment = new AppointmentModel
+        {
+            Id = appointments.Count + 1,
+            Title = selectedService!.Name,
+            DoctorName = "Jade",
+            Date = selectedDate.Add(TimeSpan.Parse(ConvertTo24Hour(selectedTimeSlot))),
+            Location = "Main Clinic - Room 101",
+            Status = "Scheduled"
+        };
+
+        appointments.Insert(0, newAppointment);
+        CloseBookingModal();
+        StateHasChanged();
+    }
+
+    private string ConvertTo24Hour(string time12h)
+    {
+        var timeParts = time12h.Split(' ');
+        var hourMin = timeParts[0].Split(':');
+        var hour = int.Parse(hourMin[0]);
+        var isPM = timeParts[1] == "PM";
+
+        if (isPM && hour != 12) hour += 12;
+        if (!isPM && hour == 12) hour = 0;
+
+        return $"{hour:00}:{hourMin[1]}:00";
+    }
+
+    private void RescheduleAppointment(int appointmentId)
+    {
+        // Handle reschedule logic
+    }
+
+    // Models
+    public class AppointmentModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string DoctorName { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string Location { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+
+    public class ServiceModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int Duration { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public bool IsPopular { get; set; }
+    }
+
+    public class CalendarDay
+    {
+        public DateTime Date { get; set; }
+        public bool IsCurrentMonth { get; set; }
+    }
+
+    public class TimeSlot
+    {
+        public string Time { get; set; } = string.Empty;
+        public string Doctor { get; set; } = string.Empty;
+        public bool IsAvailable { get; set; }
+    }
+}

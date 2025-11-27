@@ -50,27 +50,29 @@
 }
 
 .logo-placeholder {
-    width: 140px;
-    height: 140px;
-  background: white;
+    width: 200px;
+    height: 200px;
+    background: transparent;
     border-radius: 20px;
     display: flex;
-align-items: center;
+    align-items: center;
     justify-content: center;
     margin: 0 auto 18px;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+    box-shadow: none;
     transition: transform 0.3s ease;
+    padding: 0;
 }
 
 .logo-placeholder:hover {
-    transform: translateY(-4px);
+        transform: translateY(-4px);
+        box-shadow: none;
 }
 
 .clinic-logo-img {
-    width: 65%;
-    height: 70%;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    transform: scale(1.4);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .clinic-logo h1 {
@@ -155,13 +157,15 @@ align-items: center;
 .stat-number {
     font-size: 32px;
     font-weight: 800;
-  margin-bottom: 4px;
+    margin-bottom: 4px;
+    color: white;
 }
 
 .stat-label {
     font-size: 13px;
     opacity: 0.9;
     font-weight: 500;
+    color: white;
 }
 
 /* Right Section */

@@ -1,5 +1,7 @@
 ﻿@page "/admin-dashboard"
 @using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
 @inject NavigationManager Navigation
 
 <style>
@@ -19,11 +21,11 @@
 .navbar {
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
-    padding: 14px 40px;
+    padding: 0;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .navbar-container {
@@ -31,65 +33,27 @@
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+ align-items: stretch;
+    height: 60px;
 }
 
-.navbar-brand {
+/* Left Side - Tab Navigation */
+.nav-tabs {
     display: flex;
-    align-items: center;
-  gap: 14px;
-    text-decoration: none;
-}
-
-.navbar-logo {
-    width: 48px;
-    height: 48px;
-  border-radius: 10px;
-    display: flex;
- align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: #ffffff;
-padding: 4px;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);
-    transition: transform 0.2s ease;
-}
-
-.navbar-logo:hover {
-    transform: translateY(-2px);
-}
-
-.navbar-logo img {
-    width: 100%;
- height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.navbar-brand-text h1 {
-    font-size: 13px;
-    font-weight: 700;
-    color: #dc2626;
-    margin: 0 0 2px 0;
-    letter-spacing: 0.3px;
-    line-height: 1;
-}
-
-.navbar-brand-text p {
-    font-size: 10px;
-    color: #64748b;
+    align-items: stretch;
+    gap: 0;
+    list-style: none;
     margin: 0;
-    letter-spacing: 0.5px;
-    line-height: 1;
+  padding: 0 20px;
 }
 
-.navbar-menu {
+.nav-tab-item {
     display: flex;
     align-items: center;
     gap: 28px;
 }
 
-.nav-links {
+.nav-tab-link {
     display: flex;
     gap: 8px;
     list-style: none;
@@ -100,13 +64,14 @@ padding: 4px;
 .nav-link {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     text-decoration: none;
     color: #64748b;
     font-size: 14px;
     font-weight: 500;
-  padding: 8px 14px;
-    border-radius: 8px;
+ padding: 0 20px;
+    height: 100%;
+  border-bottom: 2px solid transparent;
     transition: all 0.2s ease;
 }
 
@@ -133,45 +98,7 @@ padding: 4px;
     align-items: center;
 }
 
-.search-icon {
- position: absolute;
-    left: 12px;
-    color: #94a3b8;
-    pointer-events: none;
-}
-
-.search-box input {
-    padding: 8px 12px 8px 38px;
- border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 13px;
-    width: 240px;
-    outline: none;
-    transition: all 0.2s ease;
-    background: #fafbfc;
-}
-
-.search-box input:focus {
-    border-color: #dc2626;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.icon-btn:hover {
-    background: #f3f4f6;
+.nav-tab-link:hover {
     color: #0f172a;
 }
 
@@ -187,26 +114,18 @@ padding: 4px;
     background: #f8fafc;
 }
 
-.user-profile:hover {
-    background: #ffffff;
-    border-color: #e5e7eb;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+.nav-tab-link.active {
+    color: #0066FF;
+border-bottom-color: #0066FF;
+    background: #f0f9ff;
 }
 
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+.nav-tab-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 14px;
- letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
 }
 
 .user-info {
@@ -614,61 +533,60 @@ align-items: center;
 </style>
 
 <div class="dashboard-page">
-    <!-- Top Navigation Bar -->
+    <!-- Navigation Bar -->
     <header class="navbar">
         <div class="navbar-container">
- <!-- Left: Brand -->
-          <a href="/" class="navbar-brand">
-  <div class="navbar-logo">
-         <img src="css/bootstrap/Dental_Logo.png" alt="ZNS Dental Clinic Logo" />
-     </div>
-         <div class="navbar-brand-text">
-          <h1>ZNS DENTAL CLINIC - ADMIN</h1>
-      <p>System Administration Panel</p>
-         </div>
-      </a>
-
-   <!-- Right: Nav Links + Actions -->
-<div class="navbar-menu">
-         <ul class="nav-links">
-               <li>
-       <NavLink href="/admin-dashboard" class="nav-link" ActiveClass="active" Match="NavLinkMatch.All">
+            <!-- Tab Navigation -->
+            <ul class="nav-tabs">
+                <li class="nav-tab-item">
+                    <NavLink href="/admin-dashboard" class="nav-tab-link" Match="NavLinkMatch.All">
+                        <span class="nav-tab-icon">
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-           <path d="M8 15V11H12V15M10 3L2 9H5V17H9V13H11V17H15V9H18L10 3Z" fill="currentColor" />
+                                <path d="M3 3H8V8H3V3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 3H17V8H12V3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 12H17V17H12V12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M3 12H8V17H3V12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
+                        </span>
             Overview
  </NavLink>
  </li>
-     <li>
-       <NavLink href="/users" class="nav-link" ActiveClass="active">
+                <li class="nav-tab-item">
+                    <NavLink href="/admin-analytics" class="nav-tab-link">
+                        <span class="nav-tab-icon">
  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 6C9 7.65685 7.65685 9 6 9C4.34315 9 3 7.65685 3 6C3 4.34315 4.34315 3 6 3C7.65685 3 9 4.34315 9 6Z" fill="currentColor"/>
-       <path d="M17 6C17 7.65685 15.6569 9 14 9C12.3431 9 11 7.65685 11 6C11 4.34315 12.3431 3 14 3C15.6569 3 17 4.34315 17 6Z" fill="currentColor"/>
-             <path d="M12 11H8C5.79086 11 4 12.7909 4 15V17H16V15C16 12.7909 14.2091 11 12 11Z" fill="currentColor"/>
-        <path d="M20 15V17H17V15C17 13.6675 16.4107 12.476 15.4663 11.6587C17.3457 11.8792 18.8 13.2936 19 15Z" fill="currentColor"/>
+                                <path d="M3 17V13M10 17V7M17 17V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
              </svg>
-  Users
+                        </span>
+                        Analytics
         </NavLink>
          </li>
-           <li>
-    <NavLink href="/clinics" class="nav-link" ActiveClass="active">
+                <li class="nav-tab-item">
+                    <NavLink href="/admin-reports" class="nav-tab-link">
+                        <span class="nav-tab-icon">
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M3 9L10 3L17 9V17C17 17.5304 16.7893 18.0391 16.4142 18.4142C16.0391 18.7893 15.5304 19 15 19H5C4.46957 19 3.96086 18.7893 3.58579 18.4142C3.21071 18.0391 3 17.5304 3 17V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="currentColor"/>
+                                <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V16C4 16.5304 4.21071 17.0391 4.58579 17.4142C4.96086 17.7893 5.46957 18 6 18H14C14.5304 18 15.0391 17.7893 15.4142 17.4142C15.7893 17.0391 16 16.5304 16 16V5L13 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M13 2V5H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
          </svg>
-     Clinics
+                        </span>
+                        Reports
             </NavLink>
           </li>
              <li>
                <NavLink href="/system-settings" class="nav-link" ActiveClass="active">
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.5" />
-     <path d="M16.1667 10C16.1667 10.6904 16.0298 11.3741 15.7631 12.0185C15.4964 12.6629 15.1048 13.2558 14.6073 13.7533C14.1098 14.2508 13.5169 14.6424 12.8725 14.9091C12.2281 15.1758 11.5444 15.3125 10.8542 15.3125C10.164 15.3125 9.48031 15.1758 8.83591 14.9091C8.19151 14.6424 7.59862 14.2508 7.10112 13.7533C6.60362 13.2558 6.21202 12.6629 5.94535 12.0185C5.67868 11.3741 5.5417 10.6904 5.5417 10C5.5417 9.30964 5.67868 8.62594 5.94535 7.98154C6.21202 7.33714 6.60362 6.74425 7.10112 6.24675C7.59862 5.74925 8.19151 5.35765 8.83591 5.091C9.48031 4.82433 10.164 4.6875 10.8542 4.6875C11.5444 4.6875 12.2281 4.82433 12.8725 5.091C13.5169 5.35765 14.1098 5.74925 14.6073 6.24675C15.1048 6.74425 15.4964 7.33714 15.7631 7.98154C16.0298 8.62594 16.1667 9.30964 16.1667 10Z" stroke="currentColor" stroke-width="1.5" />
+         <path d="M14 17V15C14 13.9391 13.5786 12.9217 12.8284 12.1716C12.0783 11.4214 11.0609 11 10 11H4C2.93913 11 1.92172 11.4214 1.17157 12.1716C0.421427 12.9217 0 13.9391 0 15V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+         <path d="M7 8C8.65685 8 10 6.65685 10 5C10 3.34315 8.65685 2 7 2C5.34315 2 4 3.34315 4 5C4 6.65685 5.34315 8 7 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 17V15C19.9993 14.1137 19.7044 13.2528 19.1614 12.5523C18.6184 11.8519 17.8581 11.3516 17 11.13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M14 2.13C14.8604 2.3503 15.623 2.8507 16.1676 3.55231C16.7122 4.25392 17.0078 5.11683 17.0078 6.005C17.0078 6.89317 16.7122 7.75608 16.1676 8.45769C16.123 9.1593 15.8604 9.6597 15 9.88" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
-             Settings
+                        </span>
+                        Users
      </NavLink>
                     </li>
            </ul>
 
+       <!-- Right Side Actions -->
          <div class="navbar-actions">
     <!-- Search -->
          <div class="search-box">
@@ -701,13 +619,13 @@ align-items: center;
     <div class="user-name">Admin</div>
       <div class="user-role">System Admin</div>
       </div>
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+   <!-- Fixed SVG arrow (caret) -->
+   <svg width="14" height="14" viewBox="001616" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M46L810L126" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
              </svg>
  </button>
       </div>
           </div>
-        </div>
     </header>
 
     <!-- Main Dashboard Content -->
@@ -718,7 +636,20 @@ align-items: center;
                 <!-- Left: Greeting Text -->
        <div class="hero-text">
          <h2 class="hero-title">Welcome back, Admin!</h2>
-    <p class="hero-subtitle">Here's what's happening at ZNS Dental Clinic today</p>
+                    <p class="hero-subtitle">Here’s what’s happening today.</p>
+                </div>
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <div class="stat-label">Total Patients</div>
+                        <div class="stat-value">1,240</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="stat-label">Appointments Today</div>
+                        <div class="stat-value">15</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="stat-label">New Registrations</div>
+                        <div class="stat-value">8</div>
                 </div>
 
        <!-- Right: Icon -->
@@ -732,91 +663,119 @@ align-items: center;
   </section>
 
         <!-- Stats Cards Grid -->
-      <div class="stats-cards-grid">
-<!-- Card 1: Total Revenue -->
+        <section class="stats-cards-grid">
       <div class="stat-card">
      <div class="stat-card-icon green">
-         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 2V22M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg width="28" height="28" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 14H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 17V14C7 13.4477 7.44772 13 8 13H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 7V4C7 3.44772 7.44772 3 8 3H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
          </svg>
     </div>
      <div class="stat-card-content">
    <div class="stat-card-label">Total Revenue</div>
-    <div class="stat-card-value">₱781,000</div>
+                    <div class="stat-card-value">$25,600</div>
          <div class="stat-card-change positive">
      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 9L9 6L6 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-           +12.5%
+                        <span>+12.4%</span>
               </div>
+                    <div class="stat-card-info">Compared to last month</div>
     </div>
             </div>
 
    <!-- Card 2: Total Users -->
      <div class="stat-card">
         <div class="stat-card-icon blue">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg width="28" height="28" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 14H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 17V14C7 13.4477 7.44772 13 8 13H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 7V4C7 3.44772 7.44772 3 8 3H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
        </svg>
       </div>
           <div class="stat-card-content">
-           <div class="stat-card-label">Total Users</div>
-       <div class="stat-card-value">1,250</div>
+                    <div class="stat-card-label">Total Appointments</div>
+                    <div class="stat-card-value">1,500</div>
  <div class="stat-card-change positive">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 9L9 6L6 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-   +156 new
+                        <span>+8.7%</span>
          </div>
+                    <div class="stat-card-info">Compared to last month</div>
                 </div>
   </div>
 
        <!-- Card 3: Total Clinics -->
      <div class="stat-card">
                 <div class="stat-card-icon purple">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-     <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg width="28" height="28" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 14H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 17V14C7 13.4477 7.44772 13 8 13H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 7V4C7 3.44772 7.44772 3 8 3H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
              </svg>
         </div>
              <div class="stat-card-content">
-                    <div class="stat-card-label">Total Clinics</div>
- <div class="stat-card-value">6</div>
-        <div class="stat-card-change positive">
+                    <div class="stat-card-label">New Patients</div>
+                    <div class="stat-card-value">300</div>
+                    <div class="stat-card-change negative">
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 3L3 6L6 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-         +8.3%
+                        <span>-5.1%</span>
           </div>
+                    <div class="stat-card-info">Compared to last month</div>
           </div>
             </div>
 
  <!-- Card 4: Avg Rating -->
             <div class="stat-card">
    <div class="stat-card-icon yellow">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-   <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg width="28" height="28" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 14H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 17V14C7 13.4477 7.44772 13 8 13H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 7V4C7 3.44772 7.44772 3 8 3H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
        </div>
   <div class="stat-card-content">
-           <div class="stat-card-label">Avg Rating</div>
-     <div class="stat-card-value">4.8</div>
-       <div class="stat-card-info">95% satisfaction</div>
+                    <div class="stat-card-label">Pending Payments</div>
+                    <div class="stat-card-value">$3,200</div>
+                    <div class="stat-card-change negative">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 3L3 6L6 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>-2.8%</span>
 </div>
+                    <div class="stat-card-info">Compared to last month</div>
   </div>
         </div>
+        </section>
 
- <!-- Analytics Grid: Charts -->
- <div class="analytics-grid">
- <!-- Left: Monthly Revenue Chart -->
+        <!-- Content Grid -->
+        <section class="content-grid">
+            <!-- Analytics Overview -->
    <div class="analytics-panel">
    <div class="analytics-header">
     <div class="analytics-title">
-     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M3 3V21H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M18 9L13 14L9 10L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+ <path d="M2.5 2.5H7.5V7.5H2.5V2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.5 2.5H17.5V7.5H12.5V2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M2.5 12.5H7.5V17.5H2.5V12.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+       <path d="M12.5 12.5H17.5V17.5H12.5V12.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-              Monthly Revenue
+                       Overview
+                    </div>
+                    <div class="analytics-period">
+                        Last 30 days
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <!-- Chart.js or any chart library here -->
      </div>
          <div class="analytics-period">Last 7 months</div>
               </div>
@@ -834,33 +793,71 @@ align-items: center;
       <line x1="60" y1="170" x2="580" y2="170" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
        <line x1="60" y1="240" x2="580" y2="240" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
      
-             <!-- Placeholder text -->
-      <text x="300" y="150" fill="#cbd5e1" font-size="14" text-anchor="middle">No data available</text>
+            <!-- Recent Activities -->
+            <div class="analytics-panel">
+                <div class="analytics-header">
+                    <div class="analytics-title">
+                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+ <path d="M3 7H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 13H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                  </svg>
+                       Recent Activities
+                    </div>
+                    <div class="analytics-period">
+                        Last 24 hours
+                    </div>
+                </div>
+                <div class="activities-list">
+                    <!-- List of recent activities -->
                 </div>
          </div>
+        </section>
 
-      <!-- Right: Service Distribution Chart -->
+        <!-- Analytics Grid -->
+        <section class="analytics-grid">
             <div class="analytics-panel">
      <div class="analytics-header">
       <div class="analytics-title">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21.21 15.89C20.5738 17.3945 19.5788 18.7202 18.3119 19.7513C17.045 20.7824 15.5447 21.4874 13.9424 21.8048C12.3401 22.1221 10.6844 22.0421 9.12012 21.5718C7.55585 21.1015 6.13276 20.2551 4.97662 19.1067C3.82047 17.9582 2.96479 16.5412 2.48412 14.9804C2.00345 13.4196 1.91168 11.7648 2.21679 10.1619C2.52189 8.55901 3.21554 7.05432 4.23777 5.77938C5.25999 4.50444 6.57832 3.49851 8.08 2.85003M22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7362 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2V12H22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+ <path d="M5 10H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5 14H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
      </svg>
-    Service Distribution
+                       Sales Analytics
+                    </div>
+                    <div class="analytics-period">
+                        Last 7 days
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <!-- Chart or graph representing sales data -->
       </div>
 </div>
-      <div class="chart-container empty pie-chart">
-      <svg width="100%" height="280" viewBox="0 0 300 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Placeholder circle -->
-  <circle cx="150" cy="140" r="80" stroke="#e5e7eb" stroke-width="2" fill="none"/>
-    
-            <!-- Placeholder text -->
-        <text x="150" y="145" fill="#cbd5e1" font-size="14" text-anchor="middle">No data available</text>
+            <div class="analytics-panel">
+                <div class="analytics-header">
+                    <div class="analytics-title">
+                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+ <path d="M3 7H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 13H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
          </svg>
+                        User Analytics
+                    </div>
+                    <div class="analytics-period">
+                        Last 30 days
+                    </div>
         </div>
+                <div class="chart-container">
+                    <!-- Chart or graph representing user data -->
  </div>
    </div>
+        </section>
     </main>
 </div>
 

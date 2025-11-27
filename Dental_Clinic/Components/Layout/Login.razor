@@ -1,4 +1,4 @@
-﻿@page "/auth"
+@page "/auth"
 @page "/login"
 @page "/signup"
 @page "/"
@@ -12,12 +12,12 @@
 <div class="auth-container">
     <div class="left-section">
         <div class="clinic-logo">
-     <div class="logo-placeholder">
-         <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Studio Logo" class="clinic-logo-img" />
-    </div>
-            <h1>AURELIA DENTAL</h1>
-    <h2 class="studio-text">CLINIC</h2>
-   <p class="tagline">YOUR SMILE. OUR MASTERPIECE</p>
+            <div class="logo-placeholder">
+                <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic Logo" class="clinic-logo-img" />
+            </div>
+            <h1>AURELIA DENTAL CLINIC</h1>
+            <h2 class="studio-text">DR. JADE</h2>
+            <p class="tagline">YOUR SMILE. OUR MASTERPIECE</p>
         </div>
 
         <div class="hero-content">
@@ -51,11 +51,11 @@
           <button class="sync-btn" @onclick="ToggleOfflineMode" title="@(AuthService.IsOfflineMode ? "Switch to Online" : "Switch to Offline")">
         @if (AuthService.IsOfflineMode)
    {
-             <span>🌐</span>
+             <span>??</span>
         }
       else
     {
-                 <span>📱</span>
+                 <span>??</span>
     }
        </button>
           }
@@ -337,9 +337,9 @@
     <div>
            <strong>Access Level</strong>
           <select class="access-dropdown" @bind="staffModel.AccessLevel">
-         <option value="receptionist">🧑‍💼 Receptionist</option>
-           <option value="staff">👨‍⚕️ Dentist</option>
-                 <option value="admin">👨‍💻 Administrator</option>
+         <option value="receptionist"> Receptionist</option>
+           <option value="staff"> Dentist</option>
+                 <option value="admin"> Administrator</option>
  </select>
  </div>
           </div>

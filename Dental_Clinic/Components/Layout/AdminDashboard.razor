@@ -1,866 +1,263 @@
-﻿@page "/admin-dashboard"
+@page "/admin-dashboard"
 @using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
 @inject NavigationManager Navigation
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-.dashboard-page {
-    background: #f6f8fb;
- min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-}
-
-/* Navigation Bar */
-.navbar {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-    padding: 14px 40px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.navbar-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.navbar-brand {
-    display: flex;
-    align-items: center;
-  gap: 14px;
-    text-decoration: none;
-}
-
-.navbar-logo {
-    width: 48px;
-    height: 48px;
-  border-radius: 10px;
-    display: flex;
- align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: #ffffff;
-padding: 4px;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);
-    transition: transform 0.2s ease;
-}
-
-.navbar-logo:hover {
-    transform: translateY(-2px);
-}
-
-.navbar-logo img {
-    width: 100%;
- height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.navbar-brand-text h1 {
-    font-size: 13px;
-    font-weight: 700;
-    color: #dc2626;
-    margin: 0 0 2px 0;
-    letter-spacing: 0.3px;
-    line-height: 1;
-}
-
-.navbar-brand-text p {
-    font-size: 10px;
-    color: #64748b;
-    margin: 0;
-    letter-spacing: 0.5px;
-    line-height: 1;
-}
-
-.navbar-menu {
-    display: flex;
-    align-items: center;
-    gap: 28px;
-}
-
-.nav-links {
-    display: flex;
-    gap: 8px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 500;
-  padding: 8px 14px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.nav-link:hover {
-  color: #dc2626;
-    background: #fef2f2;
-}
-
-.nav-link.active {
-    color: #dc2626;
-    background: #fee2e2;
-    font-weight: 600;
-}
-
-.navbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.search-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.search-icon {
- position: absolute;
-    left: 12px;
-    color: #94a3b8;
-    pointer-events: none;
-}
-
-.search-box input {
-    padding: 8px 12px 8px 38px;
- border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 13px;
-    width: 240px;
-    outline: none;
-    transition: all 0.2s ease;
-    background: #fafbfc;
-}
-
-.search-box input:focus {
-    border-color: #dc2626;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.icon-btn:hover {
-    background: #f3f4f6;
-    color: #0f172a;
-}
-
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 12px 6px 6px;
-    border-radius: 50px;
-    cursor: pointer;
-  transition: all 0.2s ease;
-    border: 1px solid transparent;
-    background: #f8fafc;
-}
-
-.user-profile:hover {
-    background: #ffffff;
-    border-color: #e5e7eb;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-}
-
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 14px;
- letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-    flex-shrink: 0;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.user-name {
- font-size: 13px;
-    font-weight: 600;
-    color: #0f172a;
-    line-height: 1.2;
-}
-
-.user-role {
-  font-size: 11px;
-    color: #64748b;
-    line-height: 1.2;
-}
-
-/* Dashboard Content */
-.dashboard-content {
- max-width: 1400px;
-    margin: 0 auto;
- padding: 24px 40px 40px;
-}
-
-/* Hero Section */
-.hero-section {
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
-    border-radius: 16px;
-    padding: 20px 28px;
-    color: #ffffff;
-    box-shadow: 0 8px 32px rgba(220, 38, 38, 0.25);
-    margin-bottom: 28px;
-    position: relative;
-    overflow: hidden;
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: -30%;
-    right: -5%;
-    width: 350px;
-    height: 350px;
-background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 65%);
-    border-radius: 50%;
-}
-
-.hero-wrapper {
-    position: relative;
-    z-index: 1;
-    display: grid;
-  grid-template-columns: auto 1fr auto;
-    align-items: center;
-gap: 24px;
-}
-
-.hero-text {
-    flex-shrink: 0;
-}
-
-.hero-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin: 0 0 2px 0;
- line-height: 1.3;
-}
-
-.hero-subtitle {
-    font-size: 13px;
-    opacity: 0.95;
-    margin: 0;
- font-weight: 400;
-}
-
-.quick-stats {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-}
-
-.quick-stat {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 12px 18px;
-    min-width: 130px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.quick-stat:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-.stat-label {
- font-size: 11px;
-  opacity: 0.95;
-  font-weight: 500;
- margin-bottom: 4px;
-    text-transform: capitalize;
-}
-
-.stat-value {
- font-size: 28px;
-    font-weight: 800;
-    line-height: 1;
-}
-
-.hero-icon {
-    opacity: 0.9;
- flex-shrink: 0;
-}
-
-/* Stats Cards Grid */
-.stats-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 28px;
-}
-
-.stat-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-    border: 1px solid #f1f5f9;
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-}
-
-.stat-card-icon {
-    width: 56px;
-    height: 56px;
-  border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.stat-card-icon.green {
-    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-    color: #16a34a;
-}
-
-.stat-card-icon.blue {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #2563eb;
-}
-
-.stat-card-icon.purple {
-    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  color: #7c3aed;
-}
-
-.stat-card-icon.yellow {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #f59e0b;
-}
-
-.stat-card-content {
-  flex: 1;
-    min-width: 0;
-}
-
-.stat-card-label {
-    font-size: 13px;
-    color: #64748b;
-    font-weight: 500;
-    margin-bottom: 6px;
-}
-
-.stat-card-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1.2;
-    margin-bottom: 6px;
-}
-
-.stat-card-change {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 6px;
-}
-
-.stat-card-change.positive {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-.stat-card-info {
-    font-size: 12px;
- color: #64748b;
-    font-weight: 500;
-}
-
-/* Content Grid */
-.content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-/* Analytics Grid */
-.analytics-grid {
-    display: grid;
- grid-template-columns: 1fr 1fr;
- gap: 24px;
-}
-
-.analytics-panel {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-    border: 1px solid #f1f5f9;
-}
-
-.analytics-header {
-    display: flex;
-    justify-content: space-between;
-align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.analytics-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f172a;
-}
-
-.analytics-period {
-    font-size: 12px;
-    color: #64748b;
-    background: #f8fafc;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-weight: 500;
-}
-
-.chart-container {
-    min-height: 280px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.chart-container.empty {
-    background: #f8fafc;
-    border: 2px dashed #e5e7eb;
-}
-
-.chart-container.pie-chart {
-    padding: 20px;
-}
-
-/* Responsive */
-@@media (max-width: 1200px) {
-    .stats-cards-grid {
- grid-template-columns: repeat(2, 1fr);
-    }
-
-    .analytics-grid {
-   grid-template-columns: 1fr;
-    }
-
-    .content-grid {
-  grid-template-columns: 1fr;
-    }
-
-    .hero-wrapper {
- grid-template-columns: 1fr;
-     gap: 16px;
-    }
-
- .quick-stats {
-   justify-content: flex-start;
-        flex-wrap: wrap;
-    }
-}
-
-@@media (max-width: 768px) {
-    .dashboard-content {
-        padding: 20px 16px 32px;
-    }
-
- .navbar {
-        padding: 12px 16px;
-    }
-
-    .navbar-container {
-     flex-wrap: wrap;
- gap: 12px;
-}
-
-    .navbar-menu {
-    gap: 16px;
-  width: 100%;
-  justify-content: space-between;
-    }
-
-    .nav-links {
-        width: 100%;
-   justify-content: space-around;
-    }
-
-  .hero-section {
-        padding: 16px 20px;
-    }
-
-    .hero-wrapper {
-        grid-template-columns: 1fr;
-        gap: 14px;
-    }
-
-    .stats-cards-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .stat-card {
-  padding: 16px;
-    }
-
-    .analytics-grid {
-        gap: 16px;
-    }
-
-    .quick-stats {
- grid-template-columns: 1fr 1fr;
-        gap: 10px;
-     flex-wrap: wrap;
-    }
-
-    .quick-stat {
-        min-width: auto;
-    }
-
-    .hero-icon {
-   display: none;
-    }
-
-    .search-box input {
-      width: 180px;
-    }
-}
-
-@@media (max-width: 480px) {
-    .stats-cards-grid {
-        grid-template-columns: 1fr;
-    }
-
-  .stat-card-value {
-        font-size: 24px;
-    }
-
-    .quick-stats {
-  flex-direction: column;
-  }
-
- .navbar-brand-text h1 {
-    font-size: 11px;
-    }
-
-    .navbar-brand-text p {
-      font-size: 9px;
-  }
-
-    .hero-title {
-        font-size: 18px;
- }
-
-    .user-info {
-    display: none;
- }
-}
-</style>
+<link rel="stylesheet" href="css/admindashboard.css" />
 
 <div class="dashboard-page">
     <!-- Top Navigation Bar -->
-    <header class="navbar">
-        <div class="navbar-container">
- <!-- Left: Brand -->
-          <a href="/" class="navbar-brand">
-  <div class="navbar-logo">
-         <img src="css/bootstrap/Dental_Logo.png" alt="ZNS Dental Clinic Logo" />
-     </div>
-         <div class="navbar-brand-text">
-          <h1>ZNS DENTAL CLINIC - ADMIN</h1>
-      <p>System Administration Panel</p>
-         </div>
-      </a>
+    <header class="top-navbar">
+        <div class="navbar-left">
+            <div class="clinic-brand">
+                <div class="clinic-logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 8H4C2.89543 8 2 8.89543 2 10V20C2 21.1046 2.89543 22 4 22H20C21.1046 22 22 21.1046 22 20V10C22 8.89543 21.1046 8 20 8Z" fill="#0D6EFD"/>
+                        <path d="M12 2C10.3431 2 9 3.34315 9 5V8H15V5C15 3.34315 13.6569 2 12 2Z" fill="#0D6EFD"/>
+                    </svg>
+                </div>
+                <div class="clinic-info">
+                    <h1 class="clinic-name">AURELIA DENTAL CLINIC - DR JADE</h1>
+                    <p class="clinic-tagline">YOUR SMILE, OUR MASTERPIECE</p>
+                </div>
+            </div>
 
-   <!-- Right: Nav Links + Actions -->
-<div class="navbar-menu">
-         <ul class="nav-links">
-               <li>
-       <NavLink href="/admin-dashboard" class="nav-link" ActiveClass="active" Match="NavLinkMatch.All">
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-           <path d="M8 15V11H12V15M10 3L2 9H5V17H9V13H11V17H15V9H18L10 3Z" fill="currentColor" />
-      </svg>
-            Overview
- </NavLink>
- </li>
-     <li>
-       <NavLink href="/users" class="nav-link" ActiveClass="active">
- <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 6C9 7.65685 7.65685 9 6 9C4.34315 9 3 7.65685 3 6C3 4.34315 4.34315 3 6 3C7.65685 3 9 4.34315 9 6Z" fill="currentColor"/>
-       <path d="M17 6C17 7.65685 15.6569 9 14 9C12.3431 9 11 7.65685 11 6C11 4.34315 12.3431 3 14 3C15.6569 3 17 4.34315 17 6Z" fill="currentColor"/>
-             <path d="M12 11H8C5.79086 11 4 12.7909 4 15V17H16V15C16 12.7909 14.2091 11 12 11Z" fill="currentColor"/>
-        <path d="M20 15V17H17V15C17 13.6675 16.4107 12.476 15.4663 11.6587C17.3457 11.8792 18.8 13.2936 19 15Z" fill="currentColor"/>
-             </svg>
-  Users
-        </NavLink>
-         </li>
-           <li>
-    <NavLink href="/clinics" class="nav-link" ActiveClass="active">
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M3 9L10 3L17 9V17C17 17.5304 16.7893 18.0391 16.4142 18.4142C16.0391 18.7893 15.5304 19 15 19H5C4.46957 19 3.96086 18.7893 3.58579 18.4142C3.21071 18.0391 3 17.5304 3 17V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="currentColor"/>
-         </svg>
-     Clinics
-            </NavLink>
-          </li>
-             <li>
-               <NavLink href="/system-settings" class="nav-link" ActiveClass="active">
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.5" />
-     <path d="M16.1667 10C16.1667 10.6904 16.0298 11.3741 15.7631 12.0185C15.4964 12.6629 15.1048 13.2558 14.6073 13.7533C14.1098 14.2508 13.5169 14.6424 12.8725 14.9091C12.2281 15.1758 11.5444 15.3125 10.8542 15.3125C10.164 15.3125 9.48031 15.1758 8.83591 14.9091C8.19151 14.6424 7.59862 14.2508 7.10112 13.7533C6.60362 13.2558 6.21202 12.6629 5.94535 12.0185C5.67868 11.3741 5.5417 10.6904 5.5417 10C5.5417 9.30964 5.67868 8.62594 5.94535 7.98154C6.21202 7.33714 6.60362 6.74425 7.10112 6.24675C7.59862 5.74925 8.19151 5.35765 8.83591 5.091C9.48031 4.82433 10.164 4.6875 10.8542 4.6875C11.5444 4.6875 12.2281 4.82433 12.8725 5.091C13.5169 5.35765 14.1098 5.74925 14.6073 6.24675C15.1048 6.74425 15.4964 7.33714 15.7631 7.98154C16.0298 8.62594 16.1667 9.30964 16.1667 10Z" stroke="currentColor" stroke-width="1.5" />
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs">
+                <NavLink href="/admin-dashboard" class="nav-tab" Match="NavLinkMatch.All">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Overview
+                </NavLink>
+                <NavLink href="/admin-analytics" class="nav-tab">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 17V13M10 17V7M17 17V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Analytics
+                </NavLink>
+                <NavLink href="/admin-reports" class="nav-tab">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Reports
+                </NavLink>
+                <NavLink href="/admin-users" class="nav-tab">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Users
+                </NavLink>
+                <NavLink href="/admin-marketing" class="nav-tab">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Marketing
+                </NavLink>
+            </nav>
+        </div>
+
+        <!-- Right Actions -->
+        <div class="navbar-right">
+            <div class="search-bar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                    <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <input type="text" placeholder="Search reports, users..." />
+            </div>
+
+            <button class="icon-button" type="button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <button class="icon-button" type="button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+
+            <!-- Settings -->
+            <button class="icon-btn settings-btn" type="button" aria-label="Settings" title="Settings">
+              <span class="settings-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
-             Settings
-     </NavLink>
-                    </li>
-           </ul>
+          </span>
+          </button>
 
-         <div class="navbar-actions">
-    <!-- Search -->
-         <div class="search-box">
-     <svg class="search-icon" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14.2929 14.2929L17.5 17.5M16 9C16 12.866 12.866 16 9 16C5.13401 16 2 12.866 2 9C2 5.13401 5.13401 2 9 2C12.866 2 16 5.13401 16 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-              </svg>
-               <input type="search" placeholder="Search users, logs..." />
-  </div>
-
-        <!-- Notifications -->
-  <button class="icon-btn" type="button" aria-label="Notifications">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-           <path d="M10 2C8.67392 2 7.40215 2.52678 6.46447 3.46447C5.52678 4.40215 5 5.67392 5 7C5 12.5 2.5 14 2.5 14H17.5C17.5 14 15 12.5 15 7C15 5.67392 14.4732 4.40215 13.5355 3.46447C12.5979 2.52678 11.3261 2 10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-       <path d="M11.5 17.5C11.3522 17.7526 11.1408 17.9622 10.8886 18.1081C10.6364 18.254 10.3545 18.3295 10.067 18.3295C9.77952 18.3295 9.49759 18.254 9.24539 18.1081C8.99319 17.9622 8.78178 17.7526 8.63403 17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-           </button>
-
-  <!-- Settings -->
-         <button class="icon-btn settings-btn" type="button" aria-label="Settings">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-        </button>
-
-     <!-- User Profile -->
-              <button class="user-profile" type="button">
-             <div class="user-avatar">AD</div>
-      <div class="user-info">
-    <div class="user-name">Admin</div>
-      <div class="user-role">System Admin</div>
-      </div>
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-             </svg>
- </button>
-      </div>
-          </div>
+            <div class="user-profile">
+                <div class="user-avatar">DA</div>
+                <div class="user-details">
+                    <span class="user-name">Dr. Admin</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+            </div>
         </div>
     </header>
 
-    <!-- Main Dashboard Content -->
-    <main class="dashboard-content">
+    <!-- Main Content -->
+    <main class="dashboard-main">
         <!-- Hero Section -->
         <section class="hero-section">
-   <div class="hero-wrapper">
-                <!-- Left: Greeting Text -->
-       <div class="hero-text">
-         <h2 class="hero-title">Welcome back, Admin!</h2>
-    <p class="hero-subtitle">Here's what's happening at ZNS Dental Clinic today</p>
+            <div class="hero-content">
+                <h2 class="hero-title">Welcome back, Dr. Admin!</h2>
+                <p class="hero-subtitle">Here's what's happening at Aurelia Dental Clinic - Dr Jade today</p>
+            </div>
+            <div class="hero-icon">
+                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Stats Cards -->
+        <section class="stats-section">
+            <div class="stat-card stat-revenue">
+                <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2V22M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
-
-       <!-- Right: Icon -->
-    <div class="hero-icon">
-     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 15C15.866 15 19 11.866 19 8C19 4.13401 15.866 1 12 1C8.13401 1 5 4.13401 5 8C5 11.866 8.13401 15 12 15Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.2)" />
-       <path d="M8.21 13.89L7 23L12 20L17 23L15.79 13.88" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-     </svg>
-      </div>
- </div>
-  </section>
-
-        <!-- Stats Cards Grid -->
-      <div class="stats-cards-grid">
-<!-- Card 1: Total Revenue -->
-      <div class="stat-card">
-     <div class="stat-card-icon green">
-         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 2V22M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-         </svg>
-    </div>
-     <div class="stat-card-content">
-   <div class="stat-card-label">Total Revenue</div>
-    <div class="stat-card-value">₱781,000</div>
-         <div class="stat-card-change positive">
-     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-           +12.5%
-              </div>
-    </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value">?781,000</div>
+                    <div class="stat-change positive">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 9L6 3M6 3L3 6M6 3L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        +12.5%
+                    </div>
+                </div>
             </div>
 
-   <!-- Card 2: Total Users -->
-     <div class="stat-card">
-        <div class="stat-card-icon blue">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-       </svg>
-      </div>
-          <div class="stat-card-content">
-           <div class="stat-card-label">Total Users</div>
-       <div class="stat-card-value">1,250</div>
- <div class="stat-card-change positive">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-   +156 new
-         </div>
+            <div class="stat-card stat-patients">
+                <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
-  </div>
-
-       <!-- Card 3: Total Clinics -->
-     <div class="stat-card">
-                <div class="stat-card-icon purple">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-     <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-             </svg>
-        </div>
-             <div class="stat-card-content">
-                    <div class="stat-card-label">Total Clinics</div>
- <div class="stat-card-value">6</div>
-        <div class="stat-card-change positive">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 10V2M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-         +8.3%
-          </div>
-          </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Patients</div>
+                    <div class="stat-value">1250</div>
+                    <div class="stat-change positive">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 9L6 3M6 3L3 6M6 3L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        +156 new
+                    </div>
+                </div>
             </div>
 
- <!-- Card 4: Avg Rating -->
-            <div class="stat-card">
-   <div class="stat-card-icon yellow">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-   <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-       </div>
-  <div class="stat-card-content">
-           <div class="stat-card-label">Avg Rating</div>
-     <div class="stat-card-value">4.8</div>
-       <div class="stat-card-info">95% satisfaction</div>
-</div>
-  </div>
-        </div>
-
- <!-- Analytics Grid: Charts -->
- <div class="analytics-grid">
- <!-- Left: Monthly Revenue Chart -->
-   <div class="analytics-panel">
-   <div class="analytics-header">
-    <div class="analytics-title">
-     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M3 3V21H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-       <path d="M18 9L13 14L9 10L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-              Monthly Revenue
-     </div>
-         <div class="analytics-period">Last 7 months</div>
-              </div>
-           <div class="chart-container empty">
-         <svg width="100%" height="280" viewBox="0 0 600 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-           <!-- Y-axis labels -->
-          <text x="10" y="30" fill="#94a3b8" font-size="12">140000</text>
-     <text x="10" y="100" fill="#94a3b8" font-size="12">105000</text>
-       <text x="10" y="170" fill="#94a3b8" font-size="12">70000</text>
-        <text x="10" y="240" fill="#94a3b8" font-size="12">35000</text>
-                 
-     <!-- Grid lines -->
-                <line x1="60" y1="30" x2="580" y2="30" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
-         <line x1="60" y1="100" x2="580" y2="100" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
-      <line x1="60" y1="170" x2="580" y2="170" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
-       <line x1="60" y1="240" x2="580" y2="240" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
-     
-             <!-- Placeholder text -->
-      <text x="300" y="150" fill="#cbd5e1" font-size="14" text-anchor="middle">No data available</text>
-                 </svg>
+            <div class="stat-card stat-appointments">
+                <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
-         </div>
+                <div class="stat-content">
+                    <div class="stat-label">Appointments</div>
+                    <div class="stat-value">386</div>
+                    <div class="stat-change positive">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 9L6 3M6 3L3 6M6 3L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        +8.3%
+                    </div>
+                </div>
+            </div>
 
-      <!-- Right: Service Distribution Chart -->
-            <div class="analytics-panel">
-     <div class="analytics-header">
-      <div class="analytics-title">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21.21 15.89C20.5738 17.3945 19.5788 18.7202 18.3119 19.7513C17.045 20.7824 15.5447 21.4874 13.9424 21.8048C12.3401 22.1221 10.6844 22.0421 9.12012 21.5718C7.55585 21.1015 6.13276 20.2551 4.97662 19.1067C3.82047 17.9582 2.96479 16.5412 2.48412 14.9804C2.00345 13.4196 1.91168 11.7648 2.21679 10.1619C2.52189 8.55901 3.21554 7.05432 4.23777 5.77938C5.25999 4.50444 6.57832 3.49851 8.08 2.85003M22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7362 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2V12H22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-     </svg>
-    Service Distribution
-      </div>
-</div>
-      <div class="chart-container empty pie-chart">
-      <svg width="100%" height="280" viewBox="0 0 300 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Placeholder circle -->
-  <circle cx="150" cy="140" r="80" stroke="#e5e7eb" stroke-width="2" fill="none"/>
-    
-            <!-- Placeholder text -->
-        <text x="150" y="145" fill="#cbd5e1" font-size="14" text-anchor="middle">No data available</text>
-         </svg>
-        </div>
- </div>
-   </div>
+            <div class="stat-card stat-rating">
+                <div class="stat-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Avg Rating</div>
+                    <div class="stat-value">4.8</div>
+                    <div class="stat-info">95% satisfaction</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-grid">
+            <!-- Monthly Revenue Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Monthly Revenue</h3>
+                    <span class="chart-period">Last 7 months</span>
+                </div>
+                <div class="chart-container">
+                    <div class="bar-chart">
+                        <div class="bar" style="height: 55%;"><span>Mar</span></div>
+                        <div class="bar" style="height: 63%;"><span>Apr</span></div>
+                        <div class="bar" style="height: 51%;"><span>May</span></div>
+                        <div class="bar" style="height: 75%;"><span>Jun</span></div>
+                        <div class="bar" style="height: 81%;"><span>Jul</span></div>
+                        <div class="bar" style="height: 92%;"><span>Aug</span></div>
+                        <div class="bar" style="height: 68%;"><span>Sep</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Service Distribution Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Service Distribution</h3>
+                    <span class="chart-period">Current month</span>
+                </div>
+                <div class="chart-container">
+                    <div class="pie-chart-placeholder">
+                        <!-- Placeholder for pie chart -->
+                        <svg width="240" height="240" viewBox="0 0 240 240">
+                            <circle cx="120" cy="120" r="100" fill="#E0F2FE" stroke="#0EA5E9" stroke-width="2"/>
+                            <circle cx="120" cy="120" r="80" fill="white"/>
+                            <text x="120" y="120" text-anchor="middle" dy=".3em" font-size="14" fill="#64748B" font-weight="500">Chart Placeholder</text>
+                        </svg>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #0EA5E9;"></span>
+                                <span class="legend-label">Teeth Cleaning (35%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #10B981;"></span>
+                                <span class="legend-label">Dental Filling (25%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #06B6D4;"></span>
+                                <span class="legend-label">Root Canal (15%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #F59E0B;"></span>
+                                <span class="legend-label">Teeth Whitening (12%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #EF4444;"></span>
+                                <span class="legend-label">Braces (8%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #94A3B8;"></span>
+                                <span class="legend-label">Others (5%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 </div>
 
