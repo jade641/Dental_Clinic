@@ -460,12 +460,31 @@ width: 100%;
     transition: all 0.3s ease;
 }
 
-    .btn-google:hover {
-     border-color: #0066FF;
-        color: #0066FF;
-        transform: translateY(-1px); /* was -2px */
-        box-shadow: 0 4px 10px rgba(0, 102, 255, 0.1);
-    }
+.btn-google:hover {
+    border-color: #0066FF;
+ color: #0066FF;
+  transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 102, 255, 0.1);
+}
+
+.btn-google:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e0e0e0;
+    border-top-color: #0066FF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
 .switch-text {
 text-align: center;

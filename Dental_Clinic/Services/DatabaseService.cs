@@ -11,14 +11,12 @@ namespace Dental_Clinic.Services
         private readonly string _onlineConnectionString;
         private readonly string _offlineConnectionString;
         private bool _isOnline;
-        private readonly int _connectionTimeout;
 
         public DatabaseService()
         {
             
             _onlineConnectionString = "Server=db33114.public.databaseasp.net ;Database=db33114;User Id=db33114;Password=T!t8?w5NdK-7 ;Encrypt=True;TrustServerCertificate=True;Connection Timeout=5;";
             _offlineConnectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=DentalClinicLocal;Integrated Security=True;Connect Timeout=30;Encrypt=False;";
-            _connectionTimeout = 5;
             _isOnline = CheckOnlineStatus();
         }
 
@@ -367,6 +365,90 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         }
 
    #endregion
+
+   #region Password Reset
+
+ public async Task<(bool Success, string Message)> ResetPasswordAsync(string email, string token, string newPassword)
+  {
+       using (var connection = GetConnection())
+     {
+         await connection.OpenAsync();
+                using (var transaction = connection.BeginTransaction())
+       {
+    try
+        {
+     // Verify token
+ var verifyQuery = @"
+          SELECT Id, ExpiryTime, IsUsed 
+            FROM PasswordResetTokens 
+        WHERE Email = @Email AND Token = @Token";
+
+                using (var command = new SqlCommand(verifyQuery, connection, transaction))
+       {
+      command.Parameters.AddWithValue("@Email", email);
+       command.Parameters.AddWithValue("@Token", token);
+
+ using (var reader = await command.ExecuteReaderAsync())
+            {
+           if (!await reader.ReadAsync())
+    {
+           return (false, "Invalid or expired reset token.");
+     }
+
+      var expiryTime = reader.GetDateTime(1);
+              var isUsed = reader.GetBoolean(2);
+
+  if (isUsed)
+            {
+            return (false, "This reset link has already been used.");
+                }
+
+    if (DateTime.UtcNow > expiryTime)
+   {
+          return (false, "This reset link has expired. Please request a new one.");
+           }
+         }
+  }
+
+  // Update password
+            var updateQuery = @"
+       UPDATE Users 
+      SET Password = @NewPassword 
+       WHERE Email = @Email";
+
+   using (var command = new SqlCommand(updateQuery, connection, transaction))
+    {
+       command.Parameters.AddWithValue("@NewPassword", newPassword); // In production, hash this
+     command.Parameters.AddWithValue("@Email", email);
+          await command.ExecuteNonQueryAsync();
+        }
+
+        // Mark token as used
+       var markUsedQuery = @"
+      UPDATE PasswordResetTokens 
+     SET IsUsed = 1 
+          WHERE Email = @Email AND Token = @Token";
+
+          using (var command = new SqlCommand(markUsedQuery, connection, transaction))
+{
+                command.Parameters.AddWithValue("@Email", email);
+ command.Parameters.AddWithValue("@Token", token);
+ await command.ExecuteNonQueryAsync();
+       }
+
+        transaction.Commit();
+              return (true, "Password reset successful!");
+   }
+      catch (Exception ex)
+          {
+            transaction.Rollback();
+              return (false, $"Error resetting password: {ex.Message}");
+      }
+        }
+            }
+        }
+
+        #endregion
 
    #region Data Operations for Sync
 
