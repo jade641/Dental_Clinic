@@ -1,5 +1,421 @@
-﻿<h3>Marketing</h3>
+﻿@page "/admin/marketing"
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="~/css/AdminMarketing.css">
+
+<div class="container">
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" />
+                </svg>
+            </div>
+            <div class="logo-text">
+                <h1>AURELIA DENTAL CLINIC - DR JADE</h1>
+                <p>YOUR SMILE. OUR MASTERPIECE</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <NavLink href="/admin-dashboard" class="nav-item">
+                <span class="nav-icon">📊</span> Overview
+            </NavLink>
+            <NavLink href="/admin/analytics" class="nav-item">
+                <span class="nav-icon">📈</span> Analytics
+            </NavLink>
+            <NavLink href="/admin/reports" class="nav-item">
+                <span class="nav-icon">📄</span> Reports
+            </NavLink>
+            <NavLink href="/admin/users" class="nav-item">
+                <span class="nav-icon">👥</span> Users
+            </NavLink>
+            <NavLink href="/admin/marketing" class="nav-item active">
+                <span class="nav-icon">⭐</span> Marketing
+            </NavLink>
+        </nav>
+
+        <div class="header-actions">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Search reports, users..." @bind="searchQuery">
+            </div>
+            <button class="icon-button" @onclick="ShowNotifications">🔔</button>
+            <button class="icon-button" @onclick="OpenSettings">⚙️</button>
+            <div class="user-profile">
+                <span class="user-avatar">DA</span>
+                <div class="user-info">
+                    <span class="user-name">Dr. Admin</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card yellow">
+                <div class="stat-content">
+                    <div class="stat-header">
+                        <span class="stat-label">Average Rating</span>
+                        <div class="stat-icon yellow-icon">⭐</div>
+                    </div>
+                    <div class="stat-value">
+                        <span class="value">@averageRating.ToString("F1")</span>
+                        <span class="star">⭐</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-content">
+                    <div class="stat-header">
+                        <span class="stat-label">Happy Patients</span>
+                        <div class="stat-icon green-icon">👍</div>
+                    </div>
+                    <div class="stat-value">
+                        <span class="value">@happyPatients</span>
+                    </div>
+                    <span class="stat-subtitle">4-5 star ratings</span>
+                </div>
+            </div>
+
+            <div class="stat-card blue">
+                <div class="stat-content">
+                    <div class="stat-header">
+                        <span class="stat-label">Pending Replies</span>
+                        <div class="stat-icon blue-icon">💬</div>
+                    </div>
+                    <div class="stat-value">
+                        <span class="value">@feedbacks.Count(f => !f.IsReplied)</span>
+                    </div>
+                    <span class="stat-subtitle">Needs response</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="feedback-section">
+            <div class="feedback-header">
+                <div class="tabs">
+                    <button class="tab @(activeTab == "inbox" ? "active" : "")" @onclick='() => SetActiveTab("inbox")'>
+                        <span class="tab-icon">📥</span> Feedback Inbox
+                    </button>
+                    <button class="tab @(activeTab == "campaigns" ? "active" : "")" @onclick='() => SetActiveTab("campaigns")'>
+                        <span class="tab-icon">📧</span> Email Campaigns
+                    </button>
+                </div>
+                <div class="filters">
+                    <select class="filter-dropdown" @bind="selectedCategory">
+                        <option value="">All Categories</option>
+                        <option value="Service Quality">Service Quality</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Facilities">Facilities</option>
+                    </select>
+                    <select class="filter-dropdown" @bind="selectedRating">
+                        <option value="">All Ratings</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (activeTab == "inbox")
+            {
+                <!-- Feedback Items -->
+                <div class="feedback-list">
+                    @foreach (var feedback in FilteredFeedbacks)
+                    {
+                        <div class="feedback-item">
+                            <div class="feedback-avatar @feedback.AvatarClass">@feedback.Initials</div>
+                            <div class="feedback-content">
+                                <div class="feedback-top">
+                                    <div class="feedback-author">
+                                        <h3>@feedback.Name</h3>
+                                        <div class="rating">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <span class="star @(i <= feedback.Rating ? "filled" : "")">★</span>
+                                            }
+                                            <span class="badge @feedback.BadgeClass">@feedback.BadgeText</span>
+                                        </div>
+                                    </div>
+                                    <div class="feedback-right">
+                                        <span class="feedback-date">@feedback.Date</span>
+                                        @if (feedback.IsReplied)
+                                        {
+                                            <span class="status-badge replied">✓ Replied</span>
+                                        }
+                                    </div>
+                                </div>
+                                <p class="feedback-text">@feedback.Message</p>
+                                <div class="feedback-actions">
+                                    <button class="btn-action" @onclick="() => ReplyToFeedback(feedback.Id)">
+                                        <span class="action-icon">💬</span> Reply
+                                    </button>
+                                    <button class="btn-action promo" @onclick="() => CreatePromo(feedback.Id)">
+                                        <span class="action-icon">✨</span> Create Promo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Email Campaigns -->
+                <div class="campaigns-section">
+                    <div class="campaign-header">
+                        <h3>Email Campaigns</h3>
+                        <button class="btn-primary" @onclick="CreateCampaign">
+                            <span>+</span> Create Campaign
+                        </button>
+                    </div>
+                    <div class="campaigns-grid">
+                        @foreach (var campaign in campaigns)
+                        {
+                            <div class="campaign-card">
+                                <div class="campaign-icon">📧</div>
+                                <h4>@campaign.Title</h4>
+                                <p>@campaign.Description</p>
+                                <div class="campaign-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Sent</span>
+                                        <span class="stat-value">@campaign.Sent</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Opened</span>
+                                        <span class="stat-value">@campaign.Opened</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Clicked</span>
+                                        <span class="stat-value">@campaign.Clicked</span>
+                                    </div>
+                                </div>
+                                <button class="btn-view" @onclick="() => ViewCampaign(campaign.Id)">View Details</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (showReplyModal)
+        {
+            <div class="modal-overlay" @onclick="CloseModal">
+                <div class="modal-content" @onclick:stopPropagation>
+                    <div class="modal-header">
+                        <h3>Reply to Feedback</h3>
+                        <button class="close-btn" @onclick="CloseModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Your Response</label>
+                            <textarea @bind="replyMessage" rows="5" placeholder="Type your response here..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button class="btn-primary" @onclick="SendReply">Send Reply</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (showPromoModal)
+        {
+            <div class="modal-overlay" @onclick="CloseModal">
+                <div class="modal-content" @onclick:stopPropagation>
+                    <div class="modal-header">
+                        <h3>Create Promotional Offer</h3>
+                        <button class="close-btn" @onclick="CloseModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Promo Title</label>
+                            <input type="text" @bind="promoTitle" placeholder="Enter promo title">
+                        </div>
+                        <div class="form-group">
+                            <label>Discount (%)</label>
+                            <input type="number" @bind="promoDiscount" placeholder="Enter discount percentage">
+                        </div>
+                        <div class="form-group">
+                            <label>Valid Until</label>
+                            <input type="date" @bind="promoValidUntil">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea @bind="promoDescription" rows="3" placeholder="Enter promo description..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button class="btn-primary" @onclick="CreatePromoOffer">Create Promo</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </main>
+</div>
 
 @code {
+    private string searchQuery = "";
+    private string activeTab = "inbox";
+    private string selectedCategory = "";
+    private string selectedRating = "";
+    private bool showReplyModal = false;
+    private bool showPromoModal = false;
+    private string replyMessage = "";
+    private string promoTitle = "";
+    private int promoDiscount = 0;
+    private DateTime promoValidUntil = DateTime.Now.AddMonths(1);
+    private string promoDescription = "";
+    private int currentFeedbackId = 0;
 
+    private double averageRating = 4.6;
+    private int happyPatients = 5;
+
+    private List<Feedback> feedbacks = new()
+    {
+        new Feedback
+        {
+            Id = 1,
+            Name = "Maria Rodriguez",
+            Initials = "MR",
+            AvatarClass = "",
+            Rating = 5,
+            BadgeText = "Excellent",
+            BadgeClass = "excellent",
+            Date = "Sep 14, 2025",
+            Message = "Excellent service! Dr. Jade was very professional and gentle. The clinic is very clean and modern. Highly recommend!",
+            IsReplied = false
+        },
+        new Feedback
+        {
+            Id = 2,
+            Name = "Juan Santos",
+            Initials = "JS",
+            AvatarClass = "blue-avatar",
+            Rating = 5,
+            BadgeText = "Excellent",
+            BadgeClass = "excellent",
+            Date = "Sep 13, 2025",
+            Message = "Best dental experience ever! The staff was friendly and the equipment is top-notch. Will definitely come back.",
+            IsReplied = true
+        },
+        new Feedback
+        {
+            Id = 3,
+            Name = "Ana Dela Cruz",
+            Initials = "AD",
+            AvatarClass = "purple-avatar",
+            Rating = 4,
+            BadgeText = "Good",
+            BadgeClass = "good",
+            Date = "Sep 12, 2025",
+            Message = "Great service overall. The waiting time was a bit long but the treatment was excellent. Clean facilities and friendly staff.",
+            IsReplied = false
+        }
+    };
+
+    private List<Campaign> campaigns = new()
+    {
+        new Campaign { Id = 1, Title = "Summer Teeth Whitening Promo", Description = "20% off on all teeth whitening services", Sent = 1250, Opened = 890, Clicked = 345 },
+        new Campaign { Id = 2, Title = "New Patient Welcome", Description = "Special offer for first-time patients", Sent = 450, Opened = 320, Clicked = 156 },
+        new Campaign { Id = 3, Title = "Dental Checkup Reminder", Description = "Monthly checkup reminder campaign", Sent = 2100, Opened = 1540, Clicked = 678 }
+    };
+
+    private IEnumerable<Feedback> FilteredFeedbacks =>
+        feedbacks.Where(f =>
+            (string.IsNullOrEmpty(selectedRating) || f.Rating == int.Parse(selectedRating))
+        );
+
+    private void SetActiveTab(string tab) => activeTab = tab;
+    private void ShowNotifications() => Console.WriteLine("Showing notifications...");
+    private void OpenSettings() => Console.WriteLine("Opening settings...");
+
+    private void NavigateTo(string url)
+    {
+        Navigation.NavigateTo(url);
+    }
+    private void ReplyToFeedback(int id)
+    {
+        currentFeedbackId = id;
+        showReplyModal = true;
+    }
+
+    private void CreatePromo(int id)
+    {
+        currentFeedbackId = id;
+        showPromoModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showReplyModal = false;
+        showPromoModal = false;
+        replyMessage = "";
+        promoTitle = "";
+        promoDiscount = 0;
+        promoDescription = "";
+    }
+
+    private void SendReply()
+    {
+        var feedback = feedbacks.FirstOrDefault(f => f.Id == currentFeedbackId);
+        if (feedback != null)
+        {
+            feedback.IsReplied = true;
+            Console.WriteLine($"Reply sent to {feedback.Name}: {replyMessage}");
+        }
+        CloseModal();
+    }
+
+    private void CreatePromoOffer()
+    {
+        Console.WriteLine($"Created promo: {promoTitle} with {promoDiscount}% discount valid until {promoValidUntil:yyyy-MM-dd}");
+        CloseModal();
+    }
+
+    private void CreateCampaign()
+    {
+        Console.WriteLine("Creating new email campaign...");
+    }
+
+    private void ViewCampaign(int id)
+    {
+        Console.WriteLine($"Viewing campaign {id}...");
+    }
+
+    public class Feedback
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Initials { get; set; } = "";
+        public string AvatarClass { get; set; } = "";
+        public int Rating { get; set; }
+        public string BadgeText { get; set; } = "";
+        public string BadgeClass { get; set; } = "";
+        public string Date { get; set; } = "";
+        public string Message { get; set; } = "";
+        public bool IsReplied { get; set; }
+    }
+
+    public class Campaign
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public int Sent { get; set; }
+        public int Opened { get; set; }
+        public int Clicked { get; set; }
+    }
 }

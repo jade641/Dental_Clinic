@@ -93,6 +93,20 @@ namespace Dental_Clinic.Components.Layout
             // Implement theme toggle logic
         }
 
+        private void OpenStaffModal()
+        {
+            showStaffModal = true;
+            staffErrorMessage = string.Empty;
+            staffModel = new StaffLoginModel { AccessLevel = "staff" };
+        }
+
+        private void CloseStaffModal()
+        {
+            showStaffModal = false;
+            staffErrorMessage = string.Empty;
+            staffModel = new StaffLoginModel();
+        }
+
         private async Task ToggleOfflineMode()
         {
             if (AuthService.IsOfflineMode)
@@ -132,19 +146,6 @@ namespace Dental_Clinic.Components.Layout
             syncProgress = 0;
 
             await SyncService.SyncUploadPendingChangesAsync();
-        }
-
-        private void OpenStaffModal()
-        {
-            showStaffModal = true;
-            staffErrorMessage = string.Empty;
-        }
-
-        private void CloseStaffModal()
-        {
-            showStaffModal = false;
-            staffModel = new StaffLoginModel();
-            staffErrorMessage = string.Empty;
         }
 
         private async Task HandleLogin()

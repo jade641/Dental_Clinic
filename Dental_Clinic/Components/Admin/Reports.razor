@@ -1,5 +1,233 @@
-﻿<h3>Reports</h3>
+﻿@page "/admin-reports"
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Navigation
+
+<link rel="stylesheet" href="~/css/AdminReports.css">
+
+<div class="container">
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" />
+                </svg>
+            </div>
+            <div class="logo-text">
+                <h1>AURELIA DENTAL CLINIC - DR JADE</h1>
+                <p>YOUR SMILE. OUR MASTERPIECE</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <NavLink href="/admin-dashboard" class="nav-item">
+                <span class="nav-icon">📊</span> Overview
+            </NavLink>
+            <NavLink href="/admin-analytics" class="nav-item">
+                <span class="nav-icon">📈</span> Analytics
+            </NavLink>
+            <NavLink href="/admin-reports" class="nav-item">
+                <span class="nav-icon">📄</span> Reports
+            </NavLink>
+            <NavLink href="/admin-users" class="nav-item">
+                <span class="nav-icon">👥</span> Users
+            </NavLink>
+            <NavLink href="/admin-marketing" class="nav-item">
+                <span class="nav-icon">⭐</span> Marketing
+            </NavLink>
+        </nav>
+
+        <div class="header-actions">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Search reports, users..." @bind="searchQuery">
+            </div>
+            <button class="icon-button" @onclick="ShowNotifications">🔔</button>
+            <button class="icon-button" @onclick="OpenSettings">⚙️</button>
+            <div class="user-profile">
+                <span class="user-avatar">DA</span>
+                <div class="user-info">
+                    <span class="user-name">Dr. Admin</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h2>Reports & Analytics</h2>
+            <button class="btn-primary" @onclick="ShowGenerateReportModal">
+                <span>+</span> Generate Report
+            </button>
+        </div>
+
+        <div class="reports-grid">
+            @foreach (var report in reports)
+            {
+                <div class="report-card">
+                    <div class="report-icon @report.IconClass">@report.Icon</div>
+                    <h3>@report.Title</h3>
+                    <p>@report.Description</p>
+                    <button class="btn-generate" @onclick="() => GenerateReport(report.Type)">
+                        <span class="download-icon">⬇</span> Generate
+                    </button>
+                </div>
+            }
+        </div>
+
+        @if (showGenerateModal)
+        {
+            <div class="modal-overlay" @onclick="CloseModal">
+                <div class="modal-content" @onclick:stopPropagation>
+                    <div class="modal-header">
+                        <h3>Generate Custom Report</h3>
+                        <button class="close-btn" @onclick="CloseModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Report Type</label>
+                            <select @bind="selectedReportType">
+                                <option value="financial">Financial Report</option>
+                                <option value="patient">Patient Report</option>
+                                <option value="service">Service Report</option>
+                                <option value="staff">Staff Report</option>
+                                <option value="audit">Audit Trail</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Date Range</label>
+                            <div class="date-range">
+                                <input type="date" @bind="startDate">
+                                <span>to</span>
+                                <input type="date" @bind="endDate">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Format</label>
+                            <select @bind="reportFormat">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button class="btn-primary" @onclick="GenerateCustomReport">Generate Report</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (showSuccessMessage)
+        {
+            <div class="success-toast">
+                <span>✓</span> Report generated successfully!
+            </div>
+        }
+    </main>
+</div>
 
 @code {
+    private string searchQuery = "";
+    private bool showGenerateModal = false;
+    private bool showSuccessMessage = false;
+    private string selectedReportType = "financial";
+    private string reportFormat = "pdf";
+    private DateTime startDate = DateTime.Now.AddMonths(-1);
+    private DateTime endDate = DateTime.Now;
 
+    private List<ReportItem> reports = new()
+    {
+        new ReportItem
+        {
+            Type = "financial",
+            Icon = "$",
+            IconClass = "financial",
+            Title = "Financial Report",
+            Description = "Revenue, expenses, and profit analysis"
+        },
+        new ReportItem
+        {
+            Type = "patient",
+            Icon = "👥",
+            IconClass = "patient",
+            Title = "Patient Report",
+            Description = "Patient demographics and visit patterns"
+        },
+        new ReportItem
+        {
+            Type = "service",
+            Icon = "📊",
+            IconClass = "service",
+            Title = "Service Report",
+            Description = "Popular services and performance metrics"
+        },
+        new ReportItem
+        {
+            Type = "staff",
+            Icon = "👤",
+            IconClass = "staff",
+            Title = "Staff Report",
+            Description = "Staff performance and productivity"
+        },
+        new ReportItem
+        {
+            Type = "audit",
+            Icon = "🛡️",
+            IconClass = "audit",
+            Title = "Audit Trail",
+            Description = "System activities and user actions"
+        }
+    };
+
+    private void ShowNotifications()
+    {
+        Console.WriteLine("Showing notifications...");
+    }
+
+    private void OpenSettings()
+    {
+        Console.WriteLine("Opening settings...");
+    }
+
+    private void ShowGenerateReportModal()
+    {
+        showGenerateModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showGenerateModal = false;
+    }
+
+    private async Task GenerateReport(string reportType)
+    {
+        Console.WriteLine($"Generating {reportType} report...");
+        showSuccessMessage = true;
+        await Task.Delay(3000);
+        showSuccessMessage = false;
+        StateHasChanged();
+    }
+
+    private async Task GenerateCustomReport()
+    {
+        Console.WriteLine($"Generating custom {selectedReportType} report from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd} in {reportFormat} format");
+        showGenerateModal = false;
+        showSuccessMessage = true;
+        await Task.Delay(3000);
+        showSuccessMessage = false;
+        StateHasChanged();
+    }
+
+    public class ReportItem
+    {
+        public string Type { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string IconClass { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
 }
