@@ -17,7 +17,7 @@ namespace Dental_Clinic.Components.Pages
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] private DatabaseService DatabaseService { get; set; }
 
-        private ResetPasswordModel resetPasswordModel = new ResetPasswordModel();
+        private ResetPasswordModel resetPasswordModel = new();
         private bool showNewPassword = false;
         private bool showConfirmPassword = false;
         private string errorMessage = string.Empty;
