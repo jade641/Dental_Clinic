@@ -191,9 +191,12 @@ namespace Dental_Clinic.Components.Layout
 
                 if (session != null)
                 {
+                    // Save session
+                    await SessionService.SaveSessionAsync(session);
+                    
                     // Navigate based on role
                     string dashboardRoute = GetDashboardRoute(session.Role);
-                    Navigation.NavigateTo(dashboardRoute);
+                    Navigation.NavigateTo(dashboardRoute, forceLoad: true);
                 }
                 else
                 {
@@ -392,8 +395,11 @@ namespace Dental_Clinic.Components.Layout
 
                 if (session != null)
                 {
+                    // Save session
+                    await SessionService.SaveSessionAsync(session);
+                    
                     string dashboardRoute = GetDashboardRoute(session.Role);
-                    Navigation.NavigateTo(dashboardRoute);
+                    Navigation.NavigateTo(dashboardRoute, forceLoad: true);
                     CloseStaffModal();
                 }
                 else

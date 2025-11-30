@@ -13,10 +13,12 @@ namespace Dental_Clinic.Services
         private readonly DatabaseService _databaseService;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private bool _configValidated = false;
+        private bool _isConfigValid = false;
 
  // Load from configuration instead of hardcoding
-        private string GoogleClientId => _configuration["GoogleOAuth:ClientId"] ?? throw new InvalidOperationException("Google Client ID not configured");
-        private string GoogleClientSecret => _configuration["GoogleOAuth:ClientSecret"] ?? throw new InvalidOperationException("Google Client Secret not configured");
+        private string GoogleClientId => _configuration["GoogleOAuth:ClientId"] ?? "";
+        private string GoogleClientSecret => _configuration["GoogleOAuth:ClientSecret"] ?? "";
         private string RedirectUri => _configuration["GoogleOAuth:RedirectUri"] ?? "http://127.0.0.1:5000/";
 
         public GoogleAuthService(DatabaseService databaseService, HttpClient httpClient, IConfiguration configuration)
@@ -25,33 +27,50 @@ namespace Dental_Clinic.Services
             _httpClient = httpClient;
             _configuration = configuration;
 
- // Validate config early and log a masked client id for troubleshooting
+ // Validate config early but don't throw - just log
             try
             {
-                ValidateConfiguration();
-                Debug.WriteLine($"[GoogleAuthService] Loaded GoogleOAuth ClientId: {MaskClientId(GoogleClientId)} RedirectUri: {RedirectUri}");
+                _isConfigValid = ValidateConfiguration();
+                if (_isConfigValid)
+                {
+                    Debug.WriteLine($"[GoogleAuthService] Loaded GoogleOAuth ClientId: {MaskClientId(GoogleClientId)} RedirectUri: {RedirectUri}");
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[GoogleAuthService] Configuration error: {ex.Message}");
- // rethrow so failure is obvious during startup
-                throw;
+                _isConfigValid = false;
+            }
+            finally
+            {
+                _configValidated = true;
             }
         }
 
-        private void ValidateConfiguration()
+        private bool ValidateConfiguration()
         {
             if (string.IsNullOrWhiteSpace(GoogleClientId) || GoogleClientId.Contains("YOUR_") || GoogleClientId.Contains("@"))
             {
-                throw new InvalidOperationException("Google ClientId looks invalid. Make sure appsettings.Development.json contains the correct web application client ID.");
+                Debug.WriteLine("[GoogleAuthService] Google ClientId looks invalid. Google OAuth features will be disabled.");
+                return false;
             }
             if (string.IsNullOrWhiteSpace(GoogleClientSecret) || GoogleClientSecret.Length <10)
             {
-                throw new InvalidOperationException("Google ClientSecret missing or too short. Make sure appsettings.Development.json contains the client secret for a Web application credential.");
+                Debug.WriteLine("[GoogleAuthService] Google ClientSecret missing or too short. Google OAuth features will be disabled.");
+                return false;
             }
             if (!RedirectUri.StartsWith("http://127.0.0.1") && !RedirectUri.StartsWith("http://localhost"))
             {
                 Debug.WriteLine("[GoogleAuthService] Warning: RedirectUri is not a localhost/loopback URL. Ensure it matches the one registered in Google Console.");
+            }
+            return true;
+        }
+
+        private void EnsureConfigured()
+        {
+            if (!_configValidated || !_isConfigValid)
+            {
+                throw new InvalidOperationException("Google OAuth is not configured. Please add valid GoogleOAuth settings to appsettings.json or appsettings.Development.json");
             }
         }
 
@@ -64,6 +83,7 @@ namespace Dental_Clinic.Services
 
         public string GetGoogleAuthUrl()
         {
+            EnsureConfigured();
             var scope = Uri.EscapeDataString("openid profile email");
             var state = GenerateState();
             var url = "https://accounts.google.com/o/oauth2/v2/auth" +
@@ -79,6 +99,7 @@ namespace Dental_Clinic.Services
 
         public async Task<UserSession?> AuthenticateWithGoogleAsync(string code, string state)
         {
+            EnsureConfigured();
             Debug.WriteLine($"[GoogleOAuth] AuthenticateWithGoogleAsync called with code={code.Substring(0, 20)}..., state={state.Substring(0, 10)}...");
 
             var tokenResponse = await ExchangeCodeForTokenAsync(code);
