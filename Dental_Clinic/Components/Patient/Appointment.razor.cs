@@ -207,13 +207,23 @@ StateHasChanged();
         }
 
  private List<TimeSlotModel> GetFilteredTimeSlots()
-        {
-   if (selectedDentistFilter.HasValue)
-  {
-     return availableTimeSlots.Where(s => s.DentistID == selectedDentistFilter.Value).ToList();
+ {
+     IEnumerable<TimeSlotModel> query = availableTimeSlots;
+
+ // Disallow booking past times on the current day
+ if (selectedDate.Date == DateTime.Today)
+ {
+ var now = DateTime.Now.TimeOfDay;
+ query = query.Where(s => s.StartTime > now);
  }
-       return availableTimeSlots;
-        }
+
+ if (selectedDentistFilter.HasValue)
+ {
+ query = query.Where(s => s.DentistID == selectedDentistFilter.Value);
+ }
+ return query.OrderBy(s => s.StartTime).ToList();
+ }
+
      private void PreviousMonth()
    {
  currentMonth = currentMonth.AddMonths(-1);
@@ -352,11 +362,74 @@ System.Diagnostics.Debug.WriteLine($"Error confirming booking: {ex.Message}");
 }
   }
 
-        private async Task RescheduleAppointment(int appointmentId)
+        private bool showCancelModal = false;
+private int cancelAppointmentId =0;
+private string cancellationReason = "";
+
+// ...existing code...
+
+private void OpenCancelModal(int appointmentId)
+{
+ cancelAppointmentId = appointmentId;
+ cancellationReason = "";
+ showCancelModal = true;
+ StateHasChanged();
+}
+
+private void CloseCancelModal()
+{
+ showCancelModal = false;
+ cancelAppointmentId =0;
+ cancellationReason = "";
+}
+
+private async Task ConfirmCancelAsync()
+{
+    if (cancelAppointmentId <= 0 || string.IsNullOrWhiteSpace(cancellationReason))
+ {
+   errorMessage = string.IsNullOrWhiteSpace(cancellationReason) ? "Please provide a cancellation reason." : "Invalid appointment.";
+        return;
+    }
+    try
+    {
+    isLoading = true;
+        var result = await AppointmentService.CancelAppointmentAsync(cancelAppointmentId, currentPatientId, cancellationReason);
+        if (result.Success)
+        {
+ successMessage = "Appointment cancelled.";
+            showCancelModal = false;
+         await LoadAppointmentsAsync();
+        }
+else
    {
-       // TODO: Implement reschedule functionality
-       System.Diagnostics.Debug.WriteLine($"Reschedule appointment {appointmentId}");
-     }
+   errorMessage = result.Message;
+        }
+    }
+    catch (Exception ex)
+  {
+        errorMessage = $"Failed to cancel: {ex.Message}";
+    }
+    finally
+    {
+        isLoading = false;
+        StateHasChanged();
+    }
+}
+
+private void RescheduleAppointment(int appointmentId)
+{
+ // Simple behavior: open booking modal at step2 and preselect service/date based on existing
+ var appt = appointments.FirstOrDefault(a => a.AppointmentID == appointmentId);
+ if (appt != null)
+ {
+ selectedService = new Service { ServiceID = appt.ServiceID ??0, ServiceName = appt.ServiceName, Duration =0, Cost =0, CategoryName = "" };
+ selectedDate = appt.AppointmentDate;
+ selectedTimeSlot = null;
+ showBookingModal = true;
+ currentStep =2;
+ _ = LoadAvailableTimeSlotsAsync();
+ }
+}
 
      public class CalendarDay
         {

@@ -2,6 +2,7 @@
 @using System.Diagnostics
 @inject Dental_Clinic.Services.SessionService SessionService
 @inject NavigationManager Navigation
+@inject Dental_Clinic.Services.AppointmentService AppointmentService
 
 <link href="css/patientdashboard.css" rel="stylesheet" />
 
@@ -91,7 +92,7 @@
                     </button>
 
                     <div class="user-profile">
-                        <div class="user-avatar">@patientName.Substring(0, 1).ToUpper()</div>
+                        <div class="user-avatar">@patientName.Substring(0,1).ToUpper()</div>
                         <div class="user-info">
                             <div class="user-name">@patientName</div>
                             <div class="user-role">Patient Portal</div>
@@ -112,8 +113,8 @@
                 <div class="next-appointment">
                     <div class="next-info">
                         <div class="label">Next Appointment</div>
-                        <div class="title">@nextAppointment.Title</div>
-                        <div class="meta">@nextAppointment.Date.ToString("dd/MM/yyyy") at @nextAppointment.Date.ToString("hh:mm tt")</div>
+                        <div class="title">@nextAppointment?.ServiceName</div>
+                        <div class="meta">@nextAppointment?.AppointmentDate.ToString("dd/MM/yyyy") at @(nextAppointment?.StartTime.HasValue == true ? FormatTime(nextAppointment.StartTime.Value) : "")</div>
                     </div>
                     <div class="next-actions">
                         <button class="btn-outline" @onclick='() => Navigation.NavigateTo("/appointments")'>📅 Book Appointment</button>
@@ -138,7 +139,7 @@
                 </div>
                 <div class="stat-text">
                     <div class="stat-label">Next Visit</div>
-                    <div class="stat-value">@nextVisitDays days</div>
+                    <div class="stat-value">@((nextAppointment?.AppointmentDate - DateTime.Today)?.Days ?? 0) days</div>
                 </div>
             </div>
 
@@ -187,23 +188,33 @@
                     <a class="view-all" href="/appointments">View All</a>
                 </div>
                 <div class="panel-body">
-                    @foreach (var appt in upcoming)
+                    @if (upcoming.Any())
                     {
-                        <div class="appt-item">
-                            <div class="left">
-                                <div class="avatar">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
-                                    </svg>
+                        @foreach (var appt in upcoming)
+                        {
+                            <div class="appt-item">
+                                <div class="left">
+                                    <div class="avatar">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="center">
+                                    <div class="appt-title">@appt.ServiceName</div>
+                                    <div class="appt-meta">@appt.DentistName — @appt.AppointmentDate.ToString("MMM dd, yyyy") • @FormatTime(appt.StartTime ?? new TimeSpan(0))</div>
+                                </div>
+                                <div class="right">
+                                    <span class="status @appt.Status.ToLower()">@appt.Status</span>
                                 </div>
                             </div>
-                            <div class="center">
-                                <div class="appt-title">@appt.Title</div>
-                                <div class="appt-meta">@appt.Provider — @appt.Date.ToString("dd/MM/yyyy") • @appt.Date.ToString("hh:mm tt")</div>
-                            </div>
-                            <div class="right">
-                                <span class="status @appt.Status.ToString().ToLower()">@appt.Status</span>
-                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <h4>No upcoming appointments</h4>
+                            <p>Book an appointment to see it here</p>
                         </div>
                     }
                 </div>
@@ -220,8 +231,8 @@
                         <div class="treat-item">
                             <div class="t-left">
                                 <div class="t-icon">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    <svg width="24" height="24" viewBox="002424" fill="none" stroke="#10b981" stroke-width="2">
+                                        <polyline points="206917412"></polyline>
                                     </svg>
                                 </div>
                             </div>
@@ -243,6 +254,13 @@
 
 @code {
     private string patientName = "Patient";
+    private int currentPatientId =0;
+    private int completedCount = 12; // Example value
+    private decimal outstanding = 2500; // Example value
+    private decimal totalSpent = 15800; // Example value
+
+    private Models.Appointment? nextAppointment;
+    private List<Models.Appointment> upcoming = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -256,35 +274,46 @@
             }
 
             patientName = session.UserName ?? "Patient";
+            currentPatientId = session.RoleSpecificId ??0;
+            if (currentPatientId ==0)
+            {
+                Navigation.NavigateTo("/login", true);
+                return;
+            }
+
+            // Load upcoming appointments from service
+            upcoming = (await AppointmentService.GetPatientAppointmentsAsync(currentPatientId))
+                .Where(a => a.AppointmentDate >= DateTime.Today)
+                .OrderBy(a => a.AppointmentDate)
+                .ThenBy(a => a.StartTime)
+                .Take(10)
+                .ToList();
+
+            nextAppointment = upcoming.FirstOrDefault();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Dashboard] Error loading session: {ex.Message}");
+            Debug.WriteLine($"[Dashboard] Error loading: {ex.Message}");
             patientName = "Patient";
         }
     }
 
-    private Appointment nextAppointment = new Appointment { Title = "Teeth Cleaning with Dr. Maria Santos", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 9, 20, 10, 0, 0), Status = ApptStatus.Confirmed };
-
-    private int nextVisitDays = 5;
-    private int completedCount = 3;
-    private int outstanding = 2500;
-    private int totalSpent = 15800;
-
-    private List<Appointment> upcoming = new List<Appointment>
+    private string FormatTime(TimeSpan time)
     {
-        new Appointment { Title = "Teeth Cleaning", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 9, 20, 10, 0, 0), Status = ApptStatus.Confirmed },
-        new Appointment { Title = "Root Canal Follow-up", Provider = "Dr. Juan Dela Cruz", Date = new DateTime(2025, 9, 25, 14, 30, 0), Status = ApptStatus.Scheduled }
-    };
+        var hours = time.Hours;
+        var minutes = time.Minutes;
+        var ampm = hours >=12 ? "PM" : "AM";
+        if (hours >12) hours -=12;
+        if (hours ==0) hours =12;
+        return $"{hours}:{minutes:00} {ampm}";
+    }
 
+    // Sample treatments remain
     private List<Treatment> recentTreatments = new List<Treatment>
     {
-        new Treatment { Title = "Initial Consultation", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 8, 15), Price = 1500 },
-        new Treatment { Title = "X-Ray", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 8, 15), Price = 800 }
+        new Treatment { Title = "Initial Consultation", Provider = "Dr. Maria Santos", Date = new DateTime(2025,8,15), Price =1500 },
+        new Treatment { Title = "X-Ray", Provider = "Dr. Maria Santos", Date = new DateTime(2025,8,15), Price =800 }
     };
 
-    private enum ApptStatus { Confirmed, Scheduled, Pending }
-
-    private class Appointment { public string Title { get; set; } = string.Empty; public string Provider { get; set; } = string.Empty; public DateTime Date { get; set; } public ApptStatus Status { get; set; } }
     private class Treatment { public string Title { get; set; } = string.Empty; public string Provider { get; set; } = string.Empty; public DateTime Date { get; set; } public int Price { get; set; } }
 }
