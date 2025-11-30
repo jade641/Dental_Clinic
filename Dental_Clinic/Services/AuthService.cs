@@ -1,5 +1,6 @@
 ﻿using Dental_Clinic.Models;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace Dental_Clinic.Services
 {
@@ -104,9 +105,9 @@ AND u.Password = @Password";
 
             var parameters = new[]
             {
-          new System.Data.SqlClient.SqlParameter("@EmailOrUsername", emailOrUsername),
-      new System.Data.SqlClient.SqlParameter("@Password", password)
-  };
+                new SqlParameter("@EmailOrUsername", emailOrUsername),
+                new SqlParameter("@Password", password)
+            };
 
             var result = await _localDb.GetDataTableAsync(query, parameters);
 
@@ -151,10 +152,10 @@ AND u.Password = @Password";
 
             var parameters = new[]
             {
-          new System.Data.SqlClient.SqlParameter("@EmailOrUsername", emailOrUsername),
-    new System.Data.SqlClient.SqlParameter("@Password", password),
-        new System.Data.SqlClient.SqlParameter("@RoleName", roleName)
-         };
+                new SqlParameter("@EmailOrUsername", emailOrUsername),
+                new SqlParameter("@Password", password),
+                new SqlParameter("@RoleName", roleName)
+            };
 
             var result = await _localDb.GetDataTableAsync(query, parameters);
 
@@ -194,9 +195,9 @@ AND u.Password = @Password";
                 var checkQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email OR UserName = @UserName";
                 var checkParams = new[]
                 {
-           new System.Data.SqlClient.SqlParameter("@Email", model.Email),
-              new System.Data.SqlClient.SqlParameter("@UserName", model.UserName)
-    };
+                    new SqlParameter("@Email", model.Email),
+                    new SqlParameter("@UserName", model.UserName)
+                };
 
                 var existingCount = Convert.ToInt32(await _localDb.ExecuteScalarAsync(checkQuery, checkParams));
                 if (existingCount > 0)
@@ -212,14 +213,14 @@ AND u.Password = @Password";
 
                 var insertParams = new[]
                 {
-     new System.Data.SqlClient.SqlParameter("@RoleName", "Patient"),
- new System.Data.SqlClient.SqlParameter("@UserName", model.UserName),
-         new System.Data.SqlClient.SqlParameter("@Password", model.Password),
-        new System.Data.SqlClient.SqlParameter("@FirstName", model.FirstName),
-         new System.Data.SqlClient.SqlParameter("@LastName", model.LastName),
-           new System.Data.SqlClient.SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
-         new System.Data.SqlClient.SqlParameter("@Email", model.Email)
-    };
+                    new SqlParameter("@RoleName", "Patient"),
+                    new SqlParameter("@UserName", model.UserName),
+                    new SqlParameter("@Password", model.Password),
+                    new SqlParameter("@FirstName", model.FirstName),
+                    new SqlParameter("@LastName", model.LastName),
+                    new SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
+                    new SqlParameter("@Email", model.Email)
+                };
 
                 var userId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(insertQuery, insertParams));
 
@@ -231,11 +232,11 @@ AND u.Password = @Password";
 
                 var patientParams = new[]
                 {
-     new System.Data.SqlClient.SqlParameter("@UserID", userId),
-     new System.Data.SqlClient.SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
-        new System.Data.SqlClient.SqlParameter("@Email", model.Email),
-     new System.Data.SqlClient.SqlParameter("@BirthDate", DateTime.Now.Date)
-   };
+                    new SqlParameter("@UserID", userId),
+                    new SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
+                    new SqlParameter("@Email", model.Email),
+                    new SqlParameter("@BirthDate", DateTime.Now.Date)
+                };
 
                 var patientId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(patientQuery, patientParams));
 

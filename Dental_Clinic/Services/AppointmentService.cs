@@ -1,5 +1,5 @@
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Dental_Clinic.Models;
 
 namespace Dental_Clinic.Services
@@ -94,7 +94,7 @@ var service = new Service
    {
    ServiceID = Convert.ToInt32(row["ServiceID"]),
       CategoryID = row["CategoryID"] != DBNull.Value ? Convert.ToInt32(row["CategoryID"]) : null,
-     ServiceName = row["ServiceName"].ToString(),
+     ServiceName = row["ServiceName"] != DBNull.Value ? row["ServiceName"].ToString() ?? string.Empty : string.Empty,
   Description = row["Description"]?.ToString() ?? "",
             Duration = duration,
   Cost = cost,
@@ -147,11 +147,11 @@ var service = new Service
      {
   ServiceID = Convert.ToInt32(row["ServiceID"]),
           CategoryID = row["CategoryID"] != DBNull.Value ? Convert.ToInt32(row["CategoryID"]) : null,
-          ServiceName = row["ServiceName"].ToString(),
-           Description = row["Description"].ToString(),
+             ServiceName = row["ServiceName"] != DBNull.Value ? row["ServiceName"].ToString() ?? string.Empty : string.Empty,
+           Description = row["Description"] != DBNull.Value ? row["Description"].ToString() ?? string.Empty : string.Empty  ,
               Duration = Convert.ToInt32(row["Duration"]),
       IsActive = Convert.ToBoolean(row["IsActive"]),
-       CategoryName = row["CategoryName"] != DBNull.Value ? row["CategoryName"].ToString() : string.Empty
+       CategoryName = row["CategoryName"] != DBNull.Value && row["CategoryName"] != null ? row["CategoryName"].ToString() ?? string.Empty : string.Empty
     };
     }
   }
@@ -192,14 +192,27 @@ var service = new Service
 
             foreach (DataRow row in dt.Rows)
   {
-            dentists.Add(new DentistAvailability
+                    if (row["Specialization"] != DBNull.Value)
+                    {
+                        dentists.Add(new DentistAvailability
   {
              DentistID = Convert.ToInt32(row["DentistID"]),
     DentistName = $"Dr. {row["FirstName"]} {row["LastName"]}",
-         Specialization = row["Specialization"] != DBNull.Value ? row["Specialization"].ToString() : "",
+                            Specialization = row["Specialization"] != DBNull.Value ? row["Specialization"].ToString() ?? string.Empty : string.Empty,
   IsAvailable = Convert.ToBoolean(row["IsAvailable"])
              });
- }
+                    }
+                    else
+                    {
+                        dentists.Add(new DentistAvailability
+  {
+             DentistID = Convert.ToInt32(row["DentistID"]),
+    DentistName = $"Dr. {row["FirstName"]} {row["LastName"]}",
+         Specialization = "",
+  IsAvailable = Convert.ToBoolean(row["IsAvailable"])
+             });
+                    }
+                }
      }
      catch (Exception ex)
         {
@@ -609,10 +622,10 @@ public async Task<(bool Success, string Message)> CancelAppointmentAsync(int app
      AppointmentDate = Convert.ToDateTime(row["AppointmentDate"]),
  StartTime = row["StartTime"] != DBNull.Value ? (TimeSpan)row["StartTime"] : null,
      EndTime = row["EndTime"] != DBNull.Value ? (TimeSpan)row["EndTime"] : null,
-    Status = row["Status"].ToString(),
-    Notes = row["Notes"] != DBNull.Value ? row["Notes"].ToString() : string.Empty,
+    Status = row["Status"] != DBNull.Value ? row["Status"].ToString() ?? string.Empty : string.Empty,
+    Notes = row["Notes"] != DBNull.Value && row["Notes"] != null ? row["Notes"].ToString() ?? string.Empty   : string.Empty,
             CreatedAt = DateTime.Now,
-   ServiceName = row["ServiceName"] != DBNull.Value ? row["ServiceName"].ToString() : string.Empty,
+   ServiceName = row["ServiceName"] != DBNull.Value && row["ServiceName"] != null ? row["ServiceName"].ToString() ?? string.Empty : string.Empty,
        DentistName = row["DentistName"] != DBNull.Value ? row["DentistName"].ToString() : "TBA"
       };
        }

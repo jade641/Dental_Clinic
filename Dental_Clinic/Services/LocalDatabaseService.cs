@@ -1,5 +1,5 @@
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace Dental_Clinic.Services
 {
@@ -292,7 +292,7 @@ CREATE TABLE SyncLog (
             }
   }
 
-        public async Task<object> ExecuteScalarAsync(string query, SqlParameter[] parameters = null)
+        public async Task<object?> ExecuteScalarAsync(string query, SqlParameter[] parameters = null)
  {
         using (var connection = new SqlConnection(_localConnectionString))
          {
@@ -304,6 +304,7 @@ CREATE TABLE SyncLog (
         command.Parameters.AddRange(parameters);
           }
 
+            // The return value of ExecuteScalarAsync can be null, so use nullable object
     return await command.ExecuteScalarAsync();
              }
             }

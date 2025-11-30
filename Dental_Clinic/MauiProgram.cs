@@ -27,7 +27,7 @@ namespace Dental_Clinic
             // Register Database Services as Singletons
             builder.Services.AddSingleton<DatabaseService>();
             builder.Services.AddSingleton<LocalDatabaseService>();
-                
+
             // Register Sync Service
             builder.Services.AddSingleton<SyncService>();
                 
@@ -36,7 +36,7 @@ namespace Dental_Clinic
                 
             // Register Auth Service
             builder.Services.AddScoped<AuthService>();
-                
+
             // Register Session Service
             builder.Services.AddSingleton<SessionService>();
 
@@ -56,8 +56,8 @@ namespace Dental_Clinic
             });
 
 #if DEBUG
-        		builder.Services.AddBlazorWebViewDeveloperTools();
-        		builder.Logging.AddDebug();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

@@ -5,6 +5,20 @@
         public App()
         {
             InitializeComponent();
+            RegisterGlobalExceptionHandlers();
+        }
+
+        private void RegisterGlobalExceptionHandlers()
+        {
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                System.Diagnostics.Debug.WriteLine($"[GLOBAL] UnhandledException: {e.ExceptionObject}");
+            };
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                System.Diagnostics.Debug.WriteLine($"[GLOBAL] UnobservedTaskException: {e.Exception}" );
+                e.SetObserved();
+            };
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
@@ -20,11 +34,19 @@
             // Handle Google OAuth callback
             if (uri.Scheme.StartsWith("com.googleusercontent.apps"))
             {
-                // Navigate to the callback page with the full URI as a parameter
-                MainThread.BeginInvokeOnMainThread(() =>
+                // Fallback: we are not using Shell, so just update navigation in Blazor via query
+                var navigationUri = $"/google-callback{uri.Query}";
+                Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
                 {
-                    var navigationUri = $"/google-callback{uri.Query}";
-                    Shell.Current?.GoToAsync(navigationUri);
+                    // If a Shell exists use it, else rely on Blazor routing
+                    if (Shell.Current is not null)
+                    {
+                        Shell.Current.GoToAsync(navigationUri);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[AppLink] Received OAuth callback: {uri}");
+                    }
                 });
             }
         }

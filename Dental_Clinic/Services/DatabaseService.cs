@@ -1,5 +1,5 @@
 ﻿using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Dental_Clinic.Models;
 using System.Security.Cryptography;
 using System.Text;
@@ -188,7 +188,14 @@ try
     command.Parameters.AddWithValue("@Sex", model.Sex ?? (object)DBNull.Value);
        command.Parameters.AddWithValue("@Email", model.Email);
 
-        userId = (int)await command.ExecuteScalarAsync();
+        // userId = (int)await command.ExecuteScalarAsync();
+        var result = await command.ExecuteScalarAsync();
+if (result == null || result == DBNull.Value)
+{
+    transaction.Rollback();
+    return (false, "Failed to create user record.");
+}
+userId = Convert.ToInt32(result);
    }
 
           // Insert into Patient table
@@ -226,18 +233,19 @@ transaction.Commit();
         private async Task<bool> EmailOrUsernameExistsAsync(string email, string username)
         {
     using (var connection = GetConnection())
-{
+    {
         await connection.OpenAsync();
 
-    string query = "SELECT COUNT(*) FROM Users WHERE Email = @Email OR UserName = @UserName";
-  using (var command = new SqlCommand(query, connection))
-           {
-    command.Parameters.AddWithValue("@Email", email);
-     command.Parameters.AddWithValue("@UserName", username);
-    int count = (int)await command.ExecuteScalarAsync();
-     return count > 0;
+        string query = "SELECT COUNT(*) FROM Users WHERE Email = @Email OR UserName = @UserName";
+        using (var command = new SqlCommand(query, connection))
+        {
+            command.Parameters.AddWithValue("@Email", email);
+            command.Parameters.AddWithValue("@UserName", username);
+            var result = await command.ExecuteScalarAsync();
+            int count = result is int i ? i : Convert.ToInt32(result ?? 0);
+            return count > 0;
+        }
     }
-            }
         }
 
     #endregion
@@ -288,9 +296,10 @@ transaction.Commit();
 
  using (var command = new SqlCommand(checkQuery, connection))
        {
-     var exists = (int)await command.ExecuteScalarAsync();
+    var result = await command.ExecuteScalarAsync();
+    int exists = result is int i ? i : Convert.ToInt32(result ?? 0);
     if (exists == 1)
-            return; // Tables already exist
+        return; // Tables already exist
    }
 
            // Create all tables for offline mode (simplified version)
@@ -503,7 +512,9 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
       command.Parameters.AddRange(parameters);
      }
 
-           return await command.ExecuteScalarAsync();
+           var result = await command.ExecuteScalarAsync();
+            // Fix CS8603: Ensure a non-null return value
+            return result ?? new object();
        }
             }
     }
@@ -520,7 +531,8 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
    {
          // TODO: Implement sync logic for offline changes
                 // This is a placeholder for future implementation
-   return true;
+        await Task.Yield(); // Ensures the method is truly asynchronous
+        return true;
      }
 catch
             {

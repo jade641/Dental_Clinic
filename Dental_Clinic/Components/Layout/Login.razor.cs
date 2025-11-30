@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Dental_Clinic.Models;
 using Dental_Clinic.Services;
 using System.Diagnostics;
@@ -423,8 +423,9 @@ namespace Dental_Clinic.Components.Layout
             return role switch
             {
                 "Admin" => "/admin-dashboard",
-                "Receptionist" => "/receptionist-dashboard",
+                "Receptionist" => "/receptionist/dashboard",
                 "Dentist" => "/dentist-dashboard",
+                "Patient" => "/dashboard",
                 _ => "/dashboard"
             };
         }

@@ -1,8 +1,8 @@
-@page "/receptionist-dashboard"
+@page "/receptionist/dashboard"
 @using Microsoft.AspNetCore.Components.Routing
 @inject NavigationManager Navigation
 
-<link rel="stylesheet" href="~/css/receptionistdashboard.css">
+<link href="css/receptionistdashboard.css" rel="stylesheet" />
 
 <div class="receptionist-dashboard">
     <!-- Top Navigation Bar -->
@@ -11,8 +11,8 @@
             <div class="clinic-brand">
                 <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic" class="clinic-logo-img" />
                 <div class="clinic-info">
-                    <h1>AURELIA DENTAL CLINIC - RECEPTIONIST</h1>
-                    <p>Front Desk Management</p>
+                    <h1>AURELIA DENTAL CLINIC - DR JADE</h1>
+                    <p>YOUR SMILE, OUR MASTERPIECE</p>
                 </div>
             </div>
         </div>
@@ -20,51 +20,67 @@
         <div class="navbar-center">
             <div class="page-title-section">
                 <h2 class="page-title">Receptionist Dashboard</h2>
-                <p class="page-subtitle">Manage appointments and patient check-ins</p>
+                <p class="page-subtitle">Front Desk Operations</p>
             </div>
         </div>
 
         <div class="navbar-right">
             <div class="nav-tabs">
-                <NavLink href="/receptionist-dashboard" class="nav-tab" ActiveClass="active" Match="NavLinkMatch.All">
-                    <span class="nav-icon">??</span>
+                <NavLink href="/receptionist/dashboard" class="nav-tab" ActiveClass="active" Match="NavLinkMatch.All">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
                     <span>Overview</span>
                 </NavLink>
 
-                <NavLink href="/receptionist-calendar" class="nav-tab" ActiveClass="active">
-                    <span class="nav-icon">??</span>
+                <NavLink href="/receptionist/calendar" class="nav-tab" ActiveClass="active">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
                     <span>Calendar</span>
                 </NavLink>
 
-                <NavLink href="/receptionist-patients" class="nav-tab" ActiveClass="active">
-                    <span class="nav-icon">??</span>
+                <NavLink href="/receptionist/patients" class="nav-tab" ActiveClass="active">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
                     <span>Patients</span>
                 </NavLink>
 
-                <NavLink href="/receptionist-messages" class="nav-tab" ActiveClass="active">
-                    <span class="nav-icon">??</span>
+                <NavLink href="/receptionist/messages" class="nav-tab" ActiveClass="active">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
                     <span>Messages</span>
                 </NavLink>
-
             </div>
 
             <div class="navbar-actions">
                 <button class="icon-button" aria-label="Notifications">
-                    ??
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
                     <span class="notification-dot"></span>
                 </button>
 
                 <button class="settings-btn" title="Settings" aria-label="Open settings">
-                    <span class="settings-icon">??</span>
+                    <span class="settings-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6m-9-9h6m6 0h6m-15.364 6.364l4.243-4.243m6.364 0l4.243 4.243M6.343 6.343l4.243 4.243m6.364 0l4.243-4.243"></path>
+                        </svg>
+                    </span>
                 </button>
-
-                <div class="user-profile">
-                    <div class="user-avatar">RS</div>
-                    <div class="user-info">
-                        <div class="user-name">Receptionist</div>
-                        <div class="user-role">Front Desk</div>
-                    </div>
-                </div>
             </div>
         </div>
     </header>
@@ -73,86 +89,210 @@
     <main class="dashboard-main">
         <!-- Stats Grid -->
         <div class="stats-grid">
-            <div class="stat-card blue-border">
-                <div class="stat-content">
-                    <div class="stat-info">
-                        <p class="stat-label">Today's Appointments</p>
-                        <h3 class="stat-value">12</h3>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <p class="stat-label">Today's Appointments</p>
+                    <div class="stat-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
                     </div>
-                    <div class="stat-icon blue">??</div>
                 </div>
+                <h3 class="stat-value">5</h3>
             </div>
 
-            <div class="stat-card yellow-border">
-                <div class="stat-content">
-                    <div class="stat-info">
-                        <p class="stat-label">Checked In</p>
-                        <h3 class="stat-value">5</h3>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <p class="stat-label">In Waiting Room</p>
+                    <div class="stat-icon yellow">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
                     </div>
-                    <div class="stat-icon yellow">?</div>
                 </div>
+                <h3 class="stat-value">1</h3>
             </div>
 
-            <div class="stat-card green-border">
-                <div class="stat-content">
-                    <div class="stat-info">
-                        <p class="stat-label">In Queue</p>
-                        <h3 class="stat-value">3</h3>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <p class="stat-label">In Progress</p>
+                    <div class="stat-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
                     </div>
-                    <div class="stat-icon green">??</div>
                 </div>
+                <h3 class="stat-value">1</h3>
             </div>
 
-            <div class="stat-card cyan-border">
-                <div class="stat-content">
-                    <div class="stat-info">
-                        <p class="stat-label">Pending</p>
-                        <h3 class="stat-value">4</h3>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <p class="stat-label">Confirmed Today</p>
+                    <div class="stat-icon cyan">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
                     </div>
-                    <div class="stat-icon cyan">?</div>
                 </div>
+                <h3 class="stat-value">3</h3>
             </div>
         </div>
 
         <!-- Quick Actions -->
         <section class="quick-actions-section">
-            <h3 class="section-title">Quick Actions</h3>
+            <div class="section-header-simple">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <h3>Quick Actions</h3>
+            </div>
             <div class="quick-actions-grid">
-                <button class="action-button blue" @onclick='() => Navigation.NavigateTo("/receptionist/appointments")'>New Appointment</button>
-                <button class="action-button teal" @onclick='() => Navigation.NavigateTo("/receptionist/patients")'>Register Patient</button>
-                <button class="action-button purple" @onclick='() => Navigation.NavigateTo("/receptionist/queue")'>Check-in Patient</button>
+                <button class="action-button blue" @onclick='() => Navigation.NavigateTo("/receptionist/calendar")'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Schedule Appointment
+                </button>
+                <button class="action-button teal" @onclick='() => Navigation.NavigateTo("/receptionist/patients")'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Register Patient
+                </button>
+                <button class="action-button purple" @onclick='() => Navigation.NavigateTo("/receptionist/patients")'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Waiting Room
+                </button>
             </div>
         </section>
 
-        <!-- Appointments + Queue -->
-        <div class="content-grid">
-            <section class="appointments-section">
-                <div class="section-header">
-                    <h3 class="section-title">Today's Appointments</h3>
-                    <span class="section-date">@DateTime.Now.ToString("MMMM dd, yyyy")</span>
+        <!-- Today's Appointments -->
+        <section class="appointments-section">
+            <div class="section-header-appointments">
+                <div class="section-title-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h3>Today's Appointments</h3>
                 </div>
+                <span class="section-date">Monday, September 15, 2025</span>
+            </div>
 
-                <div class="appointments-list">
-                    <div class="appointment-card">
-                        <div class="appointment-time-badge">09:00 AM</div>
-                        <div class="appointment-details">
-                            <div class="appointment-header"><h4 class="patient-name">Maria Rodriguez</h4><span class="status-badge confirmed">Confirmed</span></div>
-                            <p class="appointment-service">Regular Checkup &amp; Cleaning</p>
-                        </div>
-                        <div class="appointment-actions"><button class="action-icon-btn">?</button></div>
+            <div class="appointments-list">
+                <!-- Appointment 1 -->
+                <div class="appointment-card">
+                    <div class="appointment-time">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>9:00 AM</span>
                     </div>
+                    <div class="appointment-details">
+                        <div class="appointment-header">
+                            <h4 class="patient-name">Maria Rodriguez</h4>
+                            <span class="status-badge waiting">Waiting</span>
+                        </div>
+                        <p class="appointment-service">Teeth Cleaning</p>
+                        <div class="appointment-meta">
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span>Dr. Jade</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                                <span>+63 912 345 6789</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span>60 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="action-icon-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                    </button>
                 </div>
-            </section>
 
-            <section class="panel">
-                <div class="panel-header">
-                    <div class="panel-title">Patient Queue</div>
-                    <a class="view-all-link" href="/receptionist/queue">Manage</a>
+                <!-- Appointment 2 -->
+                <div class="appointment-card">
+                    <div class="appointment-time">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>10:30 AM</span>
+                    </div>
+                    <div class="appointment-details">
+                        <div class="appointment-header">
+                            <h4 class="patient-name">Juan Santos</h4>
+                            <span class="status-badge in-progress">In Progress</span>
+                        </div>
+                        <p class="appointment-service">Root Canal Follow-up</p>
+                        <div class="appointment-meta">
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span>Dr. Jade</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                                <span>+63 923 456 7890</span>
+                            </div>
+                            <div class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span>45 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="action-icon-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                    </button>
                 </div>
-                <div class="queue-list">
-                    <div class="queue-item"><div class="queue-number">1</div><div class="queue-details">John Doe • <span class="status-badge waiting">Waiting</span></div></div>
-                </div>
-            </section>
-        </div>
+            </div>
+        </section>
     </main>
 </div>
