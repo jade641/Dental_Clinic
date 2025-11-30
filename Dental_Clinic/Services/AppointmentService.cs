@@ -561,17 +561,15 @@ public async Task<(bool Success, string Message)> CancelAppointmentAsync(int app
   string query = @"
       UPDATE Appointments
      SET Status = 'Cancelled',
-       CanceledBy = @CanceledBy,
-         CancelationReason = @Reason,
-          ModifiedAt = @ModifiedAt
+       CancellationReason = @Reason,
+          ModifiedDate = @ModifiedDate
             WHERE AppointmentID = @AppointmentID";
 
   var parameters = new[]
     {
     new SqlParameter("@AppointmentID", appointmentId),
-          new SqlParameter("@CanceledBy", canceledBy),
-      new SqlParameter("@Reason", reason ?? (object)DBNull.Value),
-            new SqlParameter("@ModifiedAt", DateTime.Now)
+          new SqlParameter("@Reason", reason ?? (object)DBNull.Value),
+            new SqlParameter("@ModifiedDate", DateTime.Now)
       };
 
    int rowsAffected;
