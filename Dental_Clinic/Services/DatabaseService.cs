@@ -479,7 +479,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
  using (var connection = new SqlConnection(_onlineConnectionString))
  {
      await connection.OpenAsync();
-           using (var command = new SqlCommand(query, connection))
+ using (var command = new SqlCommand(query, connection))
    {
      if (parameters != null)
    {
@@ -490,6 +490,23 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
       }
  }
 }
+
+   public async Task<object> ExecuteScalarAsync(string query, SqlParameter[] parameters = null)
+     {
+    using (var connection = new SqlConnection(_onlineConnectionString))
+       {
+     await connection.OpenAsync();
+    using (var command = new SqlCommand(query, connection))
+       {
+         if (parameters != null)
+        {
+      command.Parameters.AddRange(parameters);
+     }
+
+           return await command.ExecuteScalarAsync();
+       }
+            }
+    }
 
    #endregion
 

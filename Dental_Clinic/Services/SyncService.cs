@@ -42,28 +42,40 @@ var result = new SyncResult();
       ReportProgress("Starting full sync download...", 0);
 
        // Sync Users
-         ReportProgress("Syncing users...", 10);
-       await SyncTableDownloadAsync("Users", "UserID");
+       ReportProgress("Syncing users...", 5);
+  await SyncTableDownloadAsync("Users", "UserID");
 
    // Sync Admin
- ReportProgress("Syncing admin records...", 30);
+ ReportProgress("Syncing admin records...", 15);
  await SyncTableDownloadAsync("Admin", "AdminID");
 
-         // Sync Receptionist
-   ReportProgress("Syncing receptionist records...", 50);
-     await SyncTableDownloadAsync("Receptionist", "ReceptionistID");
+  // Sync Receptionist
+   ReportProgress("Syncing receptionist records...", 25);
+      await SyncTableDownloadAsync("Receptionist", "ReceptionistID");
 
-             // Sync Dentist
-   ReportProgress("Syncing dentist records...", 70);
-                await SyncTableDownloadAsync("Dentist", "DentistID");
+        // Sync Dentist
+   ReportProgress("Syncing dentist records...", 35);
+              await SyncTableDownloadAsync("Dentist", "DentistID");
 
-        // Sync Patient
-     ReportProgress("Syncing patient records...", 90);
-           await SyncTableDownloadAsync("Patient", "PatientID");
+  // Sync Patient
+     ReportProgress("Syncing patient records...", 45);
+       await SyncTableDownloadAsync("Patient", "PatientID");
 
-         ReportProgress("Sync completed successfully!", 100);
+            // Sync ServiceCategory
+    ReportProgress("Syncing service categories...", 55);
+         await SyncTableDownloadAsync("ServiceCategory", "CategoryID");
+
+  // Sync Services
+          ReportProgress("Syncing services...", 70);
+            await SyncTableDownloadAsync("Services", "ServiceID");
+
+    // Sync Appointments
+       ReportProgress("Syncing appointments...", 85);
+ await SyncTableDownloadAsync("Appointments", "AppointmentID");
+
+    ReportProgress("Sync completed successfully!", 100);
         result.Success = true;
-             result.Message = "All data synced successfully";
+     result.Message = "All data synced successfully";
       }
        catch (Exception ex)
  {
@@ -284,14 +296,17 @@ await ProcessSyncChange(tableName, recordId, operation);
         private string GetPrimaryKeyColumn(string tableName)
         {
    return tableName switch
-            {
-      "Users" => "UserID",
+     {
+    "Users" => "UserID",
   "Admin" => "AdminID",
       "Receptionist" => "ReceptionistID",
            "Dentist" => "DentistID",
 "Patient" => "PatientID",
-            _ => throw new ArgumentException($"Unknown table: {tableName}")
-      };
+            "ServiceCategory" => "CategoryID",
+   "Services" => "ServiceID",
+  "Appointments" => "AppointmentID",
+     _ => throw new ArgumentException($"Unknown table: {tableName}")
+    };
   }
 
   #endregion

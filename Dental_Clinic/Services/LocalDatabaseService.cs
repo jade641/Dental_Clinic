@@ -86,55 +86,55 @@ namespace Dental_Clinic.Services
  UserName NVARCHAR(100) NOT NULL UNIQUE,
             Password NVARCHAR(100) NOT NULL,
        FirstName NVARCHAR(100),
-            LastName NVARCHAR(100),
+       LastName NVARCHAR(100),
       PhoneNumber NVARCHAR(50),
-             Age INT,
+      Age INT,
         Sex NVARCHAR(20),
        Email NVARCHAR(100) NOT NULL,
       IsSynced BIT DEFAULT 0,
-         LastModified DATETIME DEFAULT GETDATE()
-          );
-           END
+ LastModified DATETIME DEFAULT GETDATE()
+     );
+  END
 
-           -- Admin Table
-         IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Admin')
+        -- Admin Table
+  IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Admin')
       BEGIN
            CREATE TABLE Admin (
-         AdminID INT PRIMARY KEY IDENTITY(1,1),
-        UserID INT NOT NULL,
+    AdminID INT PRIMARY KEY IDENTITY(1,1),
+   UserID INT NOT NULL,
           IsSynced BIT DEFAULT 0,
     CONSTRAINT FK_Admin_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
   );
          END
 
-          -- Receptionist Table
+      -- Receptionist Table
        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Receptionist')
         BEGIN
             CREATE TABLE Receptionist (
   ReceptionistID INT PRIMARY KEY IDENTITY(1,1),
-              UserID INT NOT NULL,
+   UserID INT NOT NULL,
         IsSynced BIT DEFAULT 0,
-         CONSTRAINT FK_Receptionist_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
+CONSTRAINT FK_Receptionist_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
               );
  END
 
     -- Dentist Table
-        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Dentist')
+     IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Dentist')
      BEGIN
               CREATE TABLE Dentist (
-             DentistID INT PRIMARY KEY IDENTITY(1,1),
+ DentistID INT PRIMARY KEY IDENTITY(1,1),
        UserID INT NOT NULL,
-              Specialization NVARCHAR(100),
-      IsAvailable BIT,
+    Specialization NVARCHAR(100),
+  IsAvailable BIT,
         ProfileImg NVARCHAR(MAX),
     IsSynced BIT DEFAULT 0,
 CONSTRAINT FK_Dentist_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
      );
           END
 
-          -- Patient Table
-          IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Patient')
-           BEGIN
+        -- Patient Table
+     IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Patient')
+        BEGIN
              CREATE TABLE Patient (
           PatientID INT PRIMARY KEY IDENTITY(1,1),
       UserID INT NOT NULL,
@@ -149,22 +149,74 @@ CONSTRAINT FK_Dentist_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
       InsuranceProvider NVARCHAR(100),
 InsurancePolicyNumber NVARCHAR(100),
             IsSynced BIT DEFAULT 0,
-                CONSTRAINT FK_Patient_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
+ CONSTRAINT FK_Patient_Users FOREIGN KEY (UserID) REFERENCES Users(UserID)
+   );
+ END
+
+           -- ServiceCategory Table
+        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ServiceCategory')
+ BEGIN
+     CREATE TABLE ServiceCategory (
+           CategoryID INT PRIMARY KEY IDENTITY(1,1),
+   CategoryName NVARCHAR(100) NOT NULL,
+      Description NVARCHAR(500),
+        IsSynced BIT DEFAULT 0
+         );
+       END
+
+     -- Services Table
+        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Services')
+        BEGIN
+ CREATE TABLE Services (
+ ServiceID INT PRIMARY KEY IDENTITY(1,1),
+  CategoryID INT,
+    ServiceName NVARCHAR(200) NOT NULL,
+      Description NVARCHAR(500),
+     Duration INT NOT NULL,
+      IsActive BIT DEFAULT 1,
+  IsSynced BIT DEFAULT 0,
+     CONSTRAINT FK_Services_Category FOREIGN KEY (CategoryID) REFERENCES ServiceCategory(CategoryID)
+ );
+       END
+
+       -- Appointments Table
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appointments')
+    BEGIN
+           CREATE TABLE Appointments (
+       AppointmentID INT PRIMARY KEY IDENTITY(1,1),
+        PatientID INT NOT NULL,
+   DentistID INT,
+     ServiceID INT,
+     EventID INT,
+     AppointmentDate DATE NOT NULL,
+  StartTime TIME,
+        EndTime TIME,
+     Status NVARCHAR(50) DEFAULT 'Scheduled',
+     Notes NVARCHAR(MAX),
+     CreatedAt DATETIME DEFAULT GETDATE(),
+     CanceledBy INT,
+            CancelationReason NVARCHAR(500),
+            NoShowReason NVARCHAR(500),
+         ModifiedAt DATETIME,
+         IsSynced BIT DEFAULT 0,
+    CONSTRAINT FK_Appointments_Patient FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
+     CONSTRAINT FK_Appointments_Dentist FOREIGN KEY (DentistID) REFERENCES Dentist(DentistID),
+      CONSTRAINT FK_Appointments_Service FOREIGN KEY (ServiceID) REFERENCES Services(ServiceID)
    );
  END
 
            -- Sync Log Table (track what needs to be synced)
-               IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SyncLog')
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SyncLog')
     BEGIN
-         CREATE TABLE SyncLog (
-                 SyncID INT PRIMARY KEY IDENTITY(1,1),
+CREATE TABLE SyncLog (
+       SyncID INT PRIMARY KEY IDENTITY(1,1),
             TableName NVARCHAR(100) NOT NULL,
     RecordID INT NOT NULL,
     Operation NVARCHAR(20) NOT NULL, -- INSERT, UPDATE, DELETE
-      SyncStatus NVARCHAR(20) DEFAULT 'Pending', -- Pending, Completed, Failed
+    SyncStatus NVARCHAR(20) DEFAULT 'Pending', -- Pending, Completed, Failed
         CreatedAt DATETIME DEFAULT GETDATE(),
-           SyncedAt DATETIME NULL,
-      ErrorMessage NVARCHAR(MAX) NULL
+    SyncedAt DATETIME NULL,
+   ErrorMessage NVARCHAR(MAX) NULL
       );
          END";
 

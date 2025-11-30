@@ -681,6 +681,10 @@
     font-weight: 700;
     color: #0d6efd;
     margin-bottom: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
 }
 
 .btn-select-service {
@@ -749,6 +753,7 @@
     background: white;
     border-radius: 8px;
     padding: 12px;
+    overflow: hidden; /* Prevent overflow */
 }
 
 .calendar-weekdays {
@@ -769,39 +774,51 @@
 .calendar-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
     gap: 4px;
+    min-height: 300px;
+    max-height: 300px;
 }
 
 .calendar-day {
     aspect-ratio: 1;
+    min-height: 45px;
+    max-height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    cursor: pointer;
+  cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
     transition: all 0.2s ease;
+    position: relative;
+    background: white;
+    border: 1px solid #e5e7eb;
 }
 
-    .calendar-day:not(.disabled):not(.other-month):hover {
-        background: #eff6ff;
-        color: #0d6efd;
-    }
+.calendar-day:hover:not(.disabled):not(.other-month) {
+    background: #f0f9ff;
+    border-color: #0d6efd;
+    transform: translateY(-2px);
+}
 
-    .calendar-day.selected {
-        background: #0d6efd;
-        color: white;
-        font-weight: 600;
-    }
+.calendar-day.selected {
+    background: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
 
-    .calendar-day.other-month {
-        color: #cbd5e1;
-    }
+.calendar-day.disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
 
-    .calendar-day.disabled {
-        color: #e5e7eb;
-        cursor: not-allowed;
-    }
+.calendar-day.other-month {
+    color: #d1d5db;
+    background: #fafafa;
+}
 
 /* Time Slots */
 .timeslots-title {
@@ -825,64 +842,141 @@
     overflow-y: auto;
 }
 
-.timeslot {
+/* Time Slots Section */
+.timeslots-section {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.timeslots-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+ margin-bottom: 8px;
+}
+
+.timeslots-date {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+/* Dentist Filter */
+.dentist-filter {
+ margin-bottom: 24px;
+  padding: 16px;
+ background: #f8fafc;
+  border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-label {
+    display: block;
+  font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 12px;
+}
+
+.filter-buttons {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px;
-    background: white;
-    border: 2px solid #e5e7eb;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-btn {
+padding: 8px 16px;
+ background: white;
+    border: 2px solid #e2e8f0;
     border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-    .timeslot:not(.booked):hover {
-        border-color: #3b82f6;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-    }
+.filter-btn:hover {
+  border-color: #0d6efd;
+    color: #0d6efd;
+    background: #eff6ff;
+}
 
-    .timeslot.selected {
-        border-color: #0d6efd;
-        background: #eff6ff;
-    }
+.filter-btn.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
 
-    .timeslot.booked {
-        background: #f3f4f6;
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
+.timeslots-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Time Slot Cards */
+.timeslot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeslot:hover:not(.booked) {
+    border-color: #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.1);
+    transform: translateY(-2px);
+}
+
+.timeslot.selected {
+border-color: #0d6efd;
+    background: #eff6ff;
+}
+
+.timeslot.booked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #fafafa;
+}
 
 .timeslot-info {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .timeslot-time {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
-    color: #0f172a;
+    color: #1e293b;
 }
 
 .timeslot-doctor {
-    font-size: 13px;
+    font-size: 14px;
     color: #64748b;
 }
 
 .timeslot-status {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 16px;
 }
 
 .timeslot:not(.booked) .timeslot-status {
+    color: #059669;
     background: #d1fae5;
-    color: #065f46;
 }
 
 .timeslot.booked .timeslot-status {
+    color: #dc2626;
     background: #fee2e2;
-    color: #991b1b;
 }
 
 /* Confirmation */
@@ -1113,4 +1207,52 @@
     .search-box {
         display: none;
     }
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+}
+
+.loading-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Alert Messages */
+.alert {
+    display: flex;
+ align-items: center;
+    gap: 12px;
+ padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alert svg {
+ flex-shrink: 0;
+}
+
+.alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.alert-error svg {
+    stroke: #ef4444;
+}
+
+.alert-success svg {
+    stroke: #10b981;
 }
