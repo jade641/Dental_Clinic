@@ -1,262 +1,291 @@
 ﻿@page "/appointments"
+@layout Dental_Clinic.Components.Layout.PatientLayout
 @using Dental_Clinic.Models
 @using Dental_Clinic.Services
 
+<link href="css/patientdashboard.css" rel="stylesheet" />
+
+<header class="top-navbar">
+    <div class="navbar-left">
+        <div class="clinic-brand">
+            <div class="clinic-logo">
+                <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Logo" />
+            </div>
+            <div class="clinic-info">
+                <h1 class="clinic-name">AURELIA DENTAL CLINIC - DR. JADE</h1>
+                <p class="clinic-tagline">YOUR SMILE, OUR MASTERPIECE</p>
+            </div>
+        </div>
+        <nav class="nav-tabs">
+            <NavLink href="/dashboard" class="nav-tab" Match="NavLinkMatch.All">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Overview
+            </NavLink>
+            <NavLink href="/appointments" class="nav-tab">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Appointments
+            </NavLink>
+            <NavLink href="/history" class="nav-tab">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                History
+            </NavLink>
+        </nav>
+    </div>
+    <div class="navbar-right">
+        <div class="search-bar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <input type="text" placeholder="Search services, appointments..." />
+        </div>
+        <button class="icon-button" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span class="notification-badge">2</span>
+        </button>
+        <div class="user-profile">
+            <div class="user-avatar">@((string.IsNullOrWhiteSpace(patientName) ? "P" : patientName.Substring(0,1).ToUpper()))</div>
+            <div class="user-details">
+                <span class="user-name">@patientName</span>
+                <span class="user-role">Patient Portal</span>
+            </div>
+        </div>
+    </div>
+</header>
+
 <link href="css/PatientAppointment.css" rel="stylesheet" />
 
-<div class="appointments-page">
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/dashboard" class="navbar-brand">
-            <div class="navbar-logo">
-       <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Logo" />
-      </div>
-     <div class="navbar-brand-text">
-     <h1>AURELIA DENTAL CLINIC</h1>
-     <p>YOUR SMILE. OUR MASTERPIECE</p>
-   </div>
-      </a>
-            <div class="navbar-menu">
-             <ul class="nav-links">
-        <li><a href="/dashboard" class="nav-link">Overview</a></li>
-       <li><a href="/appointments" class="nav-link active">Appointments</a></li>
-      <li><a href="/history" class="nav-link">History</a></li>
-            <li><a href="/billing" class="nav-link">Billing</a></li>
-      </ul>
-        <div class="navbar-actions">
-               <div class="search-box">
-  <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-  <circle cx="11" cy="11" r="8"></circle>
-      <path d="m21 21-4.35-4.35"></path>
-     </svg>
-               <input type="text" placeholder="Search services, appointments..." />
-             </div>
-                </div>
-     </div>
-        </div>
-    </nav>
-
+<div class="dashboard-inner">
     <div class="appointments-content">
         @if (!showBookingModal)
         {
             <div class="page-header">
-        <h1 class="page-title">My Appointments</h1>
+                <h1 class="page-title">My Appointments</h1>
                 <button class="btn-book-appointment" @onclick="BookNewAppointment"><span class="btn-icon">➕</span>Book New Appointment</button>
-      </div>
-   <section class="appointments-section">
-   <h2 class="section-title">Upcoming Appointments</h2>
-  @if (isLoading)
+            </div>
+            <section class="appointments-section">
+                <h2 class="section-title">Upcoming Appointments</h2>
+                @if (isLoading)
                 {
-      <div class="loading-state"><p>Loading appointments...</p></div>
-     }
-  else
+                    <div class="loading-state"><p>Loading appointments...</p></div>
+                }
+                else
                 {
-        <div class="appointments-list">
-         @if (appointments.Any())
-         {
-      @foreach (var a in appointments.Where(a => a.AppointmentDate >= DateTime.Today))
-   {
-     <div class="appointment-card">
-   <div class="appointment-favorite"><span class="heart-icon">❤️</span></div>
-     <div class="appointment-details">
-             <h3 class="appointment-title">@a.ServiceName</h3>
-   <p class="appointment-doctor">@a.DentistName</p>
-         <div class="appointment-meta">
-   <div class="meta-item"><span class="meta-icon">📅</span><span>@a.AppointmentDate.ToString("MMMM dd, yyyy")</span></div>
-    @if (a.StartTime.HasValue)
-        {
-        <div class="meta-item"><span class="meta-icon">🕐</span><span>@FormatTime(a.StartTime.Value)</span></div>
-      }
-      <div class="meta-item"><span class="meta-icon">📍</span><span>Main Clinic</span></div>
-          </div>
-               </div>
-  <div class="appointment-actions">
-       <span class="status-badge status-@a.Status.ToLower()">@a.Status</span>
-        <button class="btn-reschedule" @onclick="() => RescheduleAppointment(a.AppointmentID)">Reschedule</button>
-            <button class="btn-reschedule" style="border-color:#ef4444;color:#ef4444" @onclick="() => OpenCancelModal(a.AppointmentID)">Cancel</button>
-       </div>
-               </div>
-          }
-      }
-            else
- {
-             <div class="empty-state"><h4>No appointments scheduled</h4><p>Book your first appointment to get started</p></div>
-}
-   </div>
-  }
+                    <div class="appointments-list">
+                        @if (appointments.Any())
+                        {
+                            @foreach (var a in appointments.Where(a => a.AppointmentDate >= DateTime.Today))
+                            {
+                                <div class="appointment-card">
+                                    <div class="appointment-favorite"><span class="heart-icon">❤️</span></div>
+                                    <div class="appointment-details">
+                                        <h3 class="appointment-title">@a.ServiceName</h3>
+                                        <p class="appointment-doctor">@a.DentistName</p>
+                                        <div class="appointment-meta">
+                                            <div class="meta-item"><span class="meta-icon">📅</span><span>@a.AppointmentDate.ToString("MMMM dd, yyyy")</span></div>
+                                            @if (a.StartTime.HasValue)
+                                            {
+                                                <div class="meta-item"><span class="meta-icon">🕐</span><span>@FormatTime(a.StartTime.Value)</span></div>
+                                            }
+                                            <div class="meta-item"><span class="meta-icon">📍</span><span>Main Clinic</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="appointment-actions">
+                                        <span class="status-badge status-@((a.Status ?? string.Empty).ToLower())">@(a.Status ?? "")</span>
+                                        <button class="btn-reschedule" @onclick="() => RescheduleAppointment(a.AppointmentID)">Reschedule</button>
+                                        <button class="btn-reschedule" style="border-color:#ef4444;color:#ef4444" @onclick="() => OpenCancelModal(a.AppointmentID)">Cancel</button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state"><h4>No appointments scheduled</h4><p>Book your first appointment to get started</p></div>
+                        }
+                    </div>
+                }
             </section>
-   }
+        }
         else
         {
-   <div class="booking-modal-overlay" @onclick="CloseBookingModal">
-<div class="booking-modal" @onclick:stopPropagation="true">
-          <div class="step-indicator">
-       <div class="step @(currentStep >=1 ? "active" : "") @(currentStep >1 ? "completed" : "")">
-<div class="step-number">1</div>
-            <div class="step-label">Service</div>
-             </div>
-     <div class="step-line @(currentStep >1 ? "completed" : "")"></div>
-     <div class="step @(currentStep >=2 ? "active" : "") @(currentStep >2 ? "completed" : "")">
-      <div class="step-number">2</div>
-       <div class="step-label">Date & Time</div>
-    </div>
-   <div class="step-line @(currentStep >2 ? "completed" : "")"></div>
-  <div class="step @(currentStep >=3 ? "active" : "")">
-             <div class="step-number">3</div>
-          <div class="step-label">Information</div>
-  </div>
-     </div>
-   <div class="booking-body">
-        @if (!string.IsNullOrEmpty(errorMessage))
-       {
-      <div class="alert alert-error"><span>@errorMessage</span></div>
-          }
-           @if (!string.IsNullOrEmpty(successMessage))
-       {
-  <div class="alert alert-success"><span>@successMessage</span></div>
- }
+            <div class="booking-modal-overlay" @onclick="CloseBookingModal">
+                <div class="booking-modal" @onclick:stopPropagation="true">
+                    <div class="step-indicator">
+                        <div class="step @(currentStep >=1 ? "active" : "") @(currentStep >1 ? "completed" : "")">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Service</div>
+                        </div>
+                        <div class="step-line @(currentStep >1 ? "completed" : "")"></div>
+                        <div class="step @(currentStep >=2 ? "active" : "") @(currentStep >2 ? "completed" : "")">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Date & Time</div>
+                        </div>
+                        <div class="step-line @(currentStep >2 ? "completed" : "")"></div>
+                        <div class="step @(currentStep >=3 ? "active" : "")">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Information</div>
+                        </div>
+                    </div>
+                    <div class="booking-body">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-error"><span>@errorMessage</span></div>
+                        }
+                        @if (!string.IsNullOrEmpty(successMessage))
+                        {
+                            <div class="alert alert-success"><span>@successMessage</span></div>
+                        }
 
-         @if (currentStep == 1)
-      {
-     <div class="booking-step">
-         <h2 class="booking-title">Choose Your Service</h2>
-      <p class="booking-subtitle">Select a dental service</p>
-    @if (isLoading)
-      {
-       <div class="loading-state"><p>Loading services...</p></div>
-               }
-          else if (!services.Any())
-         {
-       <div class="empty-state"><h4>No Services Available</h4><p>Please contact the clinic.</p></div>
-               }
-  else
-        {
-        <div class="services-grid">
-        @foreach (var service in services)
-      {
-     <div class="service-card @(selectedService?.ServiceID == service.ServiceID ? "selected" : "")" @onclick="() => SelectService(service)">
-              <h3 class="service-name">@service.ServiceName</h3>
-       <p class="service-description">@service.Description</p>
-   <div class="service-info">
-         <span class="service-duration">⏱️ @service.Duration mins</span>
-          <span class="service-type">@service.CategoryName</span>
-</div>
-        <div class="service-price">₱@service.Cost.ToString("N2")</div>
-       <button class="btn-select-service">Select</button>
-   </div>
-        }
-         </div>
-   }
-        </div>
-       }
-      @if (currentStep == 2)
-                {
-      <div class="booking-step">
-               <h2 class="booking-title">Select Date & Time</h2>
-        <p class="booking-subtitle">Choose a date and time for @selectedService?.ServiceName</p>
-<div class="datetime-container">
-        <div class="calendar-section">
-         <div class="calendar-header">
-    <button class="btn-calendar-nav" @onclick="PreviousMonth">‹</button>
- <span class="calendar-month">@currentMonth.ToString("MMMM yyyy")</span>
-    <button class="btn-calendar-nav" @onclick="NextMonth">›</button>
-  </div>
-         <div class="calendar-grid">
-      <div class="calendar-weekdays">
-           <div class="weekday">Sun</div>
-    <div class="weekday">Mon</div>
-                   <div class="weekday">Tue</div>
-      <div class="weekday">Wed</div>
-        <div class="weekday">Thu</div>
-  <div class="weekday">Fri</div>
-          <div class="weekday">Sat</div>
-       </div>
-        <div class="calendar-days">
-     @foreach (var day in GetCalendarDays())
-         {
-       <div class="calendar-day @(day.IsCurrentMonth ? "" : "other-month") @(day.Date == selectedDate ? "selected" : "") @(day.Date < DateTime.Today ? "disabled" : "")" @onclick="() => SelectDate(day.Date)">@day.Date.Day</div>
-    }
-       </div>
-      </div>
-      </div>
-            <div class="timeslots-section">
-                    <h3 class="timeslots-title">Available Times</h3>
-   <p class="timeslots-date">@selectedDate.ToString("dddd, MMMM dd, yyyy")</p>
-    @if (availableDentists.Count > 1)
-      {
-   <div class="dentist-filter">
-             <label class="filter-label">Filter by Dentist:</label>
-   <div class="filter-buttons">
-        <button class="filter-btn @(selectedDentistFilter == null ? "active" : "")" @onclick="() => FilterByDentist(null)">All</button>
-  @foreach (var d in availableDentists)
-           {
-      <button class="filter-btn @(selectedDentistFilter == d.DentistID ? "active" : "")" @onclick="() => FilterByDentist(d.DentistID)">@d.DentistName.Replace("Dr. ", "")</button>
-      }
-  </div>
-</div>
- }
-      @if (isLoading)
-        {
-       <div class="loading-state"><p>Loading available slots...</p></div>
-          }
-     else
-        {
-          <div class="timeslots-list">
-       @if (GetFilteredTimeSlots().Any())
-       {
-    @foreach (var slot in GetFilteredTimeSlots())
-         {
-            <div class="timeslot @(slot.IsAvailable ? "" : "booked") @(selectedTimeSlot?.StartTime == slot.StartTime && selectedTimeSlot?.DentistID == slot.DentistID ? "selected" : "")" @onclick="() => SelectTimeSlot(slot)">
-   <div class="timeslot-info">
-         <div class="timeslot-time">@slot.FormattedTime</div>
-     <div class="timeslot-doctor">@slot.DentistName</div>
-   </div>
-    <span class="timeslot-status">@(slot.IsAvailable ? "Available" : "Booked")</span>
-</div>
-         }
-      }
-     else
-           {
-     <p style="text-align:center;color:#64748b;">No available time slots for this date</p>
- }
-       </div>
-   }
-     </div>
-   </div>
- </div>
-                }
- @if (currentStep == 3)
-           {
-           <div class="booking-step">
- <h2 class="booking-title">Confirm Your Information</h2>
-  <p class="booking-subtitle">Review and confirm details</p>
-                <div class="confirmation-container">
-  <div class="appointment-summary">
-     <h3>Appointment Summary</h3>
-         <div class="summary-item"><span class="summary-label">Service:</span><span class="summary-value">@selectedService?.ServiceName</span></div>
-    <div class="summary-item"><span class="summary-label">Date:</span><span class="summary-value">@selectedDate.ToString("MMMM dd, yyyy")</span></div>
-  <div class="summary-item"><span class="summary-label">Time:</span><span class="summary-value">@selectedTimeSlot?.FormattedTime</span></div>
-   <div class="summary-item"><span class="summary-label">Dentist:</span><span class="summary-value">@selectedTimeSlot?.DentistName</span></div>
-                    <div class="summary-item"><span class="summary-label">Duration:</span><span class="summary-value">@selectedService?.Duration mins</span></div>
- <div class="summary-item total"><span class="summary-label">Price:</span><span class="summary-value">₱@selectedService?.Cost.ToString("N2")</span></div>
+                        @if (currentStep == 1)
+                        {
+                            <div class="booking-step">
+                                <h2 class="booking-title">Choose Your Service</h2>
+                                <p class="booking-subtitle">Select a dental service</p>
+                                @if (isLoading)
+                                {
+                                    <div class="loading-state"><p>Loading services...</p></div>
+                                }
+                                else if (!services.Any())
+                                {
+                                    <div class="empty-state"><h4>No Services Available</h4><p>Please contact the clinic.</p></div>
+                                }
+                                else
+                                {
+                                    <div class="services-grid">
+                                        @foreach (var service in services)
+                                        {
+                                            <div class="service-card @(selectedService?.ServiceID == service.ServiceID ? "selected" : "")" @onclick="() => SelectService(service)">
+                                                <h3 class="service-name">@service.ServiceName</h3>
+                                                <p class="service-description">@service.Description</p>
+                                                <div class="service-info">
+                                                    <span class="service-duration">⏱️ @service.Duration mins</span>
+                                                    <span class="service-type">@service.CategoryName</span>
+                                                </div>
+                                                <div class="service-price">₱@service.Cost.ToString("N2")</div>
+                                                <button class="btn-select-service">Select</button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        @if (currentStep == 2)
+                        {
+                            <div class="booking-step">
+                                <h2 class="booking-title">Select Date & Time</h2>
+                                <p class="booking-subtitle">Choose a date and time for @selectedService?.ServiceName</p>
+                                <div class="datetime-container">
+                                    <div class="calendar-section">
+                                        <div class="calendar-header">
+                                            <button class="btn-calendar-nav" @onclick="PreviousMonth">‹</button>
+                                            <span class="calendar-month">@currentMonth.ToString("MMMM yyyy")</span>
+                                            <button class="btn-calendar-nav" @onclick="NextMonth">›</button>
+                                        </div>
+                                        <div class="calendar-grid">
+                                            <div class="calendar-weekdays">
+                                                <div class="weekday">Sun</div>
+                                                <div class="weekday">Mon</div>
+                                                <div class="weekday">Tue</div>
+                                                <div class="weekday">Wed</div>
+                                                <div class="weekday">Thu</div>
+                                                <div class="weekday">Fri</div>
+                                                <div class="weekday">Sat</div>
+                                            </div>
+                                            <div class="calendar-days">
+                                                @foreach (var day in GetCalendarDays())
+                                                {
+                                                    <div class="calendar-day @(day.IsCurrentMonth ? "" : "other-month") @(day.Date == selectedDate ? "selected" : "") @(day.Date < DateTime.Today ? "disabled" : "")" @onclick="() => SelectDate(day.Date)">@day.Date.Day</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="timeslots-section">
+                                        <h3 class="timeslots-title">Available Times</h3>
+                                        <p class="timeslots-date">@selectedDate.ToString("dddd, MMMM dd, yyyy")</p>
+                                        @if (availableDentists.Count > 1)
+                                        {
+                                            <div class="dentist-filter">
+                                                <label class="filter-label">Filter by Dentist:</label>
+                                                <div class="filter-buttons">
+                                                    <button class="filter-btn @(selectedDentistFilter == null ? "active" : "")" @onclick="() => FilterByDentist(null)">All</button>
+                                                    @foreach (var d in availableDentists)
+                                                    {
+                                                        <button class="filter-btn @(selectedDentistFilter == d.DentistID ? "active" : "")" @onclick="() => FilterByDentist(d.DentistID)">@((d.DentistName ?? string.Empty).Replace("Dr. ", ""))</button>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (isLoading)
+                                        {
+                                            <div class="loading-state"><p>Loading available slots...</p></div>
+                                        }
+                                        else
+                                        {
+                                            <div class="timeslots-list">
+                                                @if (GetFilteredTimeSlots().Any())
+                                                {
+                                                    @foreach (var slot in GetFilteredTimeSlots())
+                                                    {
+                                                        <div class="timeslot @(slot.IsAvailable ? "" : "booked") @(selectedTimeSlot?.StartTime == slot.StartTime && selectedTimeSlot?.DentistID == slot.DentistID ? "selected" : "")" @onclick="() => SelectTimeSlot(slot)">
+                                                            <div class="timeslot-info">
+                                                                <div class="timeslot-time">@slot.FormattedTime</div>
+                                                                <div class="timeslot-doctor">@slot.DentistName</div>
+                                                            </div>
+                                                            <span class="timeslot-status">@(slot.IsAvailable ? "Available" : "Booked")</span>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <p style="text-align:center;color:#64748b;">No available time slots for this date</p>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (currentStep == 3)
+                        {
+                            <div class="booking-step">
+                                <h2 class="booking-title">Confirm Your Information</h2>
+                                <p class="booking-subtitle">Review and confirm details</p>
+                                <div class="confirmation-container">
+                                    <div class="appointment-summary">
+                                        <h3>Appointment Summary</h3>
+                                        <div class="summary-item"><span class="summary-label">Service:</span><span class="summary-value">@selectedService?.ServiceName</span></div>
+                                        <div class="summary-item"><span class="summary-label">Date:</span><span class="summary-value">@selectedDate.ToString("MMMM dd, yyyy")</span></div>
+                                        <div class="summary-item"><span class="summary-label">Time:</span><span class="summary-value">@selectedTimeSlot?.FormattedTime</span></div>
+                                        <div class="summary-item"><span class="summary-label">Dentist:</span><span class="summary-value">@selectedTimeSlot?.DentistName</span></div>
+                                        <div class="summary-item"><span class="summary-label">Duration:</span><span class="summary-value">@selectedService?.Duration mins</span></div>
+                                        <div class="summary-item total"><span class="summary-label">Price:</span><span class="summary-value">₱@selectedService?.Cost.ToString("N2")</span></div>
+                                    </div>
+                                    <div class="patient-form">
+                                        <h3>Your Information</h3>
+                                        <div class="form-group"><label>Full Name</label><input type="text" @bind="patientName" /></div>
+                                        <div class="form-group"><label>Email</label><input type="email" @bind="patientEmail" /></div>
+                                        <div class="form-group"><label>Phone</label><input type="tel" @bind="patientPhone" /></div>
+                                        <div class="form-group"><label>Notes (Optional)</label><textarea rows="3" @bind="appointmentNotes"></textarea></div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="booking-footer">
+                        <button class="btn-secondary" @onclick="HandlePrevious" disabled="@isLoading">@(currentStep == 1 ? "Cancel" : "Previous")</button>
+                        <button class="btn-primary" @onclick="HandleNext" disabled="@(!CanProceed() || isLoading)">@(currentStep == 3 ? "Confirm Booking" : "Next")</button>
+                    </div>
                 </div>
-               <div class="patient-form">
-<h3>Your Information</h3>
-     <div class="form-group"><label>Full Name</label><input type="text" @bind="patientName" /></div>
-     <div class="form-group"><label>Email</label><input type="email" @bind="patientEmail" /></div>
-            <div class="form-group"><label>Phone</label><input type="tel" @bind="patientPhone" /></div>
-                 <div class="form-group"><label>Notes (Optional)</label><textarea rows="3" @bind="appointmentNotes"></textarea></div>
-     </div>
-</div>
-         </div>
-             }
-       </div>
-  <div class="booking-footer">
-       <button class="btn-secondary" @onclick="HandlePrevious" disabled="@isLoading">@(currentStep == 1 ? "Cancel" : "Previous")</button>
-             <button class="btn-primary" @onclick="HandleNext" disabled="@(!CanProceed() || isLoading)">@(currentStep == 3 ? "Confirm Booking" : "Next")</button>
-        </div>
-           </div>
-    </div>
+            </div>
         }
     </div>
 </div>
@@ -266,28 +295,28 @@
 {
     <div class="booking-modal-overlay" @onclick="CloseCancelModal">
         <div class="booking-modal" @onclick:stopPropagation="true">
-       <div class="booking-body">
+            <div class="booking-body">
                 <div class="booking-step">
-         <h2 class="booking-title">Cancel Appointment</h2>
-      <p class="booking-subtitle">Please provide a reason for cancellation</p>
-  @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-error"><span>@errorMessage</span></div>
-        }
-  @if (!string.IsNullOrEmpty(successMessage))
-    {
-          <div class="alert alert-success"><span>@successMessage</span></div>
+                    <h2 class="booking-title">Cancel Appointment</h2>
+                    <p class="booking-subtitle">Please provide a reason for cancellation</p>
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-error"><span>@errorMessage</span></div>
                     }
-            <div class="form-group">
-            <label>Cancellation Reason</label>
-     <textarea @bind="cancellationReason" rows="4" placeholder="Reason for cancellation"></textarea>
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success"><span>@successMessage</span></div>
+                    }
+                    <div class="form-group">
+                        <label>Cancellation Reason</label>
+                        <textarea @bind="cancellationReason" rows="4" placeholder="Reason for cancellation"></textarea>
+                    </div>
+                </div>
             </div>
-          </div>
- </div>
             <div class="booking-footer">
- <button class="btn-secondary" @onclick="CloseCancelModal">Back</button>
-     <button class="btn-primary" @onclick="ConfirmCancelAsync" disabled="@string.IsNullOrWhiteSpace(cancellationReason)">Confirm Cancel</button>
-    </div>
+                <button class="btn-secondary" @onclick="CloseCancelModal">Back</button>
+                <button class="btn-primary" @onclick="ConfirmCancelAsync" disabled="@string.IsNullOrWhiteSpace(cancellationReason)">Confirm Cancel</button>
+            </div>
         </div>
     </div>
 }
@@ -296,7 +325,7 @@
     private string FormatTime(TimeSpan time)
     {
         var hours = time.Hours;
-     var minutes = time.Minutes;
+        var minutes = time.Minutes;
         var ampm = hours >= 12 ? "PM" : "AM";
         if (hours > 12) hours -= 12;
         if (hours == 0) hours = 12;

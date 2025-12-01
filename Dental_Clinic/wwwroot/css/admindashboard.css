@@ -1,4 +1,4 @@
-/* Admin Dashboard CSS - Matching Patient Dashboard Design */
+/* Admin Dashboard CSS - Redesigned to Match Reference Image */
 
 * {
     margin: 0;
@@ -21,21 +21,22 @@
 .top-navbar {
     background: white;
     border-bottom: 1px solid #E2E8F0;
-    padding: 0 32px;
+    padding: 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 72px;
+    height: 56px;
     position: sticky;
     top: 0;
     z-index: 100;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    column-gap: 16px;
 }
 
 .navbar-left {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 12px;
     flex: 1;
 }
 
@@ -43,7 +44,8 @@
 .clinic-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
+    margin-right: 12px;
 }
 
 .clinic-logo {
@@ -54,13 +56,20 @@
     justify-content: center;
 }
 
+.clinic-logo img { 
+    width: 130%; 
+    height: 130%; 
+    object-fit: contain; 
+    display: block; 
+}
+
 .clinic-info {
     display: flex;
     flex-direction: column;
 }
 
 .clinic-name {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: #0d6efd;
     letter-spacing: 0.5px;
@@ -69,7 +78,7 @@
 }
 
 .clinic-tagline {
-    font-size: 9px;
+    font-size: 8px;
     color: #64748b;
     letter-spacing: 0.8px;
     margin: 0;
@@ -90,13 +99,13 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 8px 12px;
     border-radius: 8px;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
     color: #64748b;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
     cursor: pointer;
     border: none;
     outline: none;
@@ -106,6 +115,8 @@
     background: #F1F5F9;
     color: #0f172a;
     text-decoration: none;
+    box-shadow: 0 2px 6px rgba(15,23,42,0.06);
+    transform: translateY(-1px);
 }
 
 .nav-tab.active,
@@ -113,7 +124,7 @@
     background: #EFF6FF;
     color: #0d6efd;
     font-weight: 600;
-    text-decoration: none;
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.12) inset;
 }
 
 .nav-tab:focus {
@@ -121,16 +132,21 @@
     outline: none;
 }
 
+.nav-tab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.25);
+}
+
 .nav-tab svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
 }
 
 /* Navbar Right */
 .navbar-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
 }
 
 .search-bar {
@@ -139,9 +155,9 @@
     gap: 8px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
-    padding: 8px 16px;
-    border-radius: 10px;
-    min-width: 280px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    min-width: 240px;
     transition: all 0.2s ease;
 }
 
@@ -170,14 +186,14 @@
 }
 
 .icon-button {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     background: transparent;
-    border-radius: 50%;
+    border-radius: 8px;
     cursor: pointer;
     color: #64748b;
     transition: all 0.2s ease;
@@ -190,14 +206,14 @@
 
 /* Settings Button with Rotation */
 .settings-btn {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     background: transparent;
-    border-radius: 50%;
+    border-radius: 8px;
     cursor: pointer;
     color: #64748b;
     transition: all 0.2s ease;
@@ -229,8 +245,8 @@
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 6px 14px 6px 6px;
+    gap: 10px;
+    padding: 4px 12px 4px 4px;
     border-radius: 50px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -246,8 +262,8 @@
 }
 
 .user-avatar {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%);
     display: flex;
@@ -255,7 +271,7 @@
     justify-content: center;
     color: white;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 14px;
     letter-spacing: 0.5px;
     box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
     transition: all 0.3s ease;
@@ -291,185 +307,191 @@
    ============================================ */
 
 .dashboard-main {
-    max-width: 1200px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 24px 40px;
+    padding: 32px 40px;
 }
 
 /* ============================================
-   HERO SECTION (MATCHING PATIENT DASHBOARD)
+   HERO WELCOME BANNER
    ============================================ */
 
-.hero-section {
-    background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 24px;
+.hero-banner {
+    background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+    border-radius: 20px;
+    padding: 40px 48px;
+    margin-bottom: 28px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(13, 110, 253, 0.15);
+    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.2);
 }
 
-.hero-section::before {
+.hero-banner::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    top: -60%;
+    right: -8%;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
     border-radius: 50%;
+    pointer-events: none;
 }
 
 .hero-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .hero-title {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 700;
     color: white;
-    margin: 0 0 8px 0;
+    margin: 0 0 10px 0;
     line-height: 1.2;
+    letter-spacing: -0.5px;
 }
 
 .hero-subtitle {
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.95);
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.92);
     margin: 0;
+    font-weight: 400;
 }
 
-.hero-icon {
+.hero-shield-icon {
     position: absolute;
-    right: 60px;
+    right: 50px;
     top: 50%;
     transform: translateY(-50%);
-    opacity: 0.15;
+    opacity: 0.18;
     z-index: 1;
 }
 
 /* ============================================
-   STATS SECTION (MATCHING PATIENT DASHBOARD)
+   STATS CARDS GRID
    ============================================ */
 
-.stats-section {
+.stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 20px;
+    margin-bottom: 28px;
 }
 
 .stat-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
     display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    align-items: flex-start;
+    gap: 18px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
     border: 1px solid #f1f5f9;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
+    transform: translateY(-3px);
 }
 
-.stat-icon {
-    font-size: 20px;
-    padding: 12px;
-    border-radius: 10px;
+.stat-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 48px;
-    min-height: 48px;
     flex-shrink: 0;
 }
 
-.stat-revenue .stat-icon {
-    background: #ecfdf5;
-    color: #10b981;
+.revenue-icon {
+    background: #ECFDF5;
+    color: #10B981;
 }
 
-.stat-patients .stat-icon {
-    background: #eff6ff;
-    color: #3b82f6;
+.patients-icon {
+    background: #EFF6FF;
+    color: #3B82F6;
 }
 
-.stat-appointments .stat-icon {
-    background: #f5f3ff;
-    color: #8b5cf6;
+.appointments-icon {
+    background: #F5F3FF;
+    color: #8B5CF6;
 }
 
-.stat-rating .stat-icon {
-    background: #fef3c7;
-    color: #f59e0b;
+.rating-icon {
+    background: #FEF3C7;
+    color: #F59E0B;
 }
 
-.stat-content {
+.stat-details {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .stat-label {
-    font-size: 13px;
-    color: #64748b;
+    font-size: 14px;
+    color: #64748B;
     font-weight: 500;
-    margin-bottom: 4px;
+    margin: 0;
 }
 
 .stat-value {
+    font-size: 28px;
     font-weight: 700;
-    font-size: 20px;
-    color: #0f172a;
+    color: #0F172A;
     line-height: 1.2;
-    margin-bottom: 6px;
+    margin: 0;
+    letter-spacing: -0.5px;
 }
 
-.stat-change {
+.stat-trend {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     font-size: 13px;
     font-weight: 600;
+    margin-top: 2px;
 }
 
-.stat-change.positive {
-    color: #10b981;
+.stat-trend.positive {
+    color: #10B981;
 }
 
-.stat-change.negative {
-    color: #ef4444;
+.stat-trend.negative {
+    color: #EF4444;
 }
 
-.stat-change svg {
-    width: 14px;
-    height: 14px;
+.stat-trend svg {
+    width: 12px;
+    height: 12px;
 }
 
 .stat-info {
-    font-size: 12px;
-    color: #64748b;
+    font-size: 13px;
+    color: #64748B;
     margin-top: 2px;
 }
 
 /* ============================================
-   CHARTS SECTION (MATCHING PATIENT DASHBOARD PANELS)
+   CHARTS SECTION
    ============================================ */
 
-.charts-grid {
+.charts-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 24px;
 }
 
 .chart-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
     border: 1px solid #f1f5f9;
 }
 
@@ -477,107 +499,123 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #F1F5F9;
 }
 
 .chart-header h3 {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
-    color: #0f172a;
+    color: #0F172A;
     margin: 0;
 }
 
 .chart-period {
     font-size: 13px;
-    color: #64748b;
+    color: #64748B;
     font-weight: 500;
+    background: #F8FAFC;
+    padding: 4px 12px;
+    border-radius: 6px;
 }
 
-/* Bar Chart */
-.chart-container {
-    min-height: 280px;
+.chart-body {
+    min-height: 320px;
 }
 
-.bar-chart {
+/* Bar Chart Placeholder */
+.bar-chart-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 20px 0;
+}
+
+.bars-container {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 12px;
+    width: 100%;
     height: 280px;
-    padding: 20px 0;
-    position: relative;
+    gap: 16px;
+}
+
+.bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
 }
 
 .bar {
-    flex: 1;
+    width: 100%;
     background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
-    border-radius: 8px 8px 0 0;
-    position: relative;
+    border-radius: 10px 10px 0 0;
     min-height: 30px;
     transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .bar:hover {
     opacity: 0.85;
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.bar span {
-    position: absolute;
-    bottom: -28px;
-    left: 50%;
-    transform: translateX(-50%);
+.bar-label {
+    margin-top: 12px;
     font-size: 13px;
-    color: #64748b;
+    color: #64748B;
     font-weight: 600;
-    white-space: nowrap;
 }
 
 /* Pie Chart Placeholder */
-.pie-chart-placeholder {
+.pie-chart-layout {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 10px 0;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 20px 0;
 }
 
-.pie-chart-placeholder svg {
+.pie-chart-circle {
     flex-shrink: 0;
 }
 
-.chart-legend {
+.pie-legend {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px;
+    gap: 12px;
+    padding: 8px 12px;
     border-radius: 8px;
     transition: all 0.2s ease;
 }
 
 .legend-item:hover {
-    background: #f8fafc;
+    background: #F8FAFC;
 }
 
-.legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
+.legend-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
     flex-shrink: 0;
 }
 
-.legend-label {
-    font-size: 13px;
-    color: #0f172a;
+.legend-text {
+    font-size: 14px;
+    color: #0F172A;
     font-weight: 500;
 }
 
@@ -587,10 +625,10 @@
 
 @media (max-width: 1400px) {
     .dashboard-main {
-        padding: 24px 32px;
+        padding: 28px 32px;
     }
 
-    .stats-section {
+    .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -626,27 +664,27 @@
         flex: 1;
     }
 
-    .charts-grid {
+    .charts-section {
         grid-template-columns: 1fr;
     }
 
-    .stats-section {
+    .stats-grid {
         grid-template-columns: 1fr;
     }
 
     .hero-title {
-        font-size: 24px;
+        font-size: 26px;
     }
 
     .hero-subtitle {
-        font-size: 14px;
+        font-size: 15px;
     }
 
-    .hero-icon {
+    .hero-shield-icon {
         display: none;
     }
 
-    .pie-chart-placeholder {
+    .pie-chart-layout {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -654,33 +692,32 @@
 
 @media (max-width: 640px) {
     .dashboard-main {
-        padding: 16px 20px;
+        padding: 20px 16px;
     }
 
-    .hero-section {
-        padding: 24px 20px;
+    .hero-banner {
+        padding: 28px 24px;
     }
 
     .stat-card {
-        padding: 16px;
+        padding: 20px;
     }
 
-    .stat-icon {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 10px;
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
     }
 
     .stat-value {
-        font-size: 18px;
+        font-size: 24px;
     }
 
     .chart-card {
-        padding: 16px;
+        padding: 20px;
     }
 
-    .bar-chart {
-        gap: 8px;
+    .bars-container {
+        gap: 10px;
         height: 240px;
     }
 }
