@@ -10,25 +10,20 @@ namespace Dental_Clinic.Components.Layout
         private bool isLoginMode = true;
         private bool showLoginPassword = false;
         private bool showSignupPassword = false;
-        private bool showStaffPassword = false;
-        private bool showStaffModal = false;
         private bool isLoading = false;
         private bool showSyncModal = false;
         private bool isAuthenticatingWithGoogle = false; // NEW: Track Google auth state
 
         private string errorMessage = string.Empty;
         private string successMessage = string.Empty;
-        private string staffErrorMessage = string.Empty;
         private string syncMessage = string.Empty;
         private int syncProgress = 0;
 
         private LoginModel loginModel = new LoginModel();
         private SignUpModel signUpModel = new SignUpModel();
-        private StaffLoginModel staffModel = new StaffLoginModel();
 
         private string loginPasswordType => showLoginPassword ? "text" : "password";
         private string signupPasswordType => showSignupPassword ? "text" : "password";
-        private string staffPasswordType => showStaffPassword ? "text" : "password";
 
         [Inject] private NavigationManager Navigation { get; set; } = default!;
         [Inject] private AuthService AuthService { get; set; } = default!;
@@ -98,24 +93,14 @@ namespace Dental_Clinic.Components.Layout
             successMessage = string.Empty;
         }
 
+        private void NavigateToForgotPassword()
+        {
+            Navigation.NavigateTo("/forgot-password");
+        }
+
         private void ToggleLoginPassword() => showLoginPassword = !showLoginPassword;
         private void ToggleSignupPassword() => showSignupPassword = !showSignupPassword;
-        private void ToggleStaffPassword() => showStaffPassword = !showStaffPassword;
         private void ToggleTheme() { }
-
-        private void OpenStaffModal()
-        {
-            showStaffModal = true;
-            staffErrorMessage = string.Empty;
-            staffModel = new StaffLoginModel { AccessLevel = "staff" };
-        }
-
-        private void CloseStaffModal()
-        {
-            showStaffModal = false;
-            staffErrorMessage = string.Empty;
-            staffModel = new StaffLoginModel();
-        }
 
         private async Task ToggleOfflineMode()
         {
@@ -375,46 +360,6 @@ namespace Dental_Clinic.Components.Layout
                 listener?.Stop();
                 Debug.WriteLine("[Login] === GOOGLE AUTH FLOW ENDED ===");
                 StateHasChanged();
-            }
-        }
-
-        private async Task HandleStaffLogin()
-        {
-            isLoading = true;
-            staffErrorMessage = string.Empty;
-
-            try
-            {
-                if (AuthService == null)
-                {
-                    staffErrorMessage = "Authentication service not available";
-                    return;
-                }
-
-                var session = await AuthService.StaffLoginAsync(staffModel);
-
-                if (session != null)
-                {
-                    // Save session
-                    await SessionService.SaveSessionAsync(session);
-                    
-                    string dashboardRoute = GetDashboardRoute(session.Role);
-                    Navigation.NavigateTo(dashboardRoute, forceLoad: true);
-                    CloseStaffModal();
-                }
-                else
-                {
-                    staffErrorMessage = $"Access denied. Invalid credentials or insufficient permissions for {staffModel.AccessLevel} role.";
-                }
-            }
-            catch (Exception ex)
-            {
-                staffErrorMessage = $"Authentication failed: {ex.Message}";
-                Console.WriteLine($"Staff login error: {ex}");
-            }
-            finally
-            {
-                isLoading = false;
             }
         }
 

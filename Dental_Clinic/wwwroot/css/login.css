@@ -61,7 +61,8 @@ html, body {
     box-shadow: 0 20px 50px rgba(0,0,0,.25);
 }
 
-.clinic-logo {
+/* Scope the login image logo to the logo container only to avoid conflicts with ForgotPassword page */
+.logo-container .clinic-logo {
     width: 90%;
     height: 90%;
     object-fit: contain;
@@ -282,6 +283,18 @@ html, body {
     background: #d1fae5;
     color: #059669;
     border: 1px solid #a7f3d0;
+}
+
+/* Error Message */
+.error-message {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    text-align: center;
 }
 
 /* Input Fields */
@@ -693,6 +706,164 @@ html, body {
     color: #6b7280;
     margin: 0 0 24px;
     text-align: center;
+}
+
+/* Forgot Password page styles (shared) */
+/* Left logo block in Forgot page */
+.left-section .logo-placeholder {
+    width: 140px;
+    height: 140px;
+    background: white;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+}
+
+.left-section .clinic-logo-img {
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 24px;
+    text-align: center;
+}
+
+.form-content { /* animation-safe */ }
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper .input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all .2s ease;
+    outline: none;
+    color: #1f2937;
+}
+
+.input-wrapper input:focus {
+    border-color: #1a73e8;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(26,115,232,.08);
+}
+
+/* Forgot page buttons */
+.btn-primary,
+.btn-secondary {
+    width: 100%;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    transition: all .3s ease;
+}
+
+.btn-primary {
+    background: #1a73e8;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(26,115,232,.25);
+}
+
+.btn-primary:hover {
+    background: #1557b0;
+    box-shadow: 0 6px 18px rgba(26,115,232,.35);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #fff;
+    color: #1a73e8;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #cbd5e1;
+}
+
+/* Forgot page divider */
+.divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 18px 0;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+}
+
+.divider span {
+    padding: 0 14px;
+}
+
+/* Forgot page success */
+.success-container {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success-icon {
+    margin: 0 auto 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.success-message {
+    font-size: 15px;
+    color: #374151;
+    margin: 16px 0;
+    line-height: 1.6;
+}
+
+.success-message strong {
+    color: #1a73e8;
 }
 
 /* Responsive */
