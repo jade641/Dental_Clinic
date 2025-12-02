@@ -96,42 +96,50 @@
     <main class="dashboard-main main-content">
         <!-- Stats Cards -->
         <div class="stats-grid">
-            <div class="stat-card yellow">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <span class="stat-label">Average Rating</span>
-                        <div class="stat-icon yellow-icon">⭐</div>
+            <div class="stat-card yellow-border">
+                <div class="stat-left">
+                    <div class="stat-label">Average Rating</div>
+                    <div class="stat-value-row">
+                        <span class="stat-number">@averageRating.ToString("F1")</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
                     </div>
-                    <div class="stat-value">
-                        <span class="value">@averageRating.ToString("F1")</span>
-                        <span class="star">⭐</span>
-                    </div>
+                </div>
+                <div class="stat-icon-bg yellow-bg">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
             </div>
 
-            <div class="stat-card green">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <span class="stat-label">Happy Patients</span>
-                        <div class="stat-icon green-icon">👍</div>
+            <div class="stat-card green-border">
+                <div class="stat-left">
+                    <div class="stat-label">Happy Patients</div>
+                    <div class="stat-value-row">
+                        <span class="stat-number">@happyPatients</span>
                     </div>
-                    <div class="stat-value">
-                        <span class="value">@happyPatients</span>
-                    </div>
-                    <span class="stat-subtitle">4-5 star ratings</span>
+                    <div class="stat-subtitle">4-5 star ratings</div>
+                </div>
+                <div class="stat-icon-bg green-bg">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
             </div>
 
-            <div class="stat-card blue">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <span class="stat-label">Pending Replies</span>
-                        <div class="stat-icon blue-icon">💬</div>
+            <div class="stat-card blue-border">
+                <div class="stat-left">
+                    <div class="stat-label">Pending Replies</div>
+                    <div class="stat-value-row">
+                        <span class="stat-number">@feedbacks.Count(f => !f.IsReplied)</span>
                     </div>
-                    <div class="stat-value">
-                        <span class="value">@feedbacks.Count(f => !f.IsReplied)</span>
-                    </div>
-                    <span class="stat-subtitle">Needs response</span>
+                    <div class="stat-subtitle">Needs response</div>
+                </div>
+                <div class="stat-icon-bg blue-bg">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -141,10 +149,18 @@
             <div class="feedback-header">
                 <div class="tabs">
                     <button class="tab @(activeTab == "inbox" ? "active" : "")" @onclick='() => SetActiveTab("inbox")'>
-                        <span class="tab-icon">📥</span> Feedback Inbox
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Feedback Inbox
                     </button>
                     <button class="tab @(activeTab == "campaigns" ? "active" : "")" @onclick='() => SetActiveTab("campaigns")'>
-                        <span class="tab-icon">📧</span> Email Campaigns
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="22,6 12,13 2,6" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Email Campaigns
                     </button>
                 </div>
                 <div class="filters">
@@ -189,17 +205,28 @@
                                         <span class="feedback-date">@feedback.Date</span>
                                         @if (feedback.IsReplied)
                                         {
-                                            <span class="status-badge replied">✓ Replied</span>
+                                            <span class="status-badge replied">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                    <polyline points="20 6 9 17 4 12" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                Replied
+                                            </span>
                                         }
                                     </div>
                                 </div>
                                 <p class="feedback-text">@feedback.Message</p>
                                 <div class="feedback-actions">
                                     <button class="btn-action" @onclick="() => ReplyToFeedback(feedback.Id)">
-                                        <span class="action-icon">💬</span> Reply
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Reply
                                     </button>
                                     <button class="btn-action promo" @onclick="() => CreatePromo(feedback.Id)">
-                                        <span class="action-icon">✨</span> Create Promo
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Create Promo
                                     </button>
                                 </div>
                             </div>
@@ -221,7 +248,12 @@
                         @foreach (var campaign in campaigns)
                         {
                             <div class="campaign-card">
-                                <div class="campaign-icon">📧</div>
+                                <div class="campaign-icon">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <polyline points="22,6 12,13 2,6" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
                                 <h4>@campaign.Title</h4>
                                 <p>@campaign.Description</p>
                                 <div class="campaign-stats">

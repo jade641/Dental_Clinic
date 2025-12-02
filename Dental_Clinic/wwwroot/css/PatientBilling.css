@@ -1,0 +1,355 @@
+/* Billing & Payments Page Styles */
+
+.billing-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Header Section */
+.billing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.billing-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.btn-make-payment {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #2c7a7b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-make-payment:hover {
+    background-color: #234e52;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 122, 123, 0.3);
+}
+
+.btn-make-payment svg {
+    stroke: white;
+}
+
+/* Summary Cards Section */
+.billing-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.summary-card.card-blue::before {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.summary-card.card-orange::before {
+    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+}
+
+.summary-card.card-green::before {
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+}
+
+.summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.card-icon.blue-icon {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.card-icon.orange-icon {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.card-icon.green-icon {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.card-content {
+    flex: 1;
+}
+
+.card-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.card-amount {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.card-amount.black {
+    color: #1a1a1a;
+}
+
+.card-amount.orange {
+    color: #d97706;
+}
+
+.card-amount.green {
+    color: #059669;
+}
+
+.card-due-date {
+    font-size: 0.813rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+/* Recent Payments Section */
+.recent-payments-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 1.5rem 0;
+}
+
+.payments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.payment-item:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    transform: translateX(4px);
+}
+
+.payment-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.payment-check-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.payment-check-icon svg {
+    stroke: #059669;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.payment-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.payment-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.payment-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.payment-amount {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.btn-download {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-download:hover {
+    background-color: #f3f4f6;
+    border-color: #2c7a7b;
+    transform: scale(1.1);
+}
+
+.btn-download svg {
+    stroke: #6b7280;
+}
+
+.btn-download:hover svg {
+    stroke: #2c7a7b;
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+}
+
+.empty-state svg {
+    stroke: #d1d5db;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .billing-page {
+        padding: 1rem;
+    }
+
+    .billing-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .billing-title {
+        font-size: 1.5rem;
+    }
+
+    .btn-make-payment {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .billing-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .recent-payments-section {
+        padding: 1.25rem;
+    }
+
+    .payment-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .payment-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .card-amount {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .billing-title {
+        font-size: 1.25rem;
+    }
+
+    .payment-title {
+        font-size: 0.938rem;
+    }
+
+    .payment-amount {
+        font-size: 1rem;
+    }
+
+    .card-amount {
+        font-size: 1.25rem;
+    }
+}
