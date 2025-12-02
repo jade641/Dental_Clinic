@@ -46,6 +46,8 @@ public DateTime AppointmentDate { get; set; }
    public string ServiceName { get; set; } = string.Empty;
         public string DentistName { get; set; } = string.Empty;
    public string PatientName { get; set; } = string.Empty;
+   public string PatientPhone { get; set; } = string.Empty;
+   public string PatientEmail { get; set; } = string.Empty;
     }
 
 public class DentistAvailability

@@ -2,6 +2,7 @@
 using Dental_Clinic.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Radzen;
 
 namespace Dental_Clinic
 {
@@ -23,6 +24,7 @@ namespace Dental_Clinic
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddRadzenComponents();
 
             // Register Database Services as Singletons
             builder.Services.AddSingleton<DatabaseService>();

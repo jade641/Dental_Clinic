@@ -2,56 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dental_Clinic</title>
-    <base href="/" />
-
-    <!-- Bootstrap CSS -->
+  <base href="/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-
-    <!-- Main App CSS -->
     <link rel="stylesheet" href="css/app.css" />
-
-    <!-- Admin CSS Files -->
-    <link rel="stylesheet" href="css/AdminAnalytics.css" />
-    <link rel="stylesheet" href="css/admindashboard.css" />
-    <link rel="stylesheet" href="css/AdminMarketing.css" />
-    <link rel="stylesheet" href="css/AdminReports.css" />
-    <link rel="stylesheet" href="css/AdminUsers.css" />
-
-    <!-- Dentist CSS Files -->
-    <link rel="stylesheet" href="css/dentistdashboard.css" />
-    <link rel="stylesheet" href="css/DentistPatient.css" />
-    <link rel="stylesheet" href="css/DentistSched.css" />
-
-    <!-- Patient CSS Files -->
-    <link rel="stylesheet" href="css/patientdashboard.css" />
-    <link rel="stylesheet" href="css/PatientAppointment.css" />
-    <link rel="stylesheet" href="css/PatientHistory.css" />
-
-    <!-- Receptionist CSS Files -->
-    <link rel="stylesheet" href="css/receptionistdashboard.css" />
-    <link rel="stylesheet" href="css/ReceptCalendar.css" />
-    <link rel="stylesheet" href="css/ReceptMessages.css" />
-    <link rel="stylesheet" href="css/ReceptPatients.css" />
-
-    <!-- Login CSS -->
-    <link rel="stylesheet" href="css/login.css" />
-
-    <!-- Blazor Styles -->
-    <link rel="stylesheet" href="Dental Clinic.styles.css" />
-
-    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="Dental_Clinic.styles.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="_content/Radzen.Blazor/css/material-base.css" rel="stylesheet" />
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 </head>
+
 <body>
-    <div class="status-bar-safe-area"></div>
-    <div id="app">Loading...</div>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+  <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+  <div class="loading-progress-text"></div>
+    </div>
+
     <div id="blazor-error-ui">
         An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
+ <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+
 </body>
+
 </html>

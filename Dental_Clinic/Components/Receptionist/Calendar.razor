@@ -1,252 +1,638 @@
 ﻿@page "/receptionist/calendar"
-@using Microsoft.AspNetCore.Components
-@using Dental_Clinic.Services
 @using Dental_Clinic.Models
+@using Dental_Clinic.Services
 @inject AppointmentService AppointmentService
-<link href="css/dentistdashboard.css" rel="stylesheet" />
-<link href="css/receptionistdashboard.css" rel="stylesheet" />
-<link href="ReceptCalendar.css" rel="stylesheet" />
+@inject SessionService SessionService
+@inject NavigationManager Navigation
 
-<div class="dashboard-page">
-    <nav class="navbar">
-        <div class="navbar-container">
-            <NavLink href="/receptionist/dashboard" class="navbar-brand" Match="NavLinkMatch.All">
-                <div class="navbar-logo">
-                    <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic Logo" class="clinic-logo-img" />
-                </div>
-                <div class="navbar-brand-text">
+<PageTitle>Appointment Calendar - Receptionist</PageTitle>
+
+<link href="css/receptionistdashboard.css" rel="stylesheet" />
+
+<style>
+    /* Modal Styles for Light Theme */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #212529;
+        margin: 0;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        font-size: 24px;
+        transition: color 0.2s;
+    }
+
+    .close-btn:hover {
+        color: #dc3545;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #495057;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        color: #212529;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #0d6efd;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 32px;
+    }
+
+    .btn-cancel {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        color: #6c757d;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+        background: #f8f9fa;
+        color: #212529;
+    }
+
+    .btn-save {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: none;
+        background: #0d6efd;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+
+    .btn-save:hover {
+        background: #0b5ed7;
+        transform: translateY(-1px);
+    }
+
+    /* Custom Button Styles */
+    .btn-filter {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        color: #495057;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .btn-filter:hover {
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+
+    .btn-checkin {
+        background: #198754;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+
+    .btn-checkin:hover {
+        background: #157347;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
+    }
+</style>
+
+<div class="receptionist-dashboard">
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+        <div class="navbar-left">
+            <div class="clinic-brand">
+                <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic" class="clinic-logo-img" />
+                <div class="clinic-info">
                     <h1>AURELIA DENTAL CLINIC - DR JADE</h1>
-                    <p>YOUR SMILE. OUR MASTERPIECE</p>
+                    <p>YOUR SMILE, OUR MASTERPIECE</p>
                 </div>
-            </NavLink>
-            <div class="navbar-menu">
-                <ul class="nav-links">
-                    <li>
-                        <NavLink href="/receptionist/dashboard" class="nav-link" Match="NavLinkMatch.All">Overview</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/calendar" class="nav-link" ActiveClass="active">Calendar</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/patients" class="nav-link" ActiveClass="active">Patients</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/messages" class="nav-link" ActiveClass="active">Messages</NavLink>
-                    </li>
-                </ul>
-            </div>
-            <div class="navbar-actions">
-                <div class="search-box"></div>
-                <button class="icon-button" type="button"></button>
-                <button class="icon-button" type="button"></button>
             </div>
         </div>
-    </nav>
+
+        <div class="navbar-center">
+            <div class="page-title-section">
+                <h2 class="page-title">Receptionist Dashboard</h2>
+                <p class="page-subtitle">Front Desk Operations</p>
+            </div>
+        </div>
+
+        <div class="navbar-right">
+            <div class="nav-tabs">
+                <NavLink href="/receptionist/dashboard" class="nav-tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Overview</span>
+                </NavLink>
+
+                <NavLink href="/receptionist/calendar" class="nav-tab active">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Calendar</span>
+                </NavLink>
+
+                <NavLink href="/receptionist/patients" class="nav-tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Patients</span>
+                </NavLink>
+
+                <NavLink href="/receptionist/messages" class="nav-tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Messages</span>
+                </NavLink>
+            </div>
+
+            <div class="navbar-actions">
+                <button class="icon-button" aria-label="Notifications">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="notification-dot"></span>
+                </button>
+
+                <button class="settings-btn" title="Settings" aria-label="Open settings">
+                    <span class="settings-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
 
     <main class="dashboard-main">
-        <div class="calendar-container">
-            <header class="calendar-header">
-                <h1>Clinic Schedule</h1>
-                <button class="btn-new-appointment" @onclick="ShowCreateModal">
-                    <span class="icon-plus">+</span>
-                    New Appointment
-                </button>
-                <div class="view-toggle">
-                    <button class="view-btn">Day</button>
-                    <button class="view-btn active">Week</button>
-                    <button class="view-btn">Month</button>
+        <!-- Header Section -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+            <div>
+                <h2 style="font-size: 24px; font-weight: 700; color: #212529; margin: 0;">Appointment Calendar</h2>
+                <div style="font-size: 12px; color: #6c757d; margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                    <span>Database:</span> 
+                    @if (isOffline)
+                    {
+                        <span style="color: #dc3545; font-weight: 600;">OFFLINE (Local)</span>
+                        <button class="btn-checkin" style="padding: 2px 8px; font-size: 11px; background: #0d6efd;" @onclick="RetryConnection">
+                            Connect Online
+                        </button>
+                    }
+                    else
+                    {
+                        <span style="color: #198754; font-weight: 600;">ONLINE (Cloud)</span>
+                    }
                 </div>
-            </header>
-
-            <div class="content-wrapper">
-                <aside class="sidebar">
-                    <div class="filter-section">
-                        <h3>Filter by Dentist</h3>
-
-                        <div class="month-nav">
-                            <button class="nav-arrow">‹</button>
-                            <span class="month-year">November 2025</span>
-                            <button class="nav-arrow">›</button>
-                        </div>
-
-                        <div class="week-display">Week of Nov 24</div>
-
-                        <div class="dentist-filters">
-                            <label class="dentist-item">
-                                <input type="checkbox" checked />
-                                <span class="color-dot blue"></span>
-                                <span>Dr. Jade</span>
-                            </label>
-                            <label class="dentist-item">
-                                <input type="checkbox" checked />
-                                <span class="color-dot green"></span>
-                                <span>Dr. Maria Santos</span>
-                            </label>
-                            <label class="dentist-item">
-                                <input type="checkbox" checked />
-                                <span class="color-dot orange"></span>
-                                <span>Dr. Juan Cruz</span>
-                            </label>
-                        </div>
-
-                        <div class="procedures-section">
-                            <h4>PROCEDURES</h4>
-                            <div class="procedure-filters">
-                                <div class="procedure-item">
-                                    <span class="color-dot blue"></span>
-                                    <span>Check-up</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot green"></span>
-                                    <span>Cleaning</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot light-blue"></span>
-                                    <span>Filling</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot red"></span>
-                                    <span>Root Canal</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot orange"></span>
-                                    <span>Extraction</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot yellow"></span>
-                                    <span>Whitening</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <main class="calendar-main">
-                    <div class="calendar-controls">
-                        <button class="nav-arrow">‹</button>
-                        <span class="current-month">November 2025</span>
-                        <button class="nav-arrow">›</button>
-                        <button class="btn-today">Today</button>
-                    </div>
-
-                    <div class="calendar-grid">
-                        <div class="calendar-header-row">
-                            <div class="time-column"></div>
-                            <div class="day-header">
-                                <div class="day-name">Mon</div>
-                                <div class="day-number">24</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Tue</div>
-                                <div class="day-number">25</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Wed</div>
-                                <div class="day-number">26</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Thu</div>
-                                <div class="day-number">27</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Fri</div>
-                                <div class="day-number">28</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Sat</div>
-                                <div class="day-number">29</div>
-                            </div>
-                        </div>
-
-                        <div class="calendar-body">
-                            <div class="time-column">
-                                <div class="time-slot">8 AM</div>
-                                <div class="time-slot">9 AM</div>
-                                <div class="time-slot">10 AM</div>
-                                <div class="time-slot">11 AM</div>
-                                <div class="time-slot">12 PM</div>
-                            </div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                        </div>
-                    </div>
-                </main>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="date" class="form-input" style="width: auto;" @bind="selectedDate" @bind:after="LoadDataAsync" />
+                
+                <button class="btn-filter" @onclick="LoadDataAsync">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Refresh
+                </button>
+                <button class="action-button blue" style="padding: 10px 20px; font-size: 14px;"
+                    @onclick="OpenCreateModal">
+                    <span>+</span> New Appointment
+                </button>
             </div>
         </div>
+
+        <!-- Appointments List Section -->
+        <section class="appointments-section">
+            <div class="section-header-appointments">
+                <div class="section-title-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h3>Appointments for @selectedDate.ToString("MMM dd")</h3>
+                </div>
+                <span class="section-date">@selectedDate.ToString("dddd, MMMM dd, yyyy")</span>
+            </div>
+
+            <div class="appointments-list">
+                @if (isLoading)
+                {
+                    <div style="text-align: center; padding: 40px; color: #6c757d;">Loading appointments...</div>
+                }
+                else if (appointments.Count == 0)
+                {
+                    <div style="text-align: center; padding: 40px; color: #6c757d;">
+                        <p>No appointments scheduled for @selectedDate.ToString("MMM dd, yyyy").</p>
+                        <p style="font-size: 0.9em;">Current Mode: <strong>@(isOffline ? "Offline" : "Online")</strong></p>
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div style="margin-top: 16px; padding: 12px; background: #f8d7da; color: #721c24; border-radius: 8px; display: inline-block;">
+                                <strong>Error:</strong> @errorMessage
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @foreach (var appt in appointments)
+                    {
+                        <div class="appointment-card">
+                            <!-- Time -->
+                            <div class="appointment-time">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                @FormatTime(appt.StartTime) (@GetDuration(appt.StartTime, appt.EndTime) min)
+                            </div>
+
+                            <!-- Details -->
+                            <div class="appointment-details">
+                                <div class="appointment-header">
+                                    <h4 class="patient-name">@appt.PatientName</h4>
+                                    <span class="status-badge @GetStatusClass(appt.Status)">@appt.Status</span>
+                                </div>
+                                <p class="appointment-service">@appt.ServiceName</p>
+                                <div class="appointment-meta">
+                                    <span class="meta-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        Dr. @appt.DentistName
+                                    </span>
+                                    <span class="meta-item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                            </path>
+                                        </svg>
+                                        @appt.PatientPhone
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(appt.Notes))
+                                    {
+                                        <span class="meta-item" style="color: #6c757d; font-style: italic;">
+                                            Note: @appt.Notes
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                @if (appt.Status == "Scheduled" || appt.Status == "Pending")
+                                {
+                                    <button class="btn-checkin" @onclick="() => ConfirmAppointment(appt)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                        Check In
+                                    </button>
+                                }
+                                <button class="action-icon-btn" title="Edit" @onclick="() => OpenEditModal(appt)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                                @if (appt.Status != "Cancelled")
+                                {
+                                    <button class="action-icon-btn" title="Cancel"
+                                        style="color: #dc3545; border-color: #f8d7da; background: #fff;"
+                                        @onclick="() => CancelAppointment(appt)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
     </main>
 </div>
 
-@if (showCreateModal)
+@if (showModal)
 {
-    <div class="modal-overlay">
-        <div class="modal-card">
+    <div class="modal-backdrop" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation>
             <div class="modal-header">
-                <h3>Create New Appointment</h3>
-                <button class="close-btn" @onclick="CloseCreateModal">×</button>
+                <h2 class="modal-title">@(isEditing ? "Edit Appointment" : "New Appointment")</h2>
+                <button class="close-btn" @onclick="CloseModal">×</button>
             </div>
             <div class="modal-body">
-                <div class="form-row">
-                    <label>Patient ID</label>
-                    <input type="number" @bind="patientId" />
+                @if (!isEditing)
+                {
+                    <div class="form-group">
+                        <label class="form-label">Patient ID</label>
+                        <input type="number" class="form-input" @bind="editingModel.PatientID" />
+                    </div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Dentist</label>
+                    <select class="form-input" @bind="editingModel.DentistID">
+                        <option value="0">Select Dentist</option>
+                        @foreach (var d in dentists)
+                        {
+                            <option value="@d.DentistID">@d.DentistName</option>
+                        }
+                    </select>
                 </div>
-                <div class="form-row">
-                    <label>Dentist ID</label>
-                    <input type="number" @bind="dentistId" />
+                <div class="form-group">
+                    <label class="form-label">Service ID</label>
+                    <input type="number" class="form-input" @bind="editingModel.ServiceID" />
                 </div>
-                <div class="form-row">
-                    <label>Procedure (Service) ID</label>
-                    <input type="number" @bind="serviceId" />
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" @bind="editingModel.AppointmentDate" />
                 </div>
-                <div class="form-row">
-                    <label>Date</label>
-                    <input type="date" @bind="appointmentDate" />
+                <div class="form-group">
+                    <label class="form-label">Start Time (HH:mm)</label>
+                    <input type="time" class="form-input" @bind="BindStartTime" />
                 </div>
-                <div class="form-row">
-                    <label>Time</label>
-                    <input type="time" value="@startTimeText" @onchange="OnStartTimeChanged" />
+                <div class="form-group">
+                    <label class="form-label">End Time (HH:mm)</label>
+                    <input type="time" class="form-input" @bind="BindEndTime" />
                 </div>
-                <div class="form-row">
-                    <label>Duration (minutes)</label>
-                    <input type="number" min="1" @bind="durationMinutes" />
-                </div>
-                <div class="form-row">
-                    <label>Notes</label>
-                    <input type="text" @bind="notes" />
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" rows="3" @bind="editingModel.Notes"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="primary-btn" @onclick="CreateAppointmentAsync">Create Appointment</button>
+                <button class="btn btn-filter" @onclick="CloseModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveAppointment">Save Changes</button>
             </div>
         </div>
     </div>
 }
 
 @code {
-    private bool showCreateModal;
-    private int patientId;
-    private int dentistId;
-    private int serviceId;
-    private DateTime? appointmentDate;
-    private string? startTimeText; // HH:mm
-    private int durationMinutes;
-    private string? notes;
+    private List<Appointment> appointments = new();
+    private List<DentistAvailability> dentists = new();
+    private bool isLoading = true;
+    private bool showModal = false;
+    private bool isEditing = false;
+    private CreateAppointmentModel editingModel = new();
+    private int? editingAppointmentId = null;
+    private DateTime selectedDate = DateTime.Today;
+    private bool isOffline = false;
 
-    private void ShowCreateModal() => showCreateModal = true;
-    private void CloseCreateModal() => showCreateModal = false;
-
-    private void OnStartTimeChanged(ChangeEventArgs e)
+    private TimeOnly BindStartTime
     {
-        startTimeText = e.Value?.ToString();
+        get => TimeOnly.FromTimeSpan(editingModel.StartTime);
+        set => editingModel.StartTime = value.ToTimeSpan();
     }
 
-    private async Task CreateAppointmentAsync()
+    private TimeOnly BindEndTime
     {
-        // Temporary: just close modal
-        CloseCreateModal();
-        await Task.CompletedTask;
+        get => TimeOnly.FromTimeSpan(editingModel.EndTime);
+        set => editingModel.EndTime = value.ToTimeSpan();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var session = await SessionService.GetCurrentSessionAsync();
+        if (session?.Role != "Receptionist") { Navigation.NavigateTo("/login"); return; }
+        await LoadDataAsync();
+    }
+
+    private string? errorMessage;
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        isOffline = AppointmentService.IsOffline;
+        
+        // Get appointments for selected date
+        appointments = await AppointmentService.GetAppointmentsInRangeAsync(selectedDate, selectedDate) ?? new();
+        
+        if (appointments.Count == 0 && !string.IsNullOrEmpty(AppointmentService.LastError))
+        {
+            errorMessage = AppointmentService.LastError;
+        }
+
+        dentists = await AppointmentService.GetAvailableDentistsAsync(selectedDate) ?? new();
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task RetryConnection()
+    {
+        isLoading = true;
+        AppointmentService.SwitchToOnline();
+        await LoadDataAsync();
+    }
+
+    private string GetStatusClass(string status) => (status ?? "").ToLower() switch
+    {
+        "confirmed" => "status-confirmed",
+        "in progress" => "status-inprogress",
+        "cancelled" => "status-cancelled",
+        _ => "status-waiting"
+    };
+
+    private string FormatTime(TimeSpan? t)
+    {
+        if (!t.HasValue) return "";
+        return DateTime.Today.Add(t.Value).ToString("h:mm tt");
+    }
+
+    private int GetDuration(TimeSpan? start, TimeSpan? end)
+    {
+        if (!start.HasValue || !end.HasValue) return 0;
+        return (int)(end.Value - start.Value).TotalMinutes;
+    }
+
+    private void OpenCreateModal()
+    {
+        isEditing = false;
+        editingAppointmentId = null;
+        editingModel = new CreateAppointmentModel
+        {
+            AppointmentDate = selectedDate,
+            StartTime = new TimeSpan(9, 0, 0),
+            EndTime = new TimeSpan(10, 0, 0)
+        };
+        showModal = true;
+    }
+
+    private void OpenEditModal(Appointment appt)
+    {
+        isEditing = true;
+        editingAppointmentId = appt.AppointmentID;
+        editingModel = new CreateAppointmentModel
+        {
+            PatientID = appt.PatientID,
+            DentistID = appt.DentistID ?? 0,
+            ServiceID = appt.ServiceID ?? 0,
+            AppointmentDate = appt.AppointmentDate,
+            StartTime = appt.StartTime ?? TimeSpan.Zero,
+            EndTime = appt.EndTime ?? TimeSpan.Zero,
+            Notes = appt.Notes,
+            PatientName = appt.PatientName
+        };
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task SaveAppointment()
+    {
+        if (isEditing && editingAppointmentId.HasValue)
+        {
+            var result = await AppointmentService.UpdateAppointmentAsync(
+            editingAppointmentId.Value,
+            editingModel.AppointmentDate,
+            editingModel.StartTime,
+            editingModel.EndTime,
+            editingModel.DentistID,
+            editingModel.ServiceID,
+            editingModel.Notes
+            );
+            if (result.Success) { CloseModal(); await LoadDataAsync(); }
+        }
+        else
+        {
+            var result = await AppointmentService.CreateAppointmentAsync(editingModel);
+            if (result.Success) { CloseModal(); await LoadDataAsync(); }
+        }
+    }
+
+    private async Task ConfirmAppointment(Appointment appt)
+    {
+        var result = await AppointmentService.ConfirmAppointmentAsync(appt.AppointmentID);
+        if (result.Success) await LoadDataAsync();
+    }
+
+    private async Task CancelAppointment(Appointment appt)
+    {
+        var result = await AppointmentService.CancelAppointmentAsync(appt.AppointmentID, 0, "Cancelled by receptionist");
+        if (result.Success) await LoadDataAsync();
     }
 }

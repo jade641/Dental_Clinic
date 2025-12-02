@@ -1,3 +1,6 @@
+/* --- ReceptCalendar.css --- */
+
+/* Universal Styles */
 * {
     margin: 0;
     padding: 0;
@@ -9,12 +12,14 @@ body {
     background-color: #f5f5f5;
 }
 
+/* Container for the entire calendar */
 .calendar-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
 }
 
+/* --- Recept Calendar Header --- */
 .calendar-header {
     display: flex;
     align-items: center;
@@ -22,18 +27,19 @@ body {
     margin-bottom: 20px;
 }
 
-    .calendar-header h1 {
-        font-size: 28px;
-        font-weight: 600;
-        color: #1a1a1a;
-    }
+.calendar-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
 
+/* Button to create new appointments */
 .btn-new-appointment {
     display: flex;
     align-items: center;
     gap: 8px;
     background-color: #1e90ff;
-    color: white;
+    color: #fff;
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
@@ -43,15 +49,17 @@ body {
     transition: background-color 0.2s;
 }
 
-    .btn-new-appointment:hover {
-        background-color: #1873cc;
-    }
+.btn-new-appointment:hover {
+    background-color: #1873cc;
+}
 
+/* Icon within the button */
 .icon-plus {
     font-size: 18px;
     font-weight: bold;
 }
 
+/* View toggles between different calendar views (week, month, etc.) */
 .view-toggle {
     display: flex;
     gap: 0;
@@ -61,9 +69,10 @@ body {
     overflow: hidden;
 }
 
+/* Individual button within the view toggle */
 .view-btn {
     padding: 8px 20px;
-    background-color: white;
+    background-color: #fff;
     border: none;
     border-right: 1px solid #ddd;
     cursor: pointer;
@@ -72,32 +81,39 @@ body {
     transition: all 0.2s;
 }
 
-    .view-btn:last-child {
-        border-right: none;
-    }
+.view-btn:last-child {
+    border-right: none;
+}
 
-    .view-btn.active {
-        background-color: #1e90ff;
-        color: white;
-    }
+/* Active view button style */
+.view-btn.active {
+    background-color: #1e90ff;
+    color: #fff;
+}
 
-    .view-btn:hover:not(.active) {
-        background-color: #f5f5f5;
-    }
+/* Hover effect for view buttons */
+.view-btn:hover:not(.active) {
+    background-color: #f5f5f5;
+}
 
+/* --- Recept Calendar Main Content Layout --- */
+
+/* Main layout for the calendar, sidebar and content */
 .content-wrapper {
     display: flex;
     gap: 20px;
 }
 
+/* Sidebar containing filters and other information */
 .sidebar {
     width: 280px;
-    background-color: white;
+    background-color: #fff;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Title for sections in the sidebar */
 .filter-section h3 {
     font-size: 16px;
     font-weight: 600;
@@ -105,6 +121,7 @@ body {
     color: #1a1a1a;
 }
 
+/* Navigation for months in the calendar */
 .month-nav {
     display: flex;
     align-items: center;
@@ -115,25 +132,28 @@ body {
     border-radius: 6px;
 }
 
+/* Arrow buttons for navigation */
 .nav-arrow {
     background: none;
     border: none;
     font-size: 20px;
     cursor: pointer;
     color: #666;
-    padding: 0 5px;
+    padding: 5px;
 }
 
-    .nav-arrow:hover {
-        color: #1e90ff;
-    }
+.nav-arrow:hover {
+    color: #1e90ff;
+}
 
+/* Current displayed month and year */
 .month-year {
     font-weight: 600;
     font-size: 14px;
     color: #1a1a1a;
 }
 
+/* Week display beneath the monthnav */
 .week-display {
     text-align: center;
     font-size: 13px;
@@ -141,6 +161,7 @@ body {
     margin-bottom: 20px;
 }
 
+/* Dentist filters section in the sidebar */
 .dentist-filters {
     display: flex;
     flex-direction: column;
@@ -148,6 +169,7 @@ body {
     margin-bottom: 30px;
 }
 
+/* Individual dentist filter item */
 .dentist-item {
     display: flex;
     align-items: center;
@@ -156,62 +178,67 @@ body {
     font-size: 14px;
 }
 
-    .dentist-item input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-    }
+/* Checkbox for dentist filters */
+.dentist-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
 
+/* Color dots next to each dentist indicating schedule type */
 .color-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
 }
 
-    .color-dot.blue {
-        background-color: #4a90e2;
-    }
+.color-dot.blue {
+    background-color: #4a90e2;
+}
 
-    .color-dot.green {
-        background-color: #50c878;
-    }
+.color-dot.green {
+    background-color: #50c878;
+}
 
-    .color-dot.orange {
-        background-color: #ff9500;
-    }
+.color-dot.orange {
+    background-color: #ff9500;
+}
 
-    .color-dot.light-blue {
-        background-color: #5ac8fa;
-    }
+.color-dot.light-blue {
+    background-color: #5ac8fa;
+}
 
-    .color-dot.red {
-        background-color: #dc3545;
-    }
+.color-dot.red {
+    background-color: #dc3545;
+}
 
-    .color-dot.yellow {
-        background-color: #ffd700;
-    }
+.color-dot.yellow {
+    background-color: #ffd700;
+}
 
+/* Procedures section in the sidebar */
 .procedures-section {
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #eee;
 }
 
-    .procedures-section h4 {
-        font-size: 12px;
-        font-weight: 600;
-        color: #999;
-        letter-spacing: 0.5px;
-        margin-bottom: 15px;
-    }
+.procedures-section h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    letter-spacing: 0.5px;
+    margin-bottom: 15px;
+}
 
+/* Procedure filters within the procedures section */
 .procedure-filters {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
+/* Individual procedure item */
 .procedure-item {
     display: flex;
     align-items: center;
@@ -220,14 +247,18 @@ body {
     color: #333;
 }
 
+/* --- Recept Calendar Grid & Time Slots --- */
+
+/* Main area where the calendar grid and appointments reside */
 .calendar-main {
     flex: 1;
-    background-color: white;
+    background-color: #fff;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Controls at the top of the calendar for month navigation, etc. */
 .calendar-controls {
     display: flex;
     align-items: center;
@@ -235,16 +266,18 @@ body {
     margin-bottom: 20px;
 }
 
+/* Currently displayed month in the calendar controls */
 .current-month {
     font-size: 18px;
     font-weight: 600;
     color: #1a1a1a;
 }
 
+/* Button to quickly jump to the current month */
 .btn-today {
     margin-left: auto;
     padding: 8px 16px;
-    background-color: white;
+    background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 6px;
     cursor: pointer;
@@ -253,18 +286,20 @@ body {
     transition: all 0.2s;
 }
 
-    .btn-today:hover {
-        background-color: #f5f5f5;
-        border-color: #1e90ff;
-        color: #1e90ff;
-    }
+.btn-today:hover {
+    background-color: #f5f5f5;
+    border-color: #1e90ff;
+    color: #1e90ff;
+}
 
+/* Grid container for the calendar, holds all day columns and time slots */
 .calendar-grid {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
 }
 
+/* Header row of the grid, displaying day names and dates */
 .calendar-header-row {
     display: grid;
     grid-template-columns: 80px repeat(6, 1fr);
@@ -272,16 +307,18 @@ body {
     border-bottom: 1px solid #e0e0e0;
 }
 
+/* Individual day header within the header row */
 .day-header {
     padding: 15px;
     text-align: center;
     border-right: 1px solid #e0e0e0;
 }
 
-    .day-header:last-child {
-        border-right: none;
-    }
+.day-header:last-child {
+    border-right: none;
+}
 
+/* Day name (Mon, Tue, etc.) styling */
 .day-name {
     font-size: 12px;
     color: #666;
@@ -289,21 +326,25 @@ body {
     margin-bottom: 5px;
 }
 
+/* Day number (1, 2, 3, etc.) styling */
 .day-number {
     font-size: 18px;
     font-weight: 600;
     color: #1a1a1a;
 }
 
+/* Main body of the calendar grid, where time slots and appointments are placed */
 .calendar-body {
     display: grid;
     grid-template-columns: 80px repeat(6, 1fr);
 }
 
+/* Column on the left for time slots */
 .time-column {
     border-right: 1px solid #e0e0e0;
 }
 
+/* Individual time slot in the time column */
 .time-slot {
     height: 80px;
     padding: 10px;
@@ -313,31 +354,86 @@ body {
     text-align: right;
 }
 
+/* Column for each day, contains time slots and appointments */
 .day-column {
     border-right: 1px solid #e0e0e0;
     position: relative;
+    min-height: calc((18 - 8) * 80px);
 }
 
-    .day-column:last-child {
-        border-right: none;
-    }
+.day-column:last-child {
+    border-right: none;
+}
 
-    .day-column::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 80px;
-        border-bottom: 1px solid #e0e0e0;
-    }
+/* Hour rows inside each day for better alignment */
+.day-column .hour-slot {
+    height: 80px;
+    border-bottom: 1px solid #e0e0e0;
+}
 
-    .day-column::after {
-        content: '';
-        position: absolute;
-        top: 80px;
-        left: 0;
-        right: 0;
-        height: 80px;
-        border-bottom: 1px solid #e0e0e0;
-    }
+/* --- Appointments / Events on the Calendar --- */
+
+/* Appointment blocks displayed on the calendar */
+.appointment-block {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    background: #e8f1ff;
+    border-left: 4px solid #1e90ff;
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: #0f172a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* Time displayed on the appointment card */
+.appointment-block .appt-time {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Patient's name displayed on the appointment card */
+.appointment-block .appt-patient {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Service and dentist details on the appointment card */
+.appointment-block .appt-service,
+.appointment-block .appt-dentist {
+    font-size: 12px;
+    color: #475569;
+}
+
+/* Status colors for different appointment states */
+.appointment-block.pending {
+    background: #fff7ed;
+    border-left-color: #fb923c;
+}
+
+.appointment-block.confirmed {
+    background: #ecfeff;
+    border-left-color: #06b6d4;
+}
+
+.appointment-block.completed {
+    background: #ecfdf5;
+    border-left-color: #10b981;
+}
+
+.appointment-block.cancelled {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+}
+
+/* Current time indicator line across the calendar */
+.current-time-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #ef4444;
+    opacity: 0.8;
+}
