@@ -80,161 +80,205 @@
         </div>
     </header>
 
-    <div class="dashboard-inner">
-        <!-- Hero Card -->
+    <!-- Main Content -->
+    <div class="dashboard-content">
+        <!-- Hero Card with Gradient -->
         <section class="hero-card">
-            <div class="hero-content">
-                <h1>Good morning, <span>@(string.IsNullOrWhiteSpace(patientName) ? "Patient" : patientName)</span>!</h1>
-                <p class="muted">Welcome to your AURELIA Dental Clinic portal</p>
+            <!-- Heart Icon Decoration -->
+            <div class="hero-heart-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
 
-                <div class="next-appointment">
-                    <div class="next-info">
-                        <div class="label">Next Appointment</div>
-                        <div class="title">@nextAppointment?.ServiceName</div>
-                        <div class="meta">@nextAppointment?.AppointmentDate.ToString("dd/MM/yyyy") at @(nextAppointment?.StartTime.HasValue == true ? FormatTime(nextAppointment.StartTime.Value) : "")</div>
+            <div class="hero-content">
+                <!-- Greeting -->
+                <div class="hero-greeting">
+                    <h1>Good morning, @patientName!</h1>
+                    <p class="subtitle">Welcome to your Aurelia Dental Clinic portal</p>
+                </div>
+
+                <!-- Next Appointment Box -->
+                <div class="next-appointment-box">
+                    <div class="appt-box-content">
+                        <div class="appt-calendar-icon">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+                                <path d="M16 2V6M8 2V6M3 10H21" stroke="white" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="appt-box-info">
+                            <div class="appt-box-label">Next Appointment</div>
+                            <div class="appt-box-title">@(nextAppointment?.ServiceName ?? "No upcoming appointments")</div>
+                            <div class="appt-box-date">@(nextAppointment != null ? $"{nextAppointment.AppointmentDate:dd/MM/yyyy} at {FormatTime(nextAppointment.StartTime ?? new TimeSpan(0))}" : "")</div>
+                        </div>
                     </div>
-                    <div class="next-actions">
-                        <button class="btn-outline" @onclick='() => Navigation.NavigateTo("/appointments")'>📅 Book Appointment</button>
-                        <button class="btn-outline ghost">📞 Call Clinic</button>
+
+                    <!-- Action Buttons Inside Box -->
+                    <div class="appt-box-actions">
+                        <button class="btn-book" @onclick='() => Navigation.NavigateTo("/appointments")'>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                                <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            Book Appointment
+                        </button>
+                        <button class="btn-call">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Call Clinic
+                        </button>
                     </div>
                 </div>
-            </div>
-            <div class="hero-deco">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="rgba(255,255,255,0.2)">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
             </div>
         </section>
 
-        <!-- Stats Row -->
+        <!-- Stats Row Below Hero -->
         <section class="stats-row">
             <div class="stat-card">
-                <div class="icon blue">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <div class="stat-icon blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
                     </svg>
                 </div>
-                <div class="stat-text">
+                <div class="stat-content">
                     <div class="stat-label">Next Visit</div>
                     <div class="stat-value">@((nextAppointment?.AppointmentDate - DateTime.Today)?.Days ?? 0) days</div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <div class="icon success">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
+                <div class="stat-icon green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2"/>
                     </svg>
                 </div>
-                <div class="stat-text">
+                <div class="stat-content">
                     <div class="stat-label">Completed</div>
                     <div class="stat-value">@completedCount</div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <div class="icon warning">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <div class="stat-icon orange">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
                     </svg>
                 </div>
-                <div class="stat-text">
+                <div class="stat-content">
                     <div class="stat-label">Outstanding</div>
                     <div class="stat-value">₱@outstanding.ToString("N0")</div>
                 </div>
             </div>
 
             <div class="stat-card">
-                <div class="icon purple">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <div class="stat-icon purple">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" stroke="currentColor" stroke-width="2"/>
                     </svg>
                 </div>
-                <div class="stat-text">
+                <div class="stat-content">
                     <div class="stat-label">Total Spent</div>
                     <div class="stat-value">₱@totalSpent.ToString("N0")</div>
                 </div>
             </div>
         </section>
 
-        <!-- Panels -->
-        <section class="panels">
-            <div class="panel appointments">
-                <div class="panel-header">
-                    <h3>📅 Upcoming Appointments</h3>
-                    <a class="view-all" href="/appointments">View All</a>
+        <!-- Content Sections -->
+        <div class="content-grid">
+            <!-- Upcoming Appointments -->
+            <section class="content-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <h2>Upcoming Appointments</h2>
+                    </div>
+                    <a href="/appointments" class="view-all-link">View All</a>
                 </div>
-                <div class="panel-body">
+                <div class="appointments-list">
                     @if (upcoming.Any())
                     {
                         @foreach (var appt in upcoming)
                         {
-                            <div class="appt-item">
-                                <div class="left">
-                                    <div class="avatar">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
-                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
-                                        </svg>
-                                    </div>
+                            <div class="appointment-item">
+                                <div class="appt-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
                                 </div>
-                                <div class="center">
-                                    <div class="appt-title">@appt.ServiceName</div>
-                                    <div class="appt-meta">@appt.DentistName — @appt.AppointmentDate.ToString("MMM dd, yyyy") • @FormatTime(appt.StartTime ?? new TimeSpan(0))</div>
+                                <div class="appt-info">
+                                    <div class="appt-name">@appt.ServiceName</div>
+                                    <div class="appt-meta">@appt.DentistName • @appt.AppointmentDate.ToString("dd/MM/yyyy") • @FormatTime(appt.StartTime ?? new TimeSpan(0))</div>
                                 </div>
-                                <div class="right">
-                                    <span class="status @appt.Status.ToLower()">@appt.Status</span>
-                                </div>
+                                <span class="status-badge status-@appt.Status.ToLower()">@appt.Status</span>
                             </div>
                         }
                     }
                     else
                     {
                         <div class="empty-state">
-                            <h4>No upcoming appointments</h4>
-                            <p>Book an appointment to see it here</p>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <p>No upcoming appointments</p>
                         </div>
                     }
                 </div>
-            </div>
+            </section>
 
-            <div class="panel treatments">
-                <div class="panel-header">
-                    <h3>📋 Recent Treatments</h3>
-                    <a class="view-all" href="/history">View All</a>
+            <!-- Recent Treatments -->
+            <section class="content-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        <h2>Recent Treatments</h2>
+                    </div>
+                    <a href="/history" class="view-all-link">View All</a>
                 </div>
-                <div class="panel-body">
-                    @foreach (var t in recentTreatments)
+                <div class="treatments-list">
+                    @foreach (var treatment in recentTreatments)
                     {
-                        <div class="treat-item">
-                            <div class="t-left">
-                                <div class="t-icon">
-                                    <svg width="24" height="24" viewBox="002424" fill="none" stroke="#10b981" stroke-width="2">
-                                        <polyline points="206917412"></polyline>
-                                    </svg>
-                                </div>
+                        <div class="treatment-item">
+                            <div class="treatment-icon-wrapper">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2"/>
+                                </svg>
                             </div>
-                            <div class="t-center">
-                                <div class="t-title">@t.Title</div>
-                                <div class="t-meta">@t.Provider — @t.Date.ToString("dd/MM/yyyy")</div>
+                            <div class="treatment-info">
+                                <div class="treatment-name">@treatment.Title</div>
+                                <div class="treatment-meta">@treatment.Provider • @treatment.Date.ToString("dd/MM/yyyy")</div>
                             </div>
-                            <div class="t-right">
-                                <div class="amount">₱@t.Price.ToString("N0")</div>
-                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                            <div class="treatment-right">
+                                <div class="treatment-price">₱@treatment.Price.ToString("N0")</div>
+                                <div class="treatment-rating">⭐⭐⭐⭐⭐</div>
                             </div>
                         </div>
                     }
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
+
+    <!-- Floating Chatbot Button -->
+    <button class="chatbot-button" type="button" aria-label="Open Chat">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
 </div>
 
 @code {
     private string patientName = "Patient";
-    private int currentPatientId =0;
-    private int completedCount = 12; // Example value
-    private decimal outstanding = 2500; // Example value
-    private decimal totalSpent = 15800; // Example value
+    private int currentPatientId = 0;
+    private int completedCount = 3;
+    private decimal outstanding = 2500;
+    private decimal totalSpent = 15800;
 
     private Models.Appointment? nextAppointment;
     private List<Models.Appointment> upcoming = new();
@@ -251,14 +295,13 @@
             }
 
             patientName = session.UserName ?? "Patient";
-            currentPatientId = session.RoleSpecificId ??0;
-            if (currentPatientId ==0)
+            currentPatientId = session.RoleSpecificId ?? 0;
+            if (currentPatientId == 0)
             {
                 Navigation.NavigateTo("/login", true);
                 return;
             }
 
-            // Load upcoming appointments from service
             upcoming = (await AppointmentService.GetPatientAppointmentsAsync(currentPatientId))
                 .Where(a => a.AppointmentDate >= DateTime.Today)
                 .OrderBy(a => a.AppointmentDate)
@@ -279,18 +322,23 @@
     {
         var hours = time.Hours;
         var minutes = time.Minutes;
-        var ampm = hours >=12 ? "PM" : "AM";
-        if (hours >12) hours -=12;
-        if (hours ==0) hours =12;
+        var ampm = hours >= 12 ? "PM" : "AM";
+        if (hours > 12) hours -= 12;
+        if (hours == 0) hours = 12;
         return $"{hours}:{minutes:00} {ampm}";
     }
 
-    // Sample treatments remain
     private List<Treatment> recentTreatments = new List<Treatment>
     {
-        new Treatment { Title = "Initial Consultation", Provider = "Dr. Maria Santos", Date = new DateTime(2025,8,15), Price =1500 },
-        new Treatment { Title = "X-Ray", Provider = "Dr. Maria Santos", Date = new DateTime(2025,8,15), Price =800 }
+        new Treatment { Title = "Initial Consultation", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 8, 15), Price = 1500 },
+        new Treatment { Title = "X-Ray", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 8, 15), Price = 800 }
     };
 
-    private class Treatment { public string Title { get; set; } = string.Empty; public string Provider { get; set; } = string.Empty; public DateTime Date { get; set; } public int Price { get; set; } }
+    private class Treatment 
+    { 
+        public string Title { get; set; } = string.Empty; 
+        public string Provider { get; set; } = string.Empty; 
+        public DateTime Date { get; set; } 
+        public int Price { get; set; } 
+    }
 }

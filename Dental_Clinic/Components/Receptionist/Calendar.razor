@@ -1,184 +1,112 @@
 ﻿@page "/receptionist/calendar"
+@layout Dental_Clinic.Components.Layout.ReceptionistDashboard
 @using Microsoft.AspNetCore.Components
 @using Dental_Clinic.Services
 @using Dental_Clinic.Models
 @inject AppointmentService AppointmentService
-<link href="css/dentistdashboard.css" rel="stylesheet" />
 <link href="css/receptionistdashboard.css" rel="stylesheet" />
 <link href="ReceptCalendar.css" rel="stylesheet" />
 
-<div class="dashboard-page">
-    <nav class="navbar">
-        <div class="navbar-container">
-            <NavLink href="/receptionist/dashboard" class="navbar-brand" Match="NavLinkMatch.All">
-                <div class="navbar-logo">
-                    <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic Logo" class="clinic-logo-img" />
-                </div>
-                <div class="navbar-brand-text">
-                    <h1>AURELIA DENTAL CLINIC - DR JADE</h1>
-                    <p>YOUR SMILE. OUR MASTERPIECE</p>
-                </div>
-            </NavLink>
-            <div class="navbar-menu">
-                <ul class="nav-links">
-                    <li>
-                        <NavLink href="/receptionist/dashboard" class="nav-link" Match="NavLinkMatch.All">Overview</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/calendar" class="nav-link" ActiveClass="active">Calendar</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/patients" class="nav-link" ActiveClass="active">Patients</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/messages" class="nav-link" ActiveClass="active">Messages</NavLink>
-                    </li>
-                </ul>
+<!-- Content only; navbar provided by layout -->
+<main class="dashboard-main">
+    <div class="calendar-container">
+        <header class="calendar-header">
+            <h1>Clinic Schedule</h1>
+            <button class="btn-new-appointment" @onclick="ShowCreateModal">
+                <span class="icon-plus">+</span>
+                New Appointment
+            </button>
+            <div class="view-toggle">
+                <button class="view-btn">Day</button>
+                <button class="view-btn active">Week</button>
+                <button class="view-btn">Month</button>
             </div>
-            <div class="navbar-actions">
-                <div class="search-box"></div>
-                <button class="icon-button" type="button"></button>
-                <button class="icon-button" type="button"></button>
-            </div>
-        </div>
-    </nav>
+        </header>
 
-    <main class="dashboard-main">
-        <div class="calendar-container">
-            <header class="calendar-header">
-                <h1>Clinic Schedule</h1>
-                <button class="btn-new-appointment" @onclick="ShowCreateModal">
-                    <span class="icon-plus">+</span>
-                    New Appointment
-                </button>
-                <div class="view-toggle">
-                    <button class="view-btn">Day</button>
-                    <button class="view-btn active">Week</button>
-                    <button class="view-btn">Month</button>
-                </div>
-            </header>
+        <div class="content-wrapper">
+            <aside class="sidebar">
+                <div class="filter-section">
+                    <h3>Filter by Dentist</h3>
 
-            <div class="content-wrapper">
-                <aside class="sidebar">
-                    <div class="filter-section">
-                        <h3>Filter by Dentist</h3>
-
-                        <div class="month-nav">
-                            <button class="nav-arrow">‹</button>
-                            <span class="month-year">November 2025</span>
-                            <button class="nav-arrow">›</button>
-                        </div>
-
-                        <div class="week-display">Week of Nov 24</div>
-
-                        <div class="dentist-filters">
-                            <label class="dentist-item">
-                                <input type="checkbox" checked />
-                                <span class="color-dot blue"></span>
-                                <span>Dr. Jade</span>
-                            </label>
-                            <label class="dentist-item">
-                                <input type="checkbox" checked />
-                                <span class="color-dot green"></span>
-                                <span>Dr. Maria Santos</span>
-                            </label>
-                            <label class="dentist-item">
-                                <input type="checkbox" checked />
-                                <span class="color-dot orange"></span>
-                                <span>Dr. Juan Cruz</span>
-                            </label>
-                        </div>
-
-                        <div class="procedures-section">
-                            <h4>PROCEDURES</h4>
-                            <div class="procedure-filters">
-                                <div class="procedure-item">
-                                    <span class="color-dot blue"></span>
-                                    <span>Check-up</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot green"></span>
-                                    <span>Cleaning</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot light-blue"></span>
-                                    <span>Filling</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot red"></span>
-                                    <span>Root Canal</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot orange"></span>
-                                    <span>Extraction</span>
-                                </div>
-                                <div class="procedure-item">
-                                    <span class="color-dot yellow"></span>
-                                    <span>Whitening</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <main class="calendar-main">
-                    <div class="calendar-controls">
+                    <div class="month-nav">
                         <button class="nav-arrow">‹</button>
-                        <span class="current-month">November 2025</span>
+                        <span class="month-year">November 2025</span>
                         <button class="nav-arrow">›</button>
-                        <button class="btn-today">Today</button>
                     </div>
 
-                    <div class="calendar-grid">
-                        <div class="calendar-header-row">
-                            <div class="time-column"></div>
-                            <div class="day-header">
-                                <div class="day-name">Mon</div>
-                                <div class="day-number">24</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Tue</div>
-                                <div class="day-number">25</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Wed</div>
-                                <div class="day-number">26</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Thu</div>
-                                <div class="day-number">27</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Fri</div>
-                                <div class="day-number">28</div>
-                            </div>
-                            <div class="day-header">
-                                <div class="day-name">Sat</div>
-                                <div class="day-number">29</div>
-                            </div>
-                        </div>
+                    <div class="week-display">Week of Nov 24</div>
 
-                        <div class="calendar-body">
-                            <div class="time-column">
-                                <div class="time-slot">8 AM</div>
-                                <div class="time-slot">9 AM</div>
-                                <div class="time-slot">10 AM</div>
-                                <div class="time-slot">11 AM</div>
-                                <div class="time-slot">12 PM</div>
-                            </div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
-                            <div class="day-column"></div>
+                    <div class="dentist-filters">
+                        <label class="dentist-item">
+                            <input type="checkbox" checked />
+                            <span class="color-dot blue"></span>
+                            <span>Dr. Jade</span>
+                        </label>
+                        <label class="dentist-item">
+                            <input type="checkbox" checked />
+                            <span class="color-dot green"></span>
+                            <span>Dr. Maria Santos</span>
+                        </label>
+                        <label class="dentist-item">
+                            <input type="checkbox" checked />
+                            <span class="color-dot orange"></span>
+                            <span>Dr. Juan Cruz</span>
+                        </label>
+                    </div>
+
+                    <div class="procedures-section">
+                        <h4>PROCEDURES</h4>
+                        <div class="procedure-filters">
+                            <div class="procedure-item"><span class="color-dot blue"></span><span>Check-up</span></div>
+                            <div class="procedure-item"><span class="color-dot green"></span><span>Cleaning</span></div>
+                            <div class="procedure-item"><span class="color-dot light-blue"></span><span>Filling</span></div>
+                            <div class="procedure-item"><span class="color-dot red"></span><span>Root Canal</span></div>
+                            <div class="procedure-item"><span class="color-dot orange"></span><span>Extraction</span></div>
+                            <div class="procedure-item"><span class="color-dot yellow"></span><span>Whitening</span></div>
                         </div>
                     </div>
-                </main>
-            </div>
+                </div>
+            </aside>
+
+            <section class="calendar-main">
+                <div class="calendar-controls">
+                    <button class="nav-arrow">‹</button>
+                    <span class="current-month">November 2025</span>
+                    <button class="nav-arrow">›</button>
+                    <button class="btn-today">Today</button>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="calendar-header-row">
+                        <div class="time-column"></div>
+                        <div class="day-header"><div class="day-name">Mon</div><div class="day-number">24</div></div>
+                        <div class="day-header"><div class="day-name">Tue</div><div class="day-number">25</div></div>
+                        <div class="day-header"><div class="day-name">Wed</div><div class="day-number">26</div></div>
+                        <div class="day-header"><div class="day-name">Thu</div><div class="day-number">27</div></div>
+                        <div class="day-header"><div class="day-name">Fri</div><div class="day-number">28</div></div>
+                        <div class="day-header"><div class="day-name">Sat</div><div class="day-number">29</div></div>
+                    </div>
+
+                    <div class="calendar-body">
+                        <div class="time-column">
+                            <div class="time-slot">8 AM</div>
+                            <div class="time-slot">9 AM</div>
+                            <div class="time-slot">10 AM</div>
+                            <div class="time-slot">11 AM</div>
+                            <div class="time-slot">12 PM</div>
+                        </div>
+                        <div class="day-column"></div>
+                        <div class="day-column"></div>
+                        <div class="day-column"></div>
+                        <div class="day-column"></div>
+                        <div class="day-column"></div>
+                        <div class="day-column"></div>
+                    </div>
+                </div>
+            </section>
         </div>
-    </main>
-</div>
+    </div>
+</main>
 
 @if (showCreateModal)
 {
@@ -189,34 +117,13 @@
                 <button class="close-btn" @onclick="CloseCreateModal">×</button>
             </div>
             <div class="modal-body">
-                <div class="form-row">
-                    <label>Patient ID</label>
-                    <input type="number" @bind="patientId" />
-                </div>
-                <div class="form-row">
-                    <label>Dentist ID</label>
-                    <input type="number" @bind="dentistId" />
-                </div>
-                <div class="form-row">
-                    <label>Procedure (Service) ID</label>
-                    <input type="number" @bind="serviceId" />
-                </div>
-                <div class="form-row">
-                    <label>Date</label>
-                    <input type="date" @bind="appointmentDate" />
-                </div>
-                <div class="form-row">
-                    <label>Time</label>
-                    <input type="time" value="@startTimeText" @onchange="OnStartTimeChanged" />
-                </div>
-                <div class="form-row">
-                    <label>Duration (minutes)</label>
-                    <input type="number" min="1" @bind="durationMinutes" />
-                </div>
-                <div class="form-row">
-                    <label>Notes</label>
-                    <input type="text" @bind="notes" />
-                </div>
+                <div class="form-row"><label>Patient ID</label><input type="number" @bind="patientId" /></div>
+                <div class="form-row"><label>Dentist ID</label><input type="number" @bind="dentistId" /></div>
+                <div class="form-row"><label>Procedure (Service) ID</label><input type="number" @bind="serviceId" /></div>
+                <div class="form-row"><label>Date</label><input type="date" @bind="appointmentDate" /></div>
+                <div class="form-row"><label>Time</label><input type="time" value="@startTimeText" @onchange="OnStartTimeChanged" /></div>
+                <div class="form-row"><label>Duration (minutes)</label><input type="number" min="1" @bind="durationMinutes" /></div>
+                <div class="form-row"><label>Notes</label><input type="text" @bind="notes" /></div>
             </div>
             <div class="modal-footer">
                 <button class="primary-btn" @onclick="CreateAppointmentAsync">Create Appointment</button>
@@ -238,15 +145,7 @@
     private void ShowCreateModal() => showCreateModal = true;
     private void CloseCreateModal() => showCreateModal = false;
 
-    private void OnStartTimeChanged(ChangeEventArgs e)
-    {
-        startTimeText = e.Value?.ToString();
-    }
+    private void OnStartTimeChanged(ChangeEventArgs e) { startTimeText = e.Value?.ToString(); }
 
-    private async Task CreateAppointmentAsync()
-    {
-        // Temporary: just close modal
-        CloseCreateModal();
-        await Task.CompletedTask;
-    }
+    private async Task CreateAppointmentAsync() { CloseCreateModal(); await Task.CompletedTask; }
 }

@@ -1,156 +1,43 @@
 ﻿@page "/receptionist/messages"
+@layout Dental_Clinic.Components.Layout.ReceptionistDashboard
 @using Microsoft.AspNetCore.Components
-<link href="css/dentistdashboard.css" rel="stylesheet" />
 <link href="css/receptionistdashboard.css" rel="stylesheet" />
 <link href="ReceptMessages.css" rel="stylesheet" />
 
-<div class="dashboard-page">
-    <nav class="navbar">
-        <div class="navbar-container">
-            <NavLink href="/receptionist/dashboard" class="navbar-brand" Match="NavLinkMatch.All">
-                <div class="navbar-logo">
-                    <img src="css/bootstrap/Dental_Logo.png" alt="Aurelia Dental Clinic Logo" class="clinic-logo-img" />
-                </div>
-                <div class="navbar-brand-text">
-                    <h1>AURELIA DENTAL CLINIC - DR JADE</h1>
-                    <p>YOUR SMILE. OUR MASTERPIECE</p>
-                </div>
-            </NavLink>
-            <div class="navbar-menu">
-                <ul class="nav-links">
-                    <li>
-                        <NavLink href="/receptionist/dashboard" class="nav-link" Match="NavLinkMatch.All">Overview</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/calendar" class="nav-link" ActiveClass="active">Calendar</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/patients" class="nav-link" ActiveClass="active">Patients</NavLink>
-                    </li>
-                    <li>
-                        <NavLink href="/receptionist/messages" class="nav-link active" ActiveClass="active">Messages</NavLink>
-                    </li>
-                </ul>
-            </div>
-            <div class="navbar-actions">
-                <div class="search-box"></div>
-                <button class="icon-button" type="button"></button>
-                <button class="icon-button" type="button"></button>
-            </div>
+<main class="dashboard-main">
+    <div class="messages-container">
+        <div class="stats-cards">
+            <div class="stat-card yellow"><div class="stat-content"><div class="stat-label">Unread Messages</div><div class="stat-value">3</div></div><div class="stat-icon yellow-icon">💬</div></div>
+            <div class="stat-card red"><div class="stat-content"><div class="stat-label">Urgent Concerns</div><div class="stat-value">2</div></div><div class="stat-icon red-icon">❗</div></div>
+            <div class="stat-card green"><div class="stat-content"><div class="stat-label">Total Messages</div><div class="stat-value">8</div></div><div class="stat-icon green-icon">✓</div></div>
         </div>
-    </nav>
-
-    <main class="dashboard-main">
-        <div class="messages-container">
-            <div class="stats-cards">
-                <div class="stat-card yellow">
-                    <div class="stat-content">
-                        <div class="stat-label">Unread Messages</div>
-                        <div class="stat-value">3</div>
-                    </div>
-                    <div class="stat-icon yellow-icon">💬</div>
-                </div>
-
-                <div class="stat-card red">
-                    <div class="stat-content">
-                        <div class="stat-label">Urgent Concerns</div>
-                        <div class="stat-value">2</div>
-                    </div>
-                    <div class="stat-icon red-icon">❗</div>
-                </div>
-
-                <div class="stat-card green">
-                    <div class="stat-content">
-                        <div class="stat-label">Total Messages</div>
-                        <div class="stat-value">8</div>
-                    </div>
-                    <div class="stat-icon green-icon">✓</div>
+        <div class="messages-section">
+            <div class="messages-header"><h2>💬 Patient Chat Messages</h2></div>
+            <div class="messages-controls">
+                <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="Search patient name or message..." /></div>
+                <div class="filters">
+                    <select class="filter-select"><option>All Status</option><option>New</option><option>Urgent</option><option>Read</option></select>
+                    <select class="filter-select"><option>All Categories</option><option>Appointment</option><option>Emergency</option><option>General</option></select>
                 </div>
             </div>
-
-            <div class="messages-section">
-                <div class="messages-header">
-                    <h2>💬 Patient Chat Messages</h2>
+            <div class="messages-list">
+                <div class="message-card yellow-border">
+                    <div class="message-header">
+                        <div class="patient-info-msg"><div class="patient-avatar-msg">MR</div><div class="patient-meta"><h3 class="patient-name-msg">Maria Rodriguez</h3><span class="message-time">2025-09-15 10:30 AM</span></div></div>
+                        <div class="message-badges"><span class="badge badge-new">New</span><span class="badge badge-category">appointment</span></div>
+                    </div>
+                    <div class="message-content"><p>Hi, I would like to know if you accept walk-ins for teeth cleaning or do I need an appointment?</p></div>
+                    <div class="message-actions"><button class="msg-btn btn-reply"><span>💬</span> Reply</button><button class="msg-btn btn-mark-read"><span>✓</span> Mark as Read</button></div>
                 </div>
-
-                <div class="messages-controls">
-                    <div class="search-box">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" placeholder="Search patient name or message..." />
+                <div class="message-card red-border">
+                    <div class="message-header">
+                        <div class="patient-info-msg"><div class="patient-avatar-msg">JS</div><div class="patient-meta"><h3 class="patient-name-msg">Juan Santos</h3><span class="message-time">2025-09-15 9:15 AM</span></div></div>
+                        <div class="message-badges"><span class="badge badge-urgent">Urgent</span><span class="badge badge-new">New</span><span class="badge badge-category">emergency</span></div>
                     </div>
-                    <div class="filters">
-                        <select class="filter-select">
-                            <option>All Status</option>
-                            <option>New</option>
-                            <option>Urgent</option>
-                            <option>Read</option>
-                        </select>
-                        <select class="filter-select">
-                            <option>All Categories</option>
-                            <option>Appointment</option>
-                            <option>Emergency</option>
-                            <option>General</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="messages-list">
-                    <div class="message-card yellow-border">
-                        <div class="message-header">
-                            <div class="patient-info-msg">
-                                <div class="patient-avatar-msg">MR</div>
-                                <div class="patient-meta">
-                                    <h3 class="patient-name-msg">Maria Rodriguez</h3>
-                                    <span class="message-time">2025-09-15 10:30 AM</span>
-                                </div>
-                            </div>
-                            <div class="message-badges">
-                                <span class="badge badge-new">New</span>
-                                <span class="badge badge-category">appointment</span>
-                            </div>
-                        </div>
-                        <div class="message-content">
-                            <p>Hi, I would like to know if you accept walk-ins for teeth cleaning or do I need an appointment?</p>
-                        </div>
-                        <div class="message-actions">
-                            <button class="msg-btn btn-reply">
-                                <span>💬</span> Reply
-                            </button>
-                            <button class="msg-btn btn-mark-read">
-                                <span>✓</span> Mark as Read
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="message-card red-border">
-                        <div class="message-header">
-                            <div class="patient-info-msg">
-                                <div class="patient-avatar-msg">JS</div>
-                                <div class="patient-meta">
-                                    <h3 class="patient-name-msg">Juan Santos</h3>
-                                    <span class="message-time">2025-09-15 9:15 AM</span>
-                                </div>
-                            </div>
-                            <div class="message-badges">
-                                <span class="badge badge-urgent">Urgent</span>
-                                <span class="badge badge-new">New</span>
-                                <span class="badge badge-category">emergency</span>
-                            </div>
-                        </div>
-                        <div class="message-content">
-                            <p>Hello! I have a severe toothache. Is there emergency dental service available today?</p>
-                        </div>
-                        <div class="message-actions">
-                            <button class="msg-btn btn-reply">
-                                <span>💬</span> Reply
-                            </button>
-                            <button class="msg-btn btn-mark-read">
-                                <span>✓</span> Mark as Read
-                            </button>
-                        </div>
-                    </div>
+                    <div class="message-content"><p>Hello! I have a severe toothache. Is there emergency dental service available today?</p></div>
+                    <div class="message-actions"><button class="msg-btn btn-reply"><span>💬</span> Reply</button><button class="msg-btn btn-mark-read"><span>✓</span> Mark as Read</button></div>
                 </div>
             </div>
         </div>
-    </main>
-</div>
+    </div>
+</main>
