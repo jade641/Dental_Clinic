@@ -7,7 +7,7 @@
 @inject SessionService SessionService
 @implements IDisposable
 
-<link href="css/dentistschedule.css" rel="stylesheet" />
+<link href="css/DentistSched.css" rel="stylesheet" />
 
 <div class="page-wrapper">
     <!-- Header -->
@@ -94,6 +94,13 @@
                 </div>
                 <button class="new-appointment-btn" @onclick="OpenNewAppointmentModal">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Filter
+                </button>
+                <button class="new-appointment-btn" @onclick="OpenNewAppointmentModal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
@@ -102,59 +109,58 @@
             </div>
         </div>
 
-        <div class="calendar-controls">
-            <button class="nav-arrow" @onclick="NavigatePrevious">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </button>
-            <h3 class="current-month">@currentMonthYear</h3>
-            <button class="nav-arrow" @onclick="NavigateNext">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
-            <button class="today-btn" @onclick="GoToToday">Today</button>
-        </div>
-
-        <div class="calendar-container">
-            <div class="calendar-grid">
-                <div class="time-column">
-                    <div class="time-header"></div>
-                    @foreach (var time in timeSlots)
-                    {
-                        <div class="time-slot">@time</div>
-                    }
+        <div class="schedule-grid">
+            <!-- Today's Appointments -->
+            <div class="schedule-section">
+                <div class="section-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <h3>Today's Appointments</h3>
+                    <span class="section-date">Sep 15</span>
                 </div>
 
-                @for (int i = 0; i < 7; i++)
-                {
-                    var dayIndex = i;
-                    var currentDayDate = weekStart.AddDays(i);
-                    var isToday = currentDayDate.Date == DateTime.Today;
-
-                    <div class="day-column @(isToday ? "today" : "")">
-                        <div class="day-header">
-                            <div class="day-name">@currentDayDate.ToString("ddd")</div>
-                            <div class="day-number @(isToday ? "current" : "")">@currentDayDate.Day</div>
+                <div class="calendar-container">
+                    <div class="calendar-grid">
+                        <div class="time-column">
+                            <div class="time-header"></div>
+                            @foreach (var time in timeSlots)
+                            {
+                                <div class="time-slot">@time</div>
+                            }
                         </div>
-                        @foreach (var time in timeSlots)
+
+                        @for (int i = 0; i < 7; i++)
                         {
-                            var timeSpan = ParseTimeSlot(time);
-                            <div class="calendar-cell" @onclick="() => HandleCellClick(currentDayDate, time)">
-                                @foreach (var appt in GetAppointmentsForSlot(currentDayDate, timeSpan))
+                            var dayIndex = i;
+                            var currentDayDate = weekStart.AddDays(i);
+                            var isToday = currentDayDate.Date == DateTime.Today;
+
+                            <div class="day-column @(isToday ? "today" : "")">
+                                <div class="day-header">
+                                    <div class="day-name">@currentDayDate.ToString("ddd")</div>
+                                    <div class="day-number @(isToday ? "current" : "")">@currentDayDate.Day</div>
+                                </div>
+                                @foreach (var time in timeSlots)
                                 {
-                                    <div class="appointment-block" title="@appt.PatientName - @appt.ServiceName">
-                                        <div class="appointment-patient">@appt.PatientName</div>
-                                        <div class="appointment-treatment">@appt.ServiceName</div>
+                                    var timeSpan = ParseTimeSlot(time);
+                                    <div class="calendar-cell" @onclick="() => HandleCellClick(currentDayDate, time)">
+                                        @foreach (var appt in GetAppointmentsForSlot(currentDayDate, timeSpan))
+                                        {
+                                            <div class="appointment-block" title="@appt.PatientName - @appt.ServiceName">
+                                                <div class="appointment-patient">@appt.PatientName</div>
+                                                <div class="appointment-treatment">@appt.ServiceName</div>
+                                            </div>
+                                        }
                                     </div>
                                 }
                             </div>
                         }
                     </div>
-                }
-            </div>
-        </div>
+                </div>
     </main>
 </div>
 
