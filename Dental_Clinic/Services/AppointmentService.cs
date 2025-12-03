@@ -447,7 +447,7 @@ s.ServiceName,
       return appointments;
     }
 
-    public async Task<List<Appointment>> GetAppointmentsInRangeAsync(DateTime startDate, DateTime endDate)
+    public async Task<List<Appointment>> GetAppointmentsInRangeAsync(DateTime startDate, DateTime endDate, int? dentistId = null)
     {
       var appointments = new List<Appointment>();
 
@@ -465,23 +465,34 @@ FROM Appointments a
 LEFT JOIN Services s ON a.ServiceID = s.ServiceID
 LEFT JOIN Dentist d ON a.DentistID = d.DentistID
 LEFT JOIN Users du ON d.UserID = du.UserID
-LEFT JOIN Users pu ON a.PatientID = pu.UserID
+LEFT JOIN Patient p ON a.PatientID = p.PatientID
+LEFT JOIN Users pu ON p.UserID = pu.UserID
 WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
 
-        var parameters = new[]
+        if (dentistId.HasValue)
         {
- new SqlParameter("@Start", startDate.Date),
- new SqlParameter("@End", endDate.Date)
- };
+          query += " AND a.DentistID = @DentistID";
+        }
+
+        var parameters = new List<SqlParameter>
+        {
+          new SqlParameter("@Start", startDate.Date),
+          new SqlParameter("@End", endDate.Date)
+        };
+
+        if (dentistId.HasValue)
+        {
+          parameters.Add(new SqlParameter("@DentistID", dentistId.Value));
+        }
 
         DataTable dt;
         if (IsOffline)
         {
-          dt = await _localDb.GetDataTableAsync(query, parameters);
+          dt = await _localDb.GetDataTableAsync(query, parameters.ToArray());
         }
         else
         {
-          dt = await _onlineDb.ExecuteReaderAsync(query, parameters);
+          dt = await _onlineDb.ExecuteReaderAsync(query, parameters.ToArray());
         }
 
         foreach (DataRow row in dt.Rows)

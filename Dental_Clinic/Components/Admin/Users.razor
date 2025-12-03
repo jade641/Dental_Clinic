@@ -1,6 +1,9 @@
 ﻿@page "/admin-users"
 @using Microsoft.AspNetCore.Components.Routing
+@using Dental_Clinic.Models
+@using Dental_Clinic.Services
 @inject NavigationManager Navigation
+@inject AuthService AuthService
 
 <link rel="stylesheet" href="css/AdminUsers.css">
 <link rel="stylesheet" href="css/admindashboard.css" />
@@ -137,7 +140,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Active Patients</span>
-                    <span class="stat-value">@users.Count(u => u.Role == "Patient" && u.Status == "active")</span>
+                    <span class="stat-value">@users.Count(u => u.Role == "Patient")</span>
                 </div>
             </div>
 
@@ -150,7 +153,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Active Dentists</span>
-                    <span class="stat-value">@users.Count(u => u.Role == "Dentist" && u.Status == "active")</span>
+                    <span class="stat-value">@users.Count(u => u.Role == "Dentist")</span>
                 </div>
             </div>
 
@@ -163,7 +166,7 @@
                 </div>
                 <div class="stat-content">
                     <span class="stat-label">Active Staff</span>
-                    <span class="stat-value">@users.Count(u => u.Role == "Staff" && u.Status == "active")</span>
+                    <span class="stat-value">@users.Count(u => u.Role == "Receptionist")</span>
                 </div>
             </div>
         </div>
@@ -184,12 +187,8 @@
                         <option value="">All Roles</option>
                         <option value="Patient">Patient</option>
                         <option value="Dentist">Dentist</option>
-                        <option value="Staff">Staff</option>
-                    </select>
-                    <select class="filter-select" @bind="filterStatus">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
+                        <option value="Receptionist">Receptionist</option>
+                        <option value="Admin">Admin</option>
                     </select>
                 </div>
             </div>
@@ -200,7 +199,7 @@
                         <th>User</th>
                         <th>Role</th>
                         <th>Email</th>
-                        <th>Last Login</th>
+                        <th>Phone</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -211,70 +210,50 @@
                         <tr>
                             <td>
                                 <div class="user-cell">
-                                    @if (user.HasPhoto)
-                                    {
-                                        <img src="https://i.pravatar.cc/40?u=@user.UserId" alt="@user.Name" class="user-avatar-img">
-                                    }
-                                    else
-                                    {
-                                        <div class="user-avatar-text">@user.Avatar</div>
-                                    }
+                                    <div class="user-avatar-text">@GetInitials(user.Name)</div>
                                     <div class="user-details">
                                         <span class="user-name">@user.Name</span>
-                                        <span class="user-id">@user.UserId</span>
+                                        <span class="user-id">ID: @user.UserId</span>
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <span class="role-badge" style="color: @user.RoleColor; background-color: @(user.RoleColor)15;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        @if (user.Role == "Patient")
-                                        {
-                                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                                            <circle cx="12" cy="7" r="4" />
-                                        }
-                                        else if (user.Role == "Dentist")
-                                        {
-                                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                                        }
-                                        else if (user.Role == "Staff")
-                                        {
-                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                            <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-                                        }
-                                    </svg>
                                     @user.Role
                                 </span>
                             </td>
                             <td class="email-cell">@user.Email</td>
-                            <td class="date-cell">@user.LastLogin</td>
+                            <td class="date-cell">@user.PhoneNumber</td>
                             <td>
-                                <span class="status-badge status-@user.Status">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                        <circle cx="12" cy="12" r="10" />
-                                    </svg>
-                                    @user.Status
+                                <span class="status-badge @(user.IsActive ? "status-active" : "status-inactive")">
+                                    @(user.IsActive ? "Active" : "Inactive")
                                 </span>
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="action-btn" title="View" @onclick="() => ViewUser(user.UserId)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                            <circle cx="12" cy="12" r="3" />
-                                        </svg>
-                                    </button>
-                                    <button class="action-btn" title="Edit" @onclick="() => EditUser(user.UserId)">
+                                    <button class="action-btn" title="Edit" @onclick="() => EditUser(user)">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
                                             <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                                         </svg>
                                     </button>
-                                    <button class="action-btn action-delete" title="Delete" @onclick="() => DeleteUser(user.UserId)">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6" />
-                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                                        </svg>
+                                    <button class="action-btn @(user.IsActive ? "action-delete" : "action-restore")" 
+                                            title="@(user.IsActive ? "Deactivate" : "Activate")" 
+                                            @onclick="() => ToggleUserStatus(user.UserId, !user.IsActive)">
+                                        @if (user.IsActive)
+                                        {
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                                                <line x1="12" y1="2" x2="12" y2="12" />
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M23 4v6h-6" />
+                                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                                            </svg>
+                                        }
                                     </button>
                                 </div>
                             </td>
@@ -287,32 +266,119 @@
         @if (showCreateUserModal)
         {
             <div class="modal-overlay" @onclick="CloseModal">
-                <div class="modal-content" @onclick:stopPropagation>
+                <div class="modal-content" @onclick:stopPropagation style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
                     <div class="modal-header">
-                        <h3>Create New User</h3>
+                        <h3>@(isEditing ? "Edit User" : "Create New User")</h3>
                         <button class="close-btn" @onclick="CloseModal">×</button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" @bind="newUserName" placeholder="Enter full name">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select @bind="newUser.Role" disabled="@isEditing">
+                                    <option value="Patient">Patient</option>
+                                    <option value="Dentist">Dentist</option>
+                                    <option value="Receptionist">Receptionist</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" @bind="newUserEmail" placeholder="Enter email address">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>First Name</label>
+                                <input type="text" @bind="newUser.FirstName" placeholder="First Name">
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name</label>
+                                <input type="text" @bind="newUser.LastName" placeholder="Last Name">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Role</label>
-                            <select @bind="newUserRole">
-                                <option value="Patient">Patient</option>
-                                <option value="Dentist">Dentist</option>
-                                <option value="Staff">Staff</option>
-                            </select>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" @bind="newUser.UserName" placeholder="Username" disabled="@isEditing">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" @bind="newUser.Email" placeholder="Email">
+                            </div>
                         </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" @bind="newUser.Password" placeholder="@(isEditing ? "Leave blank to keep current" : "Password")">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="text" @bind="newUser.PhoneNumber" placeholder="Phone Number">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Age</label>
+                                <input type="number" @bind="newUser.Age" placeholder="Age">
+                            </div>
+                            <div class="form-group">
+                                <label>Sex</label>
+                                <select @bind="newUser.Sex">
+                                    <option value="">Select Sex</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        @if (newUser.Role == "Dentist")
+                        {
+                            <div class="form-group">
+                                <label>Specialization</label>
+                                <input type="text" @bind="newUser.Specialization" placeholder="e.g. Orthodontist">
+                            </div>
+                        }
+
+                        @if (newUser.Role == "Patient")
+                        {
+                            <div class="form-group">
+                                <label>Birth Date</label>
+                                <input type="date" @bind="newUser.BirthDate">
+                            </div>
+                            <div class="form-group">
+                                <label>Address</label>
+                                <input type="text" @bind="newUser.Address" placeholder="Full Address">
+                            </div>
+                            <div class="form-group">
+                                <label>Marital Status</label>
+                                <select @bind="newUser.MaritalStatus">
+                                    <option value="">Select Status</option>
+                                    <option value="Single">Single</option>
+                                    <option value="Married">Married</option>
+                                    <option value="Divorced">Divorced</option>
+                                    <option value="Widowed">Widowed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Medical History</label>
+                                <textarea @bind="newUser.MedicalHistory" placeholder="Any medical conditions..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Insurance Provider</label>
+                                    <input type="text" @bind="newUser.InsuranceProvider" placeholder="Provider Name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Policy Number</label>
+                                    <input type="text" @bind="newUser.InsurancePolicyNumber" placeholder="Policy #">
+                                </div>
+                            </div>
+                        }
                     </div>
                     <div class="modal-footer">
                         <button class="btn-secondary" @onclick="CloseModal">Cancel</button>
-                        <button class="btn-primary" @onclick="CreateUser">Create User</button>
+                        <button class="btn-primary" @onclick="SaveUser">@(isEditing ? "Update User" : "Create User")</button>
                     </div>
                 </div>
             </div>
@@ -321,81 +387,160 @@
 </div>
 
 @code {
-    private string searchQuery = "";
     private string tableSearchQuery = "";
     private string filterRole = "";
-    private string filterStatus = "";
     private bool showCreateUserModal = false;
-    private string newUserName = "";
-    private string newUserEmail = "";
-    private string newUserRole = "Patient";
+    private bool isEditing = false;
+    private int editingUserId = 0;
+    private SignUpModel newUser = new SignUpModel();
 
-    private List<User> users = new()
+    private List<UserViewModel> users = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        new User { Name = "Maria Rodriguez", UserId = "USR001", Role = "Patient", RoleColor = "#6b7280", Email = "maria.rodriguez@email.com", LastLogin = "2024-09-20 14:30", Status = "active", Avatar = "MR", HasPhoto = false },
-        new User { Name = "Dr. Juan Santos", UserId = "USR002", Role = "Dentist", RoleColor = "#3b82f6", Email = "juan.santos@znsdental.com", LastLogin = "2024-09-20 16:45", Status = "active", Avatar = "JS", HasPhoto = true },
-        new User { Name = "Ana Dela Cruz", UserId = "USR003", Role = "Patient", RoleColor = "#6b7280", Email = "ana.delacruz@email.com", LastLogin = "2024-09-19 10:15", Status = "active", Avatar = "AD", HasPhoto = true },
-        new User { Name = "Sarah Johnson", UserId = "USR004", Role = "Staff", RoleColor = "#a855f7", Email = "sarah.johnson@znsdental.com", LastLogin = "2024-09-20 15:20", Status = "active", Avatar = "SJ", HasPhoto = true },
-        new User { Name = "Pedro Gonzales", UserId = "USR005", Role = "Patient", RoleColor = "#6b7280", Email = "pedro.gonzales@email.com", LastLogin = "2024-09-18 09:30", Status = "inactive", Avatar = "PG", HasPhoto = true },
-        new User { Name = "Dr. Maria Santos", UserId = "USR006", Role = "Dentist", RoleColor = "#3b82f6", Email = "maria.santos@znsdental.com", LastLogin = "2024-09-20 17:10", Status = "active", Avatar = "MS", HasPhoto = true }
-    };
+        await LoadUsers();
+    }
 
-    private IEnumerable<User> FilteredUsers =>
+    private async Task LoadUsers()
+    {
+        var dbUsers = await AuthService.GetAllUsersAsync();
+        users = dbUsers.Select(u => new UserViewModel
+        {
+            UserId = u.UserID,
+            Name = u.FullName,
+            Role = u.RoleName,
+            RoleColor = GetRoleColor(u.RoleName),
+            Email = u.Email,
+            PhoneNumber = u.PhoneNumber,
+            IsActive = u.IsActive
+        }).ToList();
+    }
+
+    private IEnumerable<UserViewModel> FilteredUsers =>
         users.Where(u =>
             (string.IsNullOrEmpty(tableSearchQuery) || u.Name.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase) || u.Email.Contains(tableSearchQuery, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(filterRole) || u.Role == filterRole) &&
-            (string.IsNullOrEmpty(filterStatus) || u.Status == filterStatus)
+            (string.IsNullOrEmpty(filterRole) || u.Role == filterRole)
         );
 
-    private void ShowNotifications() => Console.WriteLine("Showing notifications...");
-    private void ToggleTheme() => Console.WriteLine("Toggling theme...");
-    private void ShowCreateUserModal() => showCreateUserModal = true;
+    private void ShowCreateUserModal() 
+    {
+        isEditing = false;
+        newUser = new SignUpModel { Role = "Patient" }; // Reset form
+        showCreateUserModal = true;
+    }
+    
+    private void EditUser(UserViewModel user)
+    {
+        isEditing = true;
+        editingUserId = user.UserId;
+        
+        // Populate form with user data
+        // Note: In a real app, you might want to fetch full details from DB if the list view is partial
+        // For now, we'll populate what we have and split the name
+        var names = user.Name.Split(' ');
+        newUser = new SignUpModel
+        {
+            Role = user.Role,
+            FirstName = names.Length > 0 ? names[0] : "",
+            LastName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : "",
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            UserName = "ExistingUser", // Placeholder, disabled in edit
+            Password = "" // Empty for edit unless changed
+        };
+        
+        showCreateUserModal = true;
+    }
+
+    private async Task ToggleUserStatus(int userId, bool newStatus)
+    {
+        var result = await AuthService.ToggleUserStatusAsync(userId, newStatus);
+        if (result.Success)
+        {
+            await LoadUsers();
+        }
+        else
+        {
+            Console.WriteLine($"Error: {result.Message}");
+        }
+    }
+    
     private void CloseModal() => showCreateUserModal = false;
 
-    private void ViewUser(string userId) => Console.WriteLine($"Viewing user: {userId}");
-    private void EditUser(string userId) => Console.WriteLine($"Editing user: {userId}");
-    private void DeleteUser(string userId)
+    private void ViewUser(int userId) => Console.WriteLine($"Viewing user: {userId}");
+
+    private async Task SaveUser()
     {
-        var user = users.FirstOrDefault(u => u.UserId == userId);
-        if (user != null)
+        if (isEditing)
         {
-            users.Remove(user);
-            Console.WriteLine($"Deleted user: {userId}");
+            var result = await AuthService.UpdateUserAsync(newUser, editingUserId);
+            if (result.Success)
+            {
+                await LoadUsers();
+                CloseModal();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {result.Message}");
+            }
+        }
+        else
+        {
+            await CreateUser();
         }
     }
 
-    private void CreateUser()
+    private async Task CreateUser()
     {
-        var newUser = new User
+        // Basic validation
+        if (string.IsNullOrWhiteSpace(newUser.UserName) || string.IsNullOrWhiteSpace(newUser.Password) || string.IsNullOrWhiteSpace(newUser.Email))
         {
-            Name = newUserName,
-            UserId = $"USR{users.Count + 1:000}",
-            Role = newUserRole,
-            RoleColor = newUserRole == "Patient" ? "#6b7280" : newUserRole == "Dentist" ? "#3b82f6" : "#a855f7",
-            Email = newUserEmail,
-            LastLogin = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-            Status = "active",
-            Avatar = string.Join("", newUserName.Split(' ').Select(n => n[0])),
-            HasPhoto = false
-        };
-        users.Add(newUser);
-        Console.WriteLine($"Created new user: {newUserName}");
-        CloseModal();
-        newUserName = "";
-        newUserEmail = "";
-        newUserRole = "Patient";
+            // Show error (alert or toast)
+            return;
+        }
+
+        var result = await AuthService.RegisterAsync(newUser);
+        if (result.Success)
+        {
+            await LoadUsers();
+            CloseModal();
+        }
+        else
+        {
+            // Show error
+            Console.WriteLine($"Error: {result.Message}");
+        }
     }
 
-    public class User
+    private string GetRoleColor(string role)
     {
+        return role switch
+        {
+            "Patient" => "#6b7280",
+            "Dentist" => "#3b82f6",
+            "Receptionist" => "#10b981",
+            "Admin" => "#a855f7",
+            _ => "#6b7280"
+        };
+    }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "??";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[1][0]}";
+        if (parts.Length == 1) return $"{parts[0][0]}";
+        return "??";
+    }
+
+    public class UserViewModel
+    {
+        public int UserId { get; set; }
         public string Name { get; set; } = "";
-        public string UserId { get; set; } = "";
         public string Role { get; set; } = "";
         public string RoleColor { get; set; } = "";
         public string Email { get; set; } = "";
-        public string LastLogin { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string Avatar { get; set; } = "";
-        public bool HasPhoto { get; set; }
+        public string PhoneNumber { get; set; } = "";
+        public bool IsActive { get; set; }
     }
 }

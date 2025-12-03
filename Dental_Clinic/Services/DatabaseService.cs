@@ -158,7 +158,7 @@ namespace Dental_Clinic.Services
 
     #endregion
 
-    #region User Registration (Patient)
+    #region User Registration (Generic)
 
     public async Task<(bool Success, string Message)> RegisterUserAsync(SignUpModel model)
     {
@@ -184,7 +184,7 @@ namespace Dental_Clinic.Services
             int userId;
             using (var command = new SqlCommand(userQuery, connection, transaction))
             {
-              command.Parameters.AddWithValue("@RoleName", "Patient");
+              command.Parameters.AddWithValue("@RoleName", model.Role);
               command.Parameters.AddWithValue("@UserName", model.UserName);
               command.Parameters.AddWithValue("@Password", model.Password); // Store plain text (or hash if needed)
               command.Parameters.AddWithValue("@FirstName", model.FirstName);
@@ -194,7 +194,6 @@ namespace Dental_Clinic.Services
               command.Parameters.AddWithValue("@Sex", model.Sex ?? (object)DBNull.Value);
               command.Parameters.AddWithValue("@Email", model.Email);
 
-              // userId = (int)await command.ExecuteScalarAsync();
               var result = await command.ExecuteScalarAsync();
               if (result == null || result == DBNull.Value)
               {
@@ -204,34 +203,285 @@ namespace Dental_Clinic.Services
               userId = Convert.ToInt32(result);
             }
 
-            // Insert into Patient table
-            string patientQuery = @"
-  INSERT INTO Patient (UserID, BirthDate, Address, MaritalStatus, PhoneNumber, Email, InsuranceProvider, InsurancePolicyNumber, MedicalHistory)
-VALUES (@UserID, @BirthDate, @Address, @MaritalStatus, @PhoneNumber, @Email, @InsuranceProvider, @InsurancePolicyNumber, @MedicalHistory);";
-
-            using (var command = new SqlCommand(patientQuery, connection, transaction))
+            // Insert into specific role table
+            if (model.Role == "Patient")
             {
-              command.Parameters.AddWithValue("@UserID", userId);
-              command.Parameters.AddWithValue("@BirthDate", model.BirthDate ?? DateTime.Now.AddYears(-25));
-              command.Parameters.AddWithValue("@Address", model.Address ?? (object)DBNull.Value);
-              command.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus ?? (object)DBNull.Value);
-              command.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value);
-              command.Parameters.AddWithValue("@Email", model.Email);
-              command.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider ?? (object)DBNull.Value);
-              command.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber ?? (object)DBNull.Value);
-              command.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory ?? (object)DBNull.Value);
+              string patientQuery = @"
+      INSERT INTO Patient (UserID, BirthDate, Address, MaritalStatus, PhoneNumber, Email, InsuranceProvider, InsurancePolicyNumber, MedicalHistory)
+    VALUES (@UserID, @BirthDate, @Address, @MaritalStatus, @PhoneNumber, @Email, @InsuranceProvider, @InsurancePolicyNumber, @MedicalHistory);";
 
-              await command.ExecuteNonQueryAsync();
+              using (var command = new SqlCommand(patientQuery, connection, transaction))
+              {
+                command.Parameters.AddWithValue("@UserID", userId);
+                command.Parameters.AddWithValue("@BirthDate", model.BirthDate ?? DateTime.Now.AddYears(-25));
+                command.Parameters.AddWithValue("@Address", model.Address ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@Email", model.Email);
+                command.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory ?? (object)DBNull.Value);
+
+                await command.ExecuteNonQueryAsync();
+              }
+            }
+            else if (model.Role == "Dentist")
+            {
+              string dentistQuery = @"
+      INSERT INTO Dentist (UserID, Specialization, IsAvailable)
+    VALUES (@UserID, @Specialization, @IsAvailable);";
+
+              using (var command = new SqlCommand(dentistQuery, connection, transaction))
+              {
+                command.Parameters.AddWithValue("@UserID", userId);
+                command.Parameters.AddWithValue("@Specialization", model.Specialization ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@IsAvailable", model.IsAvailable);
+                await command.ExecuteNonQueryAsync();
+              }
+            }
+            else if (model.Role == "Receptionist")
+            {
+              string recepQuery = "INSERT INTO Receptionist (UserID) VALUES (@UserID)";
+              using (var command = new SqlCommand(recepQuery, connection, transaction))
+              {
+                command.Parameters.AddWithValue("@UserID", userId);
+                await command.ExecuteNonQueryAsync();
+              }
+            }
+            else if (model.Role == "Admin")
+            {
+              string adminQuery = "INSERT INTO Admin (UserID) VALUES (@UserID)";
+              using (var command = new SqlCommand(adminQuery, connection, transaction))
+              {
+                command.Parameters.AddWithValue("@UserID", userId);
+                await command.ExecuteNonQueryAsync();
+              }
             }
 
             transaction.Commit();
-            return (true, "Registration successful!");
+            return (true, "User created successfully!");
           }
           catch (SqlException ex)
           {
             transaction.Rollback();
             return (false, $"Database error: {ex.Message}");
           }
+        }
+      }
+    }
+
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+      var users = new List<User>();
+      using (var connection = GetConnection())
+      {
+        await connection.OpenAsync();
+        // Check if IsActive column exists, if not, we might need to handle it or alter table. 
+        // For now, I'll assume we can select it or default it. 
+        // To be safe against schema mismatch, I'll try to select it, but if it fails, I'll default to true.
+        // Actually, let's just try to select it. If the user wants "soft delete", the column must exist.
+        // I will add a check/alter in InitializeDatabaseAsync for offline, but for online I assume it's there or I'll add it.
+
+        string query = "SELECT UserID, RoleName, UserName, Password, FirstName, LastName, PhoneNumber, Age, Sex, Email, IsActive FROM Users ORDER BY UserID DESC";
+
+        try
+        {
+          using (var command = new SqlCommand(query, connection))
+          using (var reader = await command.ExecuteReaderAsync())
+          {
+            while (await reader.ReadAsync())
+            {
+              users.Add(new User
+              {
+                UserID = reader.GetInt32(0),
+                RoleName = reader.GetString(1),
+                UserName = reader.GetString(2),
+                Password = reader.GetString(3),
+                FirstName = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                LastName = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                PhoneNumber = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                Age = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                Sex = reader.IsDBNull(8) ? "" : reader.GetString(8),
+                Email = reader.GetString(9),
+                IsActive = !reader.IsDBNull(10) && reader.GetBoolean(10)
+              });
+            }
+          }
+        }
+        catch (SqlException)
+        {
+          // Fallback if IsActive column doesn't exist yet
+          query = "SELECT UserID, RoleName, UserName, Password, FirstName, LastName, PhoneNumber, Age, Sex, Email FROM Users ORDER BY UserID DESC";
+          using (var command = new SqlCommand(query, connection))
+          using (var reader = await command.ExecuteReaderAsync())
+          {
+            while (await reader.ReadAsync())
+            {
+              users.Add(new User
+              {
+                UserID = reader.GetInt32(0),
+                RoleName = reader.GetString(1),
+                UserName = reader.GetString(2),
+                Password = reader.GetString(3),
+                FirstName = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                LastName = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                PhoneNumber = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                Age = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                Sex = reader.IsDBNull(8) ? "" : reader.GetString(8),
+                Email = reader.GetString(9),
+                IsActive = true // Default to true
+              });
+            }
+          }
+        }
+      }
+      return users;
+    }
+
+    public async Task<(bool Success, string Message)> UpdateUserAsync(SignUpModel model, int userId)
+    {
+      using (var connection = GetConnection())
+      {
+        await connection.OpenAsync();
+        using (var transaction = connection.BeginTransaction())
+        {
+          try
+          {
+            // Update Users table
+            var updateFields = new List<string>
+                    {
+                        "FirstName = @FirstName",
+                        "LastName = @LastName",
+                        "PhoneNumber = @PhoneNumber",
+                        "Age = @Age",
+                        "Sex = @Sex",
+                        "Email = @Email"
+                    };
+
+            if (!string.IsNullOrEmpty(model.Password))
+            {
+              updateFields.Add("Password = @Password");
+            }
+
+            string userQuery = $@"
+                        UPDATE Users 
+                        SET {string.Join(", ", updateFields)}
+                        WHERE UserID = @UserID";
+
+            using (var command = new SqlCommand(userQuery, connection, transaction))
+            {
+              command.Parameters.AddWithValue("@UserID", userId);
+              command.Parameters.AddWithValue("@FirstName", model.FirstName);
+              command.Parameters.AddWithValue("@LastName", model.LastName);
+              command.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value);
+              command.Parameters.AddWithValue("@Age", model.Age ?? (object)DBNull.Value);
+              command.Parameters.AddWithValue("@Sex", model.Sex ?? (object)DBNull.Value);
+              command.Parameters.AddWithValue("@Email", model.Email);
+
+              if (!string.IsNullOrEmpty(model.Password))
+              {
+                command.Parameters.AddWithValue("@Password", model.Password);
+              }
+
+              await command.ExecuteNonQueryAsync();
+            }
+
+            // Update specific role table
+            if (model.Role == "Patient")
+            {
+              string patientQuery = @"
+                            UPDATE Patient 
+                            SET BirthDate = @BirthDate, 
+                                Address = @Address, 
+                                MaritalStatus = @MaritalStatus, 
+                                PhoneNumber = @PhoneNumber, 
+                                Email = @Email, 
+                                InsuranceProvider = @InsuranceProvider, 
+                                InsurancePolicyNumber = @InsurancePolicyNumber, 
+                                MedicalHistory = @MedicalHistory
+                            WHERE UserID = @UserID";
+
+              using (var command = new SqlCommand(patientQuery, connection, transaction))
+              {
+                command.Parameters.AddWithValue("@UserID", userId);
+                command.Parameters.AddWithValue("@BirthDate", model.BirthDate ?? DateTime.Now);
+                command.Parameters.AddWithValue("@Address", model.Address ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@Email", model.Email);
+                command.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory ?? (object)DBNull.Value);
+                await command.ExecuteNonQueryAsync();
+              }
+            }
+            else if (model.Role == "Dentist")
+            {
+              string dentistQuery = @"
+                            UPDATE Dentist 
+                            SET Specialization = @Specialization, 
+                                IsAvailable = @IsAvailable
+                            WHERE UserID = @UserID";
+
+              using (var command = new SqlCommand(dentistQuery, connection, transaction))
+              {
+                command.Parameters.AddWithValue("@UserID", userId);
+                command.Parameters.AddWithValue("@Specialization", model.Specialization ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@IsAvailable", model.IsAvailable);
+                await command.ExecuteNonQueryAsync();
+              }
+            }
+
+            transaction.Commit();
+            return (true, "User updated successfully!");
+          }
+          catch (Exception ex)
+          {
+            transaction.Rollback();
+            return (false, $"Update failed: {ex.Message}");
+          }
+        }
+      }
+    }
+
+    public async Task<(bool Success, string Message)> ToggleUserStatusAsync(int userId, bool isActive)
+    {
+      using (var connection = GetConnection())
+      {
+        await connection.OpenAsync();
+        try
+        {
+          // Ensure column exists (simple check/add for this operation if needed, or just try update)
+          // For simplicity, we assume the column exists or we catch the error.
+          // If it doesn't exist, we might want to add it.
+
+          string checkColQuery = "SELECT COL_LENGTH('Users', 'IsActive')";
+          using (var cmd = new SqlCommand(checkColQuery, connection))
+          {
+            var len = await cmd.ExecuteScalarAsync();
+            if (len == DBNull.Value)
+            {
+              // Column doesn't exist, add it
+              string addColQuery = "ALTER TABLE Users ADD IsActive BIT DEFAULT 1 WITH VALUES";
+              using (var addCmd = new SqlCommand(addColQuery, connection))
+              {
+                await addCmd.ExecuteNonQueryAsync();
+              }
+            }
+          }
+
+          string query = "UPDATE Users SET IsActive = @IsActive WHERE UserID = @UserID";
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@IsActive", isActive);
+            command.Parameters.AddWithValue("@UserID", userId);
+            await command.ExecuteNonQueryAsync();
+          }
+          return (true, $"User status updated to {(isActive ? "Active" : "Inactive")}");
+        }
+        catch (Exception ex)
+        {
+          return (false, $"Failed to update status: {ex.Message}");
         }
       }
     }
@@ -321,7 +571,8 @@ Password NVARCHAR(100) NOT NULL,
   PhoneNumber NVARCHAR(50),
   Age INT,
                Sex NVARCHAR(20),
-Email NVARCHAR(100) NOT NULL
+Email NVARCHAR(100) NOT NULL,
+IsActive BIT DEFAULT 1
      );
 
   -- Create Admin table
