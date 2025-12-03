@@ -3,6 +3,7 @@
 @inject Dental_Clinic.Services.SessionService SessionService
 @inject NavigationManager Navigation
 @inject Dental_Clinic.Services.AppointmentService AppointmentService
+@inject Dental_Clinic.Services.ChatService ChatService
 
 <link href="css/patientdashboard.css" rel="stylesheet" />
 
@@ -310,8 +311,104 @@
         </div>
     </div>
 
+    <!-- Chatbot UI -->
+    @if (isChatOpen)
+    {
+        <div class="chat-window">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    @if (chatState == "LiveChat")
+                    {
+                        <button class="chat-back-btn" @onclick="GoBackToFAQ" style="background:none;border:none;color:white;cursor:pointer;margin-right:8px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                    }
+                    <div class="chat-logo">
+                        <img src="css/bootstrap/Dental_Logo.png" alt="Logo" />
+                        <span class="online-indicator"></span>
+                    </div>
+                    <div class="chat-title-group">
+                        <h3>Aurelia Dental Clinic</h3>
+                        <span class="chat-status">● Online</span>
+                    </div>
+                </div>
+                <button class="chat-close-btn" @onclick="ToggleChat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="chat-body" id="chatBody">
+                @if (chatState == "FAQ")
+                {
+                    <div class="chat-welcome">
+                        <div class="welcome-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <h4>Welcome! 👋</h4>
+                        <p>How can we help you today? Choose a topic below or chat with our support team.</p>
+                    </div>
+
+                    <div class="faq-list">
+                        <div class="faq-label">FREQUENT QUESTIONS</div>
+                        @foreach (var faq in faqs)
+                        {
+                            <button class="faq-btn" @onclick="() => SelectFAQ(faq.Key)">
+                                @faq.Key
+                            </button>
+                        }
+                    </div>
+
+                    <button class="start-chat-btn" @onclick="StartLiveChat">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        Chat with Support
+                    </button>
+                }
+                else
+                {
+                    <div class="messages-list">
+                        @foreach (var msg in messages)
+                        {
+                            <div class="message-bubble @(msg.Sender == "Patient" || msg.Sender == patientName ? "sent" : "received")">
+                                @if (msg.Sender != "Patient" && msg.Sender != patientName)
+                                {
+                                    <div class="msg-sender">@msg.Sender</div>
+                                }
+                                <div class="msg-text">@msg.MessageText</div>
+                                <div class="msg-time">@msg.Timestamp?.ToString("h:mm tt")</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (chatState == "LiveChat")
+            {
+                <div class="chat-footer">
+                    <div class="chat-input-wrapper">
+                        <input type="text" placeholder="Type a message..." @bind="newMessage" @bind:event="oninput" @onkeypress="HandleKeyPress" />
+                        <button class="send-btn" @onclick="SendMessage" disabled="@string.IsNullOrWhiteSpace(newMessage)">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
     <!-- Floating Chatbot Button -->
-    <button class="chatbot-button" type="button" aria-label="Open Chat">
+    <button class="chatbot-button" type="button" aria-label="Open Chat" @onclick="ToggleChat">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -423,5 +520,137 @@
         public string Provider { get; set; } = string.Empty; 
         public DateTime Date { get; set; } 
         public int Price { get; set; } 
+    }
+
+    // Chat Logic
+    private bool isChatOpen = false;
+    private string chatState = "FAQ"; // "FAQ" or "LiveChat"
+    private Dictionary<string, string> faqs = new();
+    private List<Dental_Clinic.Models.ChatMessage> messages = new();
+    private string newMessage = string.Empty;
+    private Dental_Clinic.Models.ChatBotConversation? activeConversation;
+    private string selectedFAQTitle = string.Empty;
+    private string selectedFAQAnswer = string.Empty;
+
+    private async Task ToggleChat()
+    {
+        isChatOpen = !isChatOpen;
+        if (isChatOpen)
+        {
+            faqs = ChatService.GetFAQs();
+            // Check if there's an active conversation to resume
+            activeConversation = await ChatService.GetActiveConversationAsync(currentPatientId);
+            if (activeConversation != null)
+            {
+                // Check if there are any messages in this conversation
+                var msgs = await ChatService.GetMessagesAsync(activeConversation.ConversationID);
+                if (msgs.Any())
+                {
+                    chatState = "LiveChat";
+                    messages = msgs;
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
+    private async Task SelectFAQ(string question)
+    {
+        if (faqs.TryGetValue(question, out var answer))
+        {
+            // Ensure chat is active, but don't send the generic greeting
+            await StartLiveChat(sendGreeting: false);
+
+            if (activeConversation != null)
+            {
+                // Send Question as Patient
+                await ChatService.SendMessageAsync(activeConversation.ConversationID, currentPatientId, "Patient", question);
+                
+                // Send Answer as Bot
+                await ChatService.SendMessageAsync(activeConversation.ConversationID, 0, "Aurelia Bot", answer);
+                
+                await LoadMessages();
+            }
+        }
+    }
+
+    private void ClearFAQSelection()
+    {
+        selectedFAQTitle = string.Empty;
+        selectedFAQAnswer = string.Empty;
+    }
+
+    private void GoBackToFAQ()
+    {
+        chatState = "FAQ";
+    }
+
+    private async Task StartLiveChat()
+    {
+        await StartLiveChat(true);
+    }
+
+    private async Task StartLiveChat(bool sendGreeting)
+    {
+        chatState = "LiveChat";
+        if (activeConversation == null)
+        {
+            int conversationId = await ChatService.CreateConversationAsync(currentPatientId);
+            activeConversation = new Dental_Clinic.Models.ChatBotConversation 
+            { 
+                ConversationID = conversationId, 
+                PatientID = currentPatientId,
+                Status = "Open"
+            };
+            
+            if (sendGreeting)
+            {
+                // Add initial bot greeting
+                await ChatService.SendMessageAsync(conversationId, 0, "Aurelia Bot", "Hello! I've connected you to our support system. Please leave your message and a receptionist will reply shortly.");
+            }
+        }
+        
+        await LoadMessages();
+    }
+
+    private async Task LoadMessages()
+    {
+        if (activeConversation != null)
+        {
+            messages = await ChatService.GetMessagesAsync(activeConversation.ConversationID);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(newMessage) || activeConversation == null) return;
+
+        var text = newMessage;
+        newMessage = string.Empty;
+
+        // Optimistic update
+        messages.Add(new Dental_Clinic.Models.ChatMessage 
+        { 
+            Sender = "Patient", 
+            MessageText = text, 
+            Timestamp = DateTime.Now 
+        });
+
+        await ChatService.SendMessageAsync(activeConversation.ConversationID, currentPatientId, patientName, text);
+        
+        // Automated Reply for non-FAQ messages
+        await Task.Delay(500); // Small delay for natural feel
+        await ChatService.SendMessageAsync(activeConversation.ConversationID, 0, "Aurelia Bot", "Thank you for your message! A member of our staff will respond shortly. In the meantime, feel free to explore our FAQ section for quick answers.");
+
+        await LoadMessages(); // Refresh to get ID/Timestamp
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessage();
+        }
     }
 }

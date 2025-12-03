@@ -32,15 +32,18 @@ namespace Dental_Clinic
 
             // Register Sync Service
             builder.Services.AddSingleton<SyncService>();
-                
+
             // Register AppointmentService
             builder.Services.AddScoped<AppointmentService>();
-                
+
             // Register Auth Service
             builder.Services.AddScoped<AuthService>();
 
             // Register Session Service
             builder.Services.AddSingleton<SessionService>();
+
+            // Register Chat Service
+            builder.Services.AddScoped<ChatService>();
 
             // Register Email Service
             builder.Services.AddSingleton<EmailService>();

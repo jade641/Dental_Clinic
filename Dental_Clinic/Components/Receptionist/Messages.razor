@@ -1,43 +1,371 @@
 ﻿@page "/receptionist/messages"
 @layout Dental_Clinic.Components.Layout.ReceptionistDashboard
 @using Microsoft.AspNetCore.Components
+@using Dental_Clinic.Services
+@using Dental_Clinic.Models
+@inject ChatService ChatService
+@inject SessionService SessionService
 <link href="css/receptionistdashboard.css" rel="stylesheet" />
 <link href="css/ReceptMessages.css" rel="stylesheet" />
 
 <main class="dashboard-main">
     <div class="messages-container">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error-banner"
+                style="background-color: #fee2e2; color: #b91c1c; padding: 1rem; margin-bottom: 1rem; border-radius: 0.5rem; border: 1px solid #fca5a5;">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        }
         <div class="stats-cards">
-            <div class="stat-card yellow"><div class="stat-content"><div class="stat-label">Unread Messages</div><div class="stat-value">3</div></div><div class="stat-icon yellow-icon">💬</div></div>
-            <div class="stat-card red"><div class="stat-content"><div class="stat-label">Urgent Concerns</div><div class="stat-value">2</div></div><div class="stat-icon red-icon">❗</div></div>
-            <div class="stat-card green"><div class="stat-content"><div class="stat-label">Total Messages</div><div class="stat-value">8</div></div><div class="stat-icon green-icon">✓</div></div>
+            <div class="stat-card yellow">
+                <div class="stat-content">
+                    <div class="stat-label">Unread Messages</div>
+                    <div class="stat-value">@conversations.Sum(c => c.UnreadCount)</div>
+                </div>
+                <div class="stat-icon yellow-icon">💬</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-content">
+                    <div class="stat-label">Urgent Concerns</div>
+                    <div class="stat-value">@conversations.Count(c => c.Status == "Escalated")</div>
+                </div>
+                <div class="stat-icon red-icon">❗</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-content">
+                    <div class="stat-label">Total Messages</div>
+                    <div class="stat-value">@conversations.Count</div>
+                </div>
+                <div class="stat-icon green-icon">✓</div>
+            </div>
         </div>
         <div class="messages-section">
-            <div class="messages-header"><h2>💬 Patient Chat Messages</h2></div>
+            <div class="messages-header">
+                <h2>💬 Patient Chat Messages</h2>
+            </div>
             <div class="messages-controls">
-                <div class="search-box"><span class="search-icon">🔍</span><input type="text" placeholder="Search patient name or message..." /></div>
+                <div class="search-box"><span class="search-icon">🔍</span><input type="text"
+                        placeholder="Search patient name or message..." @bind="searchTerm" @bind:event="oninput" />
+                </div>
                 <div class="filters">
-                    <select class="filter-select"><option>All Status</option><option>New</option><option>Urgent</option><option>Read</option></select>
-                    <select class="filter-select"><option>All Categories</option><option>Appointment</option><option>Emergency</option><option>General</option></select>
+                    <select class="filter-select" @bind="statusFilter">
+                        <option value="All">All Status</option>
+                        <option value="New">New</option>
+                        <option value="Escalated">Urgent</option>
+                        <option value="Open">Open</option>
+                    </select>
                 </div>
             </div>
             <div class="messages-list">
-                <div class="message-card yellow-border">
-                    <div class="message-header">
-                        <div class="patient-info-msg"><div class="patient-avatar-msg">MR</div><div class="patient-meta"><h3 class="patient-name-msg">Maria Rodriguez</h3><span class="message-time">2025-09-15 10:30 AM</span></div></div>
-                        <div class="message-badges"><span class="badge badge-new">New</span><span class="badge badge-category">appointment</span></div>
+                @if (FilteredConversations.Any())
+                {
+                    @foreach (var conv in FilteredConversations)
+                    {
+                        <div class="message-card @(conv.Status == "Escalated" ? "red-border" : "yellow-border")">
+                            <div class="message-header">
+                                <div class="patient-info-msg">
+                                    <div class="patient-avatar-msg">@(conv.PatientName.Length > 0 ?
+                                                                        conv.PatientName.Substring(0, 1).ToUpper() : "?")</div>
+                                    <div class="patient-meta">
+                                        <h3 class="patient-name-msg">@conv.PatientName</h3>
+                                        <span class="message-time">@(conv.LastMessageTime?.ToString("MMM dd, h:mm tt") ?? "No                                    messages")</span>
+                                    </div>
+                                </div>
+                                <div class="message-badges">
+                                    @if (conv.UnreadCount > 0)
+                                    {
+                                        <span class="badge badge-new">@conv.UnreadCount New</span>
+                                    }
+                                    @if (conv.Status == "Escalated")
+                                    {
+                                        <span class="badge badge-urgent">Urgent</span>
+                                    }
+                                    <span class="badge badge-category">@conv.Status</span>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                <p>@conv.LastMessage</p>
+                            </div>
+                            <div class="message-actions">
+                                <button class="msg-btn btn-reply" @onclick="() => OpenReplyModal(conv)"><span>💬</span>
+                                    Reply</button>
+                                <button class="msg-btn btn-mark-read"
+                                    @onclick="() => MarkAsRead(conv.ConversationID)"><span>✓</span> Mark as Read</button>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <p>No messages found.</p>
                     </div>
-                    <div class="message-content"><p>Hi, I would like to know if you accept walk-ins for teeth cleaning or do I need an appointment?</p></div>
-                    <div class="message-actions"><button class="msg-btn btn-reply"><span>💬</span> Reply</button><button class="msg-btn btn-mark-read"><span>✓</span> Mark as Read</button></div>
-                </div>
-                <div class="message-card red-border">
-                    <div class="message-header">
-                        <div class="patient-info-msg"><div class="patient-avatar-msg">JS</div><div class="patient-meta"><h3 class="patient-name-msg">Juan Santos</h3><span class="message-time">2025-09-15 9:15 AM</span></div></div>
-                        <div class="message-badges"><span class="badge badge-urgent">Urgent</span><span class="badge badge-new">New</span><span class="badge badge-category">emergency</span></div>
-                    </div>
-                    <div class="message-content"><p>Hello! I have a severe toothache. Is there emergency dental service available today?</p></div>
-                    <div class="message-actions"><button class="msg-btn btn-reply"><span>💬</span> Reply</button><button class="msg-btn btn-mark-read"><span>✓</span> Mark as Read</button></div>
-                </div>
+                }
             </div>
         </div>
     </div>
 </main>
+
+@if (showReplyModal && selectedConversation != null)
+{
+    <div class="modal-overlay">
+        <div class="modal-content chat-modal">
+            <div class="modal-header">
+                <h3>Chat with @selectedConversation.PatientName</h3>
+                <button class="close-btn" @onclick="CloseReplyModal">×</button>
+            </div>
+            <div class="modal-body chat-history">
+                @foreach (var msg in currentMessages)
+                {
+                    var isClinic = msg.Sender == "Receptionist" || msg.Sender == "Admin" || msg.Sender == "Aurelia Bot";
+                    <div class="chat-bubble @(isClinic ? "sent" : "received")">
+                        @if (!isClinic)
+                        {
+                            <div class="bubble-sender">@msg.Sender</div>
+                        }
+                        <div class="bubble-text">@msg.MessageText</div>
+                        <div class="bubble-time">@msg.Timestamp?.ToString("h:mm tt")</div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer chat-input-area">
+                <input type="text" placeholder="Type your reply..." @bind="replyMessage" @bind:event="oninput"
+                    @onkeypress="HandleKeyPress" />
+                <button class="btn-send" @onclick="SendReply"
+                    disabled="@string.IsNullOrWhiteSpace(replyMessage)">Send</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content.chat-modal {
+        background: white;
+        width: 500px;
+        height: 600px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        padding: 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-body.chat-history {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .chat-bubble {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .chat-bubble.received {
+        align-self: flex-start;
+        background: #f1f5f9;
+        color: #334155;
+        border-bottom-left-radius: 2px;
+    }
+
+    .chat-bubble.sent {
+        align-self: flex-end;
+        background: #3b82f6;
+        color: white;
+        border-bottom-right-radius: 2px;
+    }
+
+    .bubble-sender {
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        opacity: 0.8;
+    }
+
+    .bubble-time {
+        font-size: 10px;
+        margin-top: 4px;
+        opacity: 0.7;
+        text-align: right;
+    }
+
+    .modal-footer.chat-input-area {
+        padding: 15px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 10px;
+    }
+
+    .chat-input-area input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+    }
+
+    .btn-send {
+        padding: 10px 20px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .btn-send:disabled {
+        background: #ccc;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+</style>
+
+@code {
+    private List<ChatService.ConversationViewModel> conversations = new();
+    private string searchTerm = "";
+    private string statusFilter = "All";
+
+    // Modal State
+    private bool showReplyModal = false;
+    private ChatService.ConversationViewModel? selectedConversation;
+    private List<Dental_Clinic.Models.ChatMessage> currentMessages = new();
+    private string replyMessage = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadConversations();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            System.Diagnostics.Debug.WriteLine($"[Messages] Error: {ex}");
+        }
+    }
+
+    private async Task LoadConversations()
+    {
+        conversations = await ChatService.GetReceptionistConversationsAsync();
+    }
+
+    private IEnumerable<ChatService.ConversationViewModel> FilteredConversations
+    {
+        get
+        {
+            var query = conversations.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(c => c.PatientName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                c.LastMessage.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (statusFilter != "All")
+            {
+                if (statusFilter == "New")
+                {
+                    query = query.Where(c => c.UnreadCount > 0);
+                }
+                else
+                {
+                    query = query.Where(c => c.Status == statusFilter);
+                }
+            }
+
+            return query;
+        }
+    }
+
+    private async Task OpenReplyModal(ChatService.ConversationViewModel conversation)
+    {
+        selectedConversation = conversation;
+        showReplyModal = true;
+        await LoadMessages(conversation.ConversationID);
+        await MarkAsRead(conversation.ConversationID);
+    }
+
+    private void CloseReplyModal()
+    {
+        showReplyModal = false;
+        selectedConversation = null;
+        currentMessages.Clear();
+        replyMessage = "";
+    }
+
+    private async Task LoadMessages(int conversationId)
+    {
+        currentMessages = await ChatService.GetMessagesAsync(conversationId);
+    }
+
+    private async Task MarkAsRead(int conversationId)
+    {
+        await ChatService.MarkMessagesAsReadAsync(conversationId);
+        await LoadConversations(); // Refresh unread counts
+    }
+
+    private async Task SendReply()
+    {
+        if (selectedConversation == null || string.IsNullOrWhiteSpace(replyMessage)) return;
+
+        // Assuming Receptionist ID is 0 or retrieved from session.
+        // For now, let's use 0 as system/admin or get current user ID if available.
+        // The prompt implies "Receptionist" role.
+        // Let's try to get the current user ID from session, or default to a known ID.
+        // Since I don't have the full SessionService implementation details for Receptionist ID,
+        // I'll assume the current logged-in user is the receptionist.
+
+        var session = await SessionService.GetCurrentSessionAsync();
+        int senderId = session?.UserId ?? 0;
+        string senderName = "Receptionist"; // Or session.UserName
+
+        await ChatService.SendMessageAsync(selectedConversation.ConversationID, senderId, senderName, replyMessage);
+
+        replyMessage = "";
+        await LoadMessages(selectedConversation.ConversationID);
+        await LoadConversations(); // Update last message in list
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendReply();
+        }
+    }
+}
