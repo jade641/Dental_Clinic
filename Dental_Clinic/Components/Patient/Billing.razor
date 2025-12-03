@@ -1,4 +1,4 @@
-@page "/patient-billing"
+﻿@page "/patient-billing"
 @using System.Diagnostics
 @inject Dental_Clinic.Services.SessionService SessionService
 @inject NavigationManager Navigation
@@ -116,7 +116,7 @@
                     </div>
                     <div class="card-content">
                         <div class="card-label">Total Spent</div>
-                        <div class="card-amount black">?@totalSpent.ToString("N0")</div>
+                        <div class="card-amount black">₱@totalSpent.ToString("N0")</div>
                     </div>
                 </div>
 
@@ -131,7 +131,7 @@
                     </div>
                     <div class="card-content">
                         <div class="card-label">Outstanding</div>
-                        <div class="card-amount orange">?@outstanding.ToString("N0")</div>
+                        <div class="card-amount orange">₱@outstanding.ToString("N0")</div>
                     </div>
                 </div>
 
@@ -144,7 +144,7 @@
                     </div>
                     <div class="card-content">
                         <div class="card-label">Next Payment</div>
-                        <div class="card-amount green">?@nextPayment.ToString("N0")</div>
+                        <div class="card-amount green">₱@nextPayment.ToString("N0")</div>
                         <div class="card-due-date">Due @nextPaymentDate</div>
                     </div>
                 </div>
