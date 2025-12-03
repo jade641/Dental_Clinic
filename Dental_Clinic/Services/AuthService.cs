@@ -187,6 +187,60 @@ AND u.Password = @Password";
             }
         }
 
+        public async Task<(bool Success, string Message)> UpdateUserAsync(SignUpModel model, int userId)
+        {
+            if (_useOfflineMode || !_onlineDb.IsOnline)
+            {
+                // Implement offline update if needed
+                return (false, "Update not supported in offline mode yet");
+            }
+            else
+            {
+                return await _onlineDb.UpdateUserAsync(model, userId);
+            }
+        }
+
+        public async Task<(bool Success, string Message)> ToggleUserStatusAsync(int userId, bool isActive)
+        {
+            if (_useOfflineMode || !_onlineDb.IsOnline)
+            {
+                // Implement offline toggle if needed
+                return (false, "Status change not supported in offline mode yet");
+            }
+            else
+            {
+                return await _onlineDb.ToggleUserStatusAsync(userId, isActive);
+            }
+        }
+
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            if (_useOfflineMode || !_onlineDb.IsOnline)
+            {
+                // Implement offline get all users if needed, for now return empty or basic query
+                var users = new List<User>();
+                var dt = await _localDb.GetDataTableAsync("SELECT * FROM Users ORDER BY UserID DESC");
+                foreach (DataRow row in dt.Rows)
+                {
+                    users.Add(new User
+                    {
+                        UserID = Convert.ToInt32(row["UserID"]),
+                        RoleName = row["RoleName"].ToString(),
+                        UserName = row["UserName"].ToString(),
+                        FirstName = row["FirstName"].ToString(),
+                        LastName = row["LastName"].ToString(),
+                        Email = row["Email"].ToString(),
+                        // Map other fields if needed
+                    });
+                }
+                return users;
+            }
+            else
+            {
+                return await _onlineDb.GetAllUsersAsync();
+            }
+        }
+
         private async Task<(bool Success, string Message)> RegisterOfflineAsync(SignUpModel model)
         {
             try
@@ -207,44 +261,81 @@ AND u.Password = @Password";
 
                 // Insert user
                 var insertQuery = @"
-          INSERT INTO Users (RoleName, UserName, Password, FirstName, LastName, PhoneNumber, Email, IsSynced)
+          INSERT INTO Users (RoleName, UserName, Password, FirstName, LastName, PhoneNumber, Age, Sex, Email, IsSynced)
           OUTPUT INSERTED.UserID
-          VALUES (@RoleName, @UserName, @Password, @FirstName, @LastName, @PhoneNumber, @Email, 0)";
+          VALUES (@RoleName, @UserName, @Password, @FirstName, @LastName, @PhoneNumber, @Age, @Sex, @Email, 0)";
 
                 var insertParams = new[]
                 {
-                    new SqlParameter("@RoleName", "Patient"),
+                    new SqlParameter("@RoleName", model.Role),
                     new SqlParameter("@UserName", model.UserName),
                     new SqlParameter("@Password", model.Password),
                     new SqlParameter("@FirstName", model.FirstName),
                     new SqlParameter("@LastName", model.LastName),
                     new SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
+                    new SqlParameter("@Age", model.Age ?? (object)DBNull.Value),
+                    new SqlParameter("@Sex", model.Sex ?? (object)DBNull.Value),
                     new SqlParameter("@Email", model.Email)
                 };
 
                 var userId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(insertQuery, insertParams));
-
-                // Insert patient record
-                var patientQuery = @"
-          INSERT INTO Patient (UserID, PhoneNumber, Email, IsSynced, BirthDate)
-                OUTPUT INSERTED.PatientID
-             VALUES (@UserID, @PhoneNumber, @Email, 0, @BirthDate)";
-
-                var patientParams = new[]
-                {
-                    new SqlParameter("@UserID", userId),
-                    new SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
-                    new SqlParameter("@Email", model.Email),
-                    new SqlParameter("@BirthDate", DateTime.Now.Date)
-                };
-
-                var patientId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(patientQuery, patientParams));
-
-                // Log for sync
                 await _localDb.LogChangeAsync("Users", userId, "INSERT");
-                await _localDb.LogChangeAsync("Patient", patientId, "INSERT");
 
-                return (true, "Registration successful (offline mode - will sync when online)");
+                // Insert role specific record
+                if (model.Role == "Patient")
+                {
+                    var patientQuery = @"
+              INSERT INTO Patient (UserID, PhoneNumber, Email, IsSynced, BirthDate, Address, MaritalStatus, MedicalHistory, InsuranceProvider, InsurancePolicyNumber)
+                    OUTPUT INSERTED.PatientID
+                 VALUES (@UserID, @PhoneNumber, @Email, 0, @BirthDate, @Address, @MaritalStatus, @MedicalHistory, @InsuranceProvider, @InsurancePolicyNumber)";
+
+                    var patientParams = new[]
+                    {
+                        new SqlParameter("@UserID", userId),
+                        new SqlParameter("@PhoneNumber", model.PhoneNumber ?? string.Empty),
+                        new SqlParameter("@Email", model.Email),
+                        new SqlParameter("@BirthDate", model.BirthDate ?? DateTime.Now),
+                        new SqlParameter("@Address", model.Address ?? (object)DBNull.Value),
+                        new SqlParameter("@MaritalStatus", model.MaritalStatus ?? (object)DBNull.Value),
+                        new SqlParameter("@MedicalHistory", model.MedicalHistory ?? (object)DBNull.Value),
+                        new SqlParameter("@InsuranceProvider", model.InsuranceProvider ?? (object)DBNull.Value),
+                        new SqlParameter("@InsurancePolicyNumber", model.InsurancePolicyNumber ?? (object)DBNull.Value)
+                    };
+
+                    var patientId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(patientQuery, patientParams));
+                    await _localDb.LogChangeAsync("Patient", patientId, "INSERT");
+                }
+                else if (model.Role == "Dentist")
+                {
+                    var dentistQuery = @"
+              INSERT INTO Dentist (UserID, Specialization, IsAvailable)
+                    OUTPUT INSERTED.DentistID
+                 VALUES (@UserID, @Specialization, @IsAvailable)";
+
+                    var dentistParams = new[]
+                    {
+                        new SqlParameter("@UserID", userId),
+                        new SqlParameter("@Specialization", model.Specialization ?? (object)DBNull.Value),
+                        new SqlParameter("@IsAvailable", model.IsAvailable)
+                    };
+
+                    var dentistId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(dentistQuery, dentistParams));
+                    // Log change for Dentist table if needed
+                }
+                else if (model.Role == "Receptionist")
+                {
+                    var recepQuery = "INSERT INTO Receptionist (UserID) OUTPUT INSERTED.ReceptionistID VALUES (@UserID)";
+                    var recepParams = new[] { new SqlParameter("@UserID", userId) };
+                    var recepId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(recepQuery, recepParams));
+                }
+                else if (model.Role == "Admin")
+                {
+                    var adminQuery = "INSERT INTO Admin (UserID) OUTPUT INSERTED.AdminID VALUES (@UserID)";
+                    var adminParams = new[] { new SqlParameter("@UserID", userId) };
+                    var adminId = Convert.ToInt32(await _localDb.ExecuteScalarAsync(adminQuery, adminParams));
+                }
+
+                return (true, "User created successfully (offline mode)");
             }
             catch (Exception ex)
             {
