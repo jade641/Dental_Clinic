@@ -36,35 +36,47 @@
 }
 
 .filter-btn,
-.new-appointment-btn {
+.export-btn {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
+    padding: 11px 20px;
     border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 1px solid #d1d5db;
+    border: none;
+    outline: none;
+}
+
+.filter-btn {
     background: #ffffff;
     color: #374151;
+    border: 1px solid #d1d5db;
 }
 
 .filter-btn:hover {
-    background: #f9fafb;
+    background: #f8fafc;
     border-color: #9ca3af;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.new-appointment-btn {
-    background: #ffffff;
-    color: #374151;
-    border: 1px solid #d1d5db;
+.export-btn {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
-.new-appointment-btn:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
+.export-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.export-btn svg {
+    color: #ffffff;
 }
 
 /* Filter Panel */
@@ -167,7 +179,7 @@
 /* Schedule Grid */
 .schedule-grid {
     display: grid;
-    gap: 24px;
+    gap: 8px;
 }
 
 .schedule-section {
@@ -181,7 +193,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 24px 24px 20px 24px;
+    padding: 16px 20px 14px 20px;
     margin: 0;
     border-bottom: 1px solid #f3f4f6;
 }
@@ -207,14 +219,13 @@
 
 /* Appointment Card - New Clean Design */
 .appointment-card {
-    display: grid;
-    grid-template-columns: 56px 1fr auto;
-    gap: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     background: #ffffff;
-    padding: 20px 24px;
+    padding: 12px 20px;
     border-bottom: 1px solid #f3f4f6;
     transition: all 0.2s ease;
-    align-items: center;
 }
 
 .appointment-card:last-child {
@@ -227,8 +238,8 @@
 
 /* Appointment Icon - Circular Check Icon */
 .appointment-icon {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -238,8 +249,8 @@
 }
 
 .appointment-icon svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     color: #10b981;
 }
 
@@ -269,11 +280,13 @@
 
 /* Appointment Content */
 .appointment-content {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
+    margin-right: auto;
 }
 
 .appointment-header {
@@ -285,7 +298,7 @@
 }
 
 .patient-name {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: #1a1a1a;
     margin: 0;
@@ -293,24 +306,24 @@
 }
 
 .appointment-service {
-    font-size: 14px;
+    font-size: 13px;
     color: #6b7280;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .appointment-details {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     flex-wrap: wrap;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .detail-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 13px;
+    gap: 5px;
+    font-size: 12px;
     color: #6b7280;
 }
 
@@ -324,11 +337,11 @@
 .treatment-rating {
     display: flex;
     gap: 2px;
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .treatment-rating .star {
-    font-size: 16px;
+    font-size: 14px;
     color: #fbbf24;
 }
 
@@ -346,13 +359,13 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
-    min-width: 120px;
+    margin-left: 20px;
 }
 
 .detail-item.price-tag {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: #1a1a1a;
 }
@@ -603,7 +616,7 @@
     }
 
     .appointment-card {
-        grid-template-columns: 48px 1fr;
+        flex-wrap: wrap;
         gap: 12px;
         padding: 16px;
     }
@@ -619,12 +632,12 @@
     }
 
     .appointment-actions {
-        grid-column: 1 / -1;
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        min-width: auto;
+        margin-left: 0;
+        flex-basis: 100%;
     }
 
     .detail-item.price-tag {

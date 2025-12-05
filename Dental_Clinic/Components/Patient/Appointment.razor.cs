@@ -34,6 +34,10 @@ namespace Dental_Clinic.Components.Patient
         private string errorMessage = "";
         private string successMessage = "";
 
+        // Navbar state
+        private bool showSettings = false;
+        private bool appointmentReminders = true;
+
    protected override async Task OnInitializedAsync()
         {
 try
@@ -52,6 +56,9 @@ try
        Navigation.NavigateTo("/login", true);
         return;
     }
+
+            // set patient display name for navbar and form defaults
+            patientName = string.IsNullOrWhiteSpace(session.UserName) ? "Patient" : session.UserName!;
 
       // Load patient appointments
      await LoadAppointmentsAsync();
@@ -430,6 +437,14 @@ private void RescheduleAppointment(int appointmentId)
  _ = LoadAvailableTimeSlotsAsync();
  }
 }
+
+        // Navbar handlers
+        private void ToggleSettings() => showSettings = !showSettings;
+        private void EditProfile() { Navigation.NavigateTo("/patient-profile"); showSettings = false; }
+        private void ToggleReminders(ChangeEventArgs e) { appointmentReminders = e.Value is bool b ? b : appointmentReminders; }
+        private void MedicalUploads() { Navigation.NavigateTo("/history"); showSettings = false; }
+        private void HelpSupport() { Navigation.NavigateTo("/help"); showSettings = false; }
+        private void Logout() { Navigation.NavigateTo("/login", true); showSettings = false; }
 
      public class CalendarDay
         {
