@@ -1,15 +1,21 @@
 ﻿@page "/receptionist/messages"
-@layout Dental_Clinic.Components.Layout.ReceptionistDashboard
 @using Microsoft.AspNetCore.Components
 @using Dental_Clinic.Services
 @using Dental_Clinic.Models
+@using Dental_Clinic.Components.Receptionist
 @inject ChatService ChatService
 @inject SessionService SessionService
+
+<PageTitle>Messages - Receptionist</PageTitle>
+
 <link href="css/receptionistdashboard.css" rel="stylesheet" />
 <link href="css/ReceptMessages.css" rel="stylesheet" />
 
-<main class="dashboard-main">
-    <div class="messages-container">
+<div class="receptionist-dashboard">
+    <ReceptNavBar />
+
+    <main class="dashboard-main">
+        <div class="messages-container">
         @if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="error-banner"
@@ -23,30 +29,51 @@
                     <div class="stat-label">Unread Messages</div>
                     <div class="stat-value">@conversations.Sum(c => c.UnreadCount)</div>
                 </div>
-                <div class="stat-icon yellow-icon">💬</div>
+                <div class="stat-icon yellow-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
             </div>
             <div class="stat-card red">
                 <div class="stat-content">
                     <div class="stat-label">Urgent Concerns</div>
                     <div class="stat-value">@conversations.Count(c => c.Status == "Escalated")</div>
                 </div>
-                <div class="stat-icon red-icon">❗</div>
+                <div class="stat-icon red-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
             </div>
             <div class="stat-card green">
                 <div class="stat-content">
                     <div class="stat-label">Total Messages</div>
                     <div class="stat-value">@conversations.Count</div>
                 </div>
-                <div class="stat-icon green-icon">✓</div>
+                <div class="stat-icon green-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
             </div>
         </div>
         <div class="messages-section">
             <div class="messages-header">
-                <h2>💬 Patient Chat Messages</h2>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <h2>Patient Chat Messages</h2>
             </div>
             <div class="messages-controls">
-                <div class="search-box"><span class="search-icon">🔍</span><input type="text"
-                        placeholder="Search patient name or message..." @bind="searchTerm" @bind:event="oninput" />
+                <div class="search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21L16.65 16.65"></path>
+                    </svg>
+                    <input type="text" placeholder="Search patient name or message..." @bind="searchTerm" @bind:event="oninput" />
                 </div>
                 <div class="filters">
                     <select class="filter-select" @bind="statusFilter">
@@ -88,10 +115,18 @@
                                 <p>@conv.LastMessage</p>
                             </div>
                             <div class="message-actions">
-                                <button class="msg-btn btn-reply" @onclick="() => OpenReplyModal(conv)"><span>💬</span>
-                                    Reply</button>
-                                <button class="msg-btn btn-mark-read"
-                                    @onclick="() => MarkAsRead(conv.ConversationID)"><span>✓</span> Mark as Read</button>
+                                <button class="msg-btn btn-reply" @onclick="() => OpenReplyModal(conv)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                    </svg>
+                                    Reply
+                                </button>
+                                <button class="msg-btn btn-mark-read" @onclick="() => MarkAsRead(conv.ConversationID)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Mark as Read
+                                </button>
                             </div>
                         </div>
                     }
@@ -104,8 +139,9 @@
                 }
             </div>
         </div>
-    </div>
-</main>
+        </div> <!-- FIX: Added missing closing tag for .messages-container -->
+    </main>
+</div>
 
 @if (showReplyModal && selectedConversation != null)
 {
