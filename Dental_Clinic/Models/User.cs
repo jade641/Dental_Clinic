@@ -65,5 +65,7 @@ namespace Dental_Clinic.Models
     public string Email { get; set; } = string.Empty;
     public string InsuranceProvider { get; set; } = string.Empty;
     public string InsurancePolicyNumber { get; set; } = string.Empty;
+
+    public decimal OutstandingBalance { get; set; }
   }
 }

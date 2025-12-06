@@ -4,11 +4,82 @@
 @using Dental_Clinic.Services
 @inject NavigationManager Navigation
 @inject AppointmentService AppointmentService
+@inject DatabaseService DatabaseService
 @inject SessionService SessionService
 @implements IDisposable
 
 <link href="css/dentistschedule.css" rel="stylesheet" />
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
 
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        width: 500px;
+        max-width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-cancel {
+        padding: 0.75rem 1.5rem;
+        background: #f3f4f6;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .btn-save {
+        padding: 0.75rem 1.5rem;
+        background: #0ea5e9;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+</style>
 
 <div class="page-wrapper">
     <!-- Header -->
@@ -152,9 +223,14 @@
                             <div class="calendar-cell" @onclick="() => HandleCellClick(currentDayDate, time)">
                                 @foreach (var appt in GetAppointmentsForSlot(currentDayDate, timeSpan))
                                 {
-                                    <div class="appointment-block" title="@appt.PatientName - @appt.ServiceName">
+                                    <div class="appointment-block @(appt.Status == "Completed" ? "completed-appt" : "")" 
+                                         title="@appt.PatientName - @appt.ServiceName"
+                                         style="@(appt.Status == "Completed" ? "background-color: #dcfce7; border-left: 3px solid #22c55e;" : "")">
                                         <div class="appointment-patient">@appt.PatientName</div>
-                                        <div class="appointment-treatment">@appt.ServiceName</div>
+                                        <div class="appointment-treatment">
+                                            @appt.ServiceName
+                                            @if(appt.Status == "Completed") { <span style="font-size: 10px; color: #15803d;">(Done)</span> }
+                                        </div>
                                     </div>
                                 }
                             </div>
@@ -164,6 +240,98 @@
             </div>
         </div>
     </main>
+
+    @if (showTreatmentModal && selectedAppointment != null)
+    {
+        <div class="modal-backdrop" @onclick="CloseTreatmentModal">
+            <div class="modal-content" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h3>Complete Appointment</h3>
+                    <button class="icon-button" @onclick="CloseTreatmentModal">×</button>
+                </div>
+                <div class="modal-body">
+                    @if (hasPastDue)
+                    {
+                        <div class="alert alert-warning"
+                            style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                            <strong>Warning:</strong> This patient has a past due balance of
+                            ₱@patientCurrentBalance.ToString("N2").
+                            Please remind them to settle their account.
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label>Patient</label>
+                        <input type="text" class="form-control" value="@selectedAppointment.PatientName" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>Service Performed</label>
+                        <input type="text" class="form-control" value="@selectedAppointment.ServiceName" readonly />
+                    </div>
+
+                    <div class="form-row" style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Base Service Fee</label>
+                            <input type="text" class="form-control" value="₱@baseServiceCost.ToString("N2")" readonly
+                                style="background-color: #f3f4f6;" />
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Current Balance</label>
+                            <input type="text" class="form-control" value="₱@patientCurrentBalance.ToString("N2")" readonly
+                                style="background-color: #f3f4f6;" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Diagnosis</label>
+                        <textarea class="form-control" @bind="diagnosis" rows="2"
+                            placeholder="Enter diagnosis..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Treatment Notes (Procedures done)</label>
+                        <textarea class="form-control" @bind="treatmentNotes" rows="3"
+                            placeholder="e.g., 2 surfaces on Tooth 14..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Final Cost (PHP)</label>
+                        <input type="number" class="form-control" @bind="finalCost" step="0.01" />
+                        <small class="text-muted">Adjust this if the procedure was more complex than expected. This amount
+                            will be added to the patient's balance.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" @onclick="CloseTreatmentModal" disabled="@isProcessing">Cancel</button>
+                    <button class="btn-save" @onclick="SaveTreatmentRecord" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span>Processing...</span>
+                        }
+                        else
+                        {
+                            <span>Complete & Update Balance</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showSuccessModal)
+    {
+        <div class="modal-backdrop" style="z-index: 2000;" @onclick="CloseSuccessModal">
+            <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;" @onclick:stopPropagation>
+                <div style="margin-bottom: 20px; color: #10b981; display: flex; justify-content: center;">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3 style="margin-bottom: 10px; color: #0f172a; font-size: 18px; font-weight: 600;">Transaction Successful!</h3>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">The appointment has been completed and the patient's balance has been updated.</p>
+                <button class="btn-save" @onclick="CloseSuccessModal" style="width: 100%; justify-content: center;">OK</button>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -175,6 +343,20 @@
     private string searchQuery = string.Empty;
     private List<Appointment> appointments = new();
     private User? currentUser;
+
+    // Modal State
+    private bool showTreatmentModal = false;
+    private Appointment? selectedAppointment;
+    private string diagnosis = string.Empty;
+    private string treatmentNotes = string.Empty;
+    private decimal finalCost = 0;
+    private decimal baseServiceCost = 0;
+    private decimal patientCurrentBalance = 0;
+    private bool hasPastDue = false;
+    private bool isProcessing = false; // Prevent double clicks
+
+    // Success Modal State
+    private bool showSuccessModal = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -207,7 +389,13 @@
         var session = await SessionService.GetCurrentSessionAsync();
         int? dentistId = session?.RoleSpecificId;
 
-        appointments = await AppointmentService.GetAppointmentsInRangeAsync(startDate, endDate, dentistId);
+        var allAppointments = await AppointmentService.GetAppointmentsInRangeAsync(startDate, endDate, dentistId);
+        
+        // Filter: Only show Confirmed or Completed appointments. Hide Pending/Cancelled.
+        appointments = allAppointments
+            .Where(a => a.Status == "Confirmed" || a.Status == "Completed")
+            .ToList();
+            
         StateHasChanged();
     }
 
@@ -240,9 +428,81 @@
         await LoadAppointmentsAsync();
     }
 
-    private void HandleCellClick(DateTime date, string timeSlot)
+    private async Task HandleCellClick(DateTime date, string timeSlot)
     {
-        Console.WriteLine($"Clicked on {date:yyyy-MM-dd} at {timeSlot}");
+        // Find appointment in this slot
+        var timeSpan = ParseTimeSlot(timeSlot);
+        var appt = GetAppointmentsForSlot(date, timeSpan).FirstOrDefault();
+
+        if (appt != null)
+        {
+            // Prevent opening modal if already completed
+            if (appt.Status == "Completed")
+            {
+                // Optional: Show a "View Only" modal or just do nothing
+                return;
+            }
+            await OpenTreatmentModal(appt);
+        }
+    }
+    private async Task OpenTreatmentModal(Appointment appt)
+    {
+        selectedAppointment = appt;
+        diagnosis = "";
+        treatmentNotes = "";
+
+        // Fetch Base Cost
+        if (appt.ServiceID.HasValue)
+        {
+            baseServiceCost = await DatabaseService.GetServiceBaseCostAsync(appt.ServiceID.Value);
+        }
+        else
+        {
+            baseServiceCost = 0;
+        }
+        finalCost = baseServiceCost; // Default to base cost
+
+        // Fetch Patient Balance Info
+        patientCurrentBalance = await DatabaseService.GetPatientBalanceAsync(appt.PatientID);
+        hasPastDue = await DatabaseService.HasPastDueBalanceAsync(appt.PatientID);
+
+        showTreatmentModal = true;
+    }
+    private void CloseTreatmentModal()
+    {
+        showTreatmentModal = false;
+        selectedAppointment = null;
+    }
+
+    private async Task SaveTreatmentRecord()
+    {
+        if (selectedAppointment == null || isProcessing) return;
+
+        isProcessing = true; // Disable button
+        StateHasChanged();
+
+        bool success = await DatabaseService.UpdateAppointmentCostAndTreatmentAsync(
+        selectedAppointment.AppointmentID,
+        selectedAppointment.PatientID,
+        finalCost,
+        treatmentNotes,
+        diagnosis
+        );
+
+        if (success)
+        {
+            await LoadAppointmentsAsync(); // Refresh schedule
+            CloseTreatmentModal();
+            showSuccessModal = true; // Show success message
+        }
+        
+        isProcessing = false; // Re-enable (though modal is closed)
+        StateHasChanged();
+    }
+
+    private void CloseSuccessModal()
+    {
+        showSuccessModal = false;
     }
 
     private void OpenNewAppointmentModal()

@@ -26,6 +26,84 @@ namespace Dental_Clinic.Services
       return _isOnline;
     }
 
+    public async Task EnsureDatabaseSchemaAsync()
+    {
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+
+          // Check if OutstandingBalance column exists in Patient table
+          var checkCmd = new SqlCommand(
+              "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Patient' AND COLUMN_NAME = 'OutstandingBalance'",
+              conn);
+
+          int count = (int)await checkCmd.ExecuteScalarAsync();
+
+          if (count == 0)
+          {
+            // Add the column if it doesn't exist
+            var alterCmd = new SqlCommand(
+                "ALTER TABLE Patient ADD OutstandingBalance DECIMAL(18, 2) NOT NULL DEFAULT 0;",
+                conn);
+            await alterCmd.ExecuteNonQueryAsync();
+            System.Diagnostics.Debug.WriteLine("Schema Updated: Added OutstandingBalance to Patient table.");
+          }
+
+          // Check if Payments table exists
+          var checkTableCmd = new SqlCommand(
+              "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Payments'",
+              conn);
+          int tableCount = (int)await checkTableCmd.ExecuteScalarAsync();
+
+          if (tableCount == 0)
+          {
+            var createTableCmd = new SqlCommand(@"
+                  CREATE TABLE Payments (
+                      PaymentID INT PRIMARY KEY IDENTITY(1,1),
+                      PatientID INT NOT NULL,
+                      AppointmentID INT NULL, 
+                      Amount DECIMAL(10, 2) NOT NULL,
+                      PaymentDate DATETIME DEFAULT GETDATE(),
+                      PaymentMethod NVARCHAR(50) NOT NULL, 
+                      ReferenceNumber NVARCHAR(100) NULL, 
+                      Remarks NVARCHAR(255) NULL,
+                      FOREIGN KEY (PatientID) REFERENCES Patient(PatientID)
+                  );", conn);
+            await createTableCmd.ExecuteNonQueryAsync();
+            System.Diagnostics.Debug.WriteLine("Schema Updated: Created Payments table.");
+          }
+
+          // Check if Notifications table exists
+          var checkNotifTableCmd = new SqlCommand(
+              "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Notifications'",
+              conn);
+          int notifTableCount = (int)await checkNotifTableCmd.ExecuteScalarAsync();
+
+          if (notifTableCount == 0)
+          {
+            var createNotifTableCmd = new SqlCommand(@"
+                  CREATE TABLE Notifications (
+                      NotificationID INT PRIMARY KEY IDENTITY(1,1),
+                      PatientID INT NOT NULL,
+                      Message NVARCHAR(MAX) NOT NULL,
+                      DateCreated DATETIME DEFAULT GETDATE(),
+                      IsRead BIT DEFAULT 0,
+                      Type NVARCHAR(50) NOT NULL,
+                      FOREIGN KEY (PatientID) REFERENCES Patient(PatientID)
+                  );", conn);
+            await createNotifTableCmd.ExecuteNonQueryAsync();
+            System.Diagnostics.Debug.WriteLine("Schema Updated: Created Notifications table.");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Schema Update Failed: {ex.Message}");
+      }
+    }
+
     #region Connection Management
 
     private bool CheckOnlineStatus()
@@ -798,5 +876,370 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     }
 
     #endregion
+    #region Billing Methods
+
+    public async Task<decimal> GetPatientBalanceAsync(int patientId)
+    {
+      string query = "SELECT OutstandingBalance FROM Patient WHERE PatientID = @PatientID";
+      using (var connection = GetConnection())
+      {
+        await connection.OpenAsync();
+        using (var command = new SqlCommand(query, connection))
+        {
+          command.Parameters.AddWithValue("@PatientID", patientId);
+          var result = await command.ExecuteScalarAsync();
+          if (result != null && result != DBNull.Value)
+          {
+            return Convert.ToDecimal(result);
+          }
+          return 0;
+        }
+      }
+    }
+
+    public async Task<(bool Success, string Message)> DeductPatientBalanceAsync(int patientId, decimal amount)
+    {
+      try
+      {
+        string query = "UPDATE Patient SET OutstandingBalance = OutstandingBalance - @Amount WHERE PatientID = @PatientID";
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@Amount", amount);
+            command.Parameters.AddWithValue("@PatientID", patientId);
+            int rows = await command.ExecuteNonQueryAsync();
+            return rows > 0 ? (true, "Balance updated") : (false, "Patient not found");
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        return (false, ex.Message);
+      }
+    }
+
+    public async Task<bool> UpdateAppointmentCostAndTreatmentAsync(int appointmentId, int patientId, decimal finalCost, string treatmentNotes, string diagnosis)
+    {
+      try
+      {
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+
+          // 0. Guard Clause: Check if already completed to prevent double billing
+          string checkStatusQuery = "SELECT Status FROM Appointments WHERE AppointmentID = @AppointmentID";
+          using (var checkCmd = new SqlCommand(checkStatusQuery, connection))
+          {
+            checkCmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+            var status = (string)await checkCmd.ExecuteScalarAsync();
+            if (status == "Completed")
+            {
+              System.Diagnostics.Debug.WriteLine($"[DatabaseService] Blocked duplicate transaction for Appointment {appointmentId}. Already Completed.");
+              return false;
+            }
+          }
+
+          using (var transaction = connection.BeginTransaction())
+          {
+            try
+            {
+              // 1. Get the original service cost and details for this appointment
+              decimal originalCost = 0;
+              int serviceId = 0;
+              int dentistId = 0;
+
+              string getDetailsQuery = @"
+                            SELECT s.Cost, a.ServiceID, a.DentistID
+                            FROM Appointments a
+                            JOIN Services s ON a.ServiceID = s.ServiceID
+                            WHERE a.AppointmentID = @AppointmentID";
+
+              using (var cmd = new SqlCommand(getDetailsQuery, connection, transaction))
+              {
+                cmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                  if (await reader.ReadAsync())
+                  {
+                    originalCost = reader.GetDecimal(0);
+                    serviceId = reader.GetInt32(1);
+                    dentistId = reader.GetInt32(2);
+                  }
+                }
+              }
+
+              // 2. Record Service Transaction (This is the official record of the fee)
+              string insertTransactionQuery = @"
+                  INSERT INTO ServiceTransactions (AppointmentID, PatientID, DentistID, ServiceID, TransactionDate, Quantity, Cost, TotalAmount, Status)
+                  VALUES (@AppointmentID, @PatientID, @DentistID, @ServiceID, GETDATE(), 1, @Cost, @TotalAmount, 'Completed')";
+
+              using (var cmd = new SqlCommand(insertTransactionQuery, connection, transaction))
+              {
+                cmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                cmd.Parameters.AddWithValue("@DentistID", dentistId);
+                cmd.Parameters.AddWithValue("@ServiceID", serviceId);
+                cmd.Parameters.AddWithValue("@Cost", finalCost); // The final agreed cost
+                cmd.Parameters.AddWithValue("@TotalAmount", finalCost);
+                await cmd.ExecuteNonQueryAsync();
+              }
+
+              // 3. Update Patient Balance (Add the FINAL cost to their balance)
+              // Note: We add the full final cost because "Service First, Pay Later" means they haven't paid yet.
+              // If they had paid a deposit, we would subtract that, but assuming standard flow:
+              string updateBalanceQuery = @"
+                                UPDATE Patient 
+                                SET OutstandingBalance = OutstandingBalance + @FinalCost 
+                                WHERE PatientID = @PatientID";
+
+              using (var cmd = new SqlCommand(updateBalanceQuery, connection, transaction))
+              {
+                cmd.Parameters.AddWithValue("@FinalCost", finalCost);
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                await cmd.ExecuteNonQueryAsync();
+              }
+
+              // 4. Record Treatment Details
+              string insertTreatmentQuery = @"
+                            INSERT INTO TreatmentRecord (AppointmentID, PatientID, DentistID, Diagnosis, TreatmentNotes, DateRecorded)
+                            VALUES (@AppointmentID, @PatientID, @DentistID, @Diagnosis, @TreatmentNotes, GETDATE())";
+
+              using (var cmd = new SqlCommand(insertTreatmentQuery, connection, transaction))
+              {
+                cmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                cmd.Parameters.AddWithValue("@DentistID", dentistId);
+                cmd.Parameters.AddWithValue("@Diagnosis", diagnosis ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@TreatmentNotes", treatmentNotes ?? (object)DBNull.Value);
+                await cmd.ExecuteNonQueryAsync();
+              }
+
+              // 5. Update Appointment Status to Completed
+              string updateStatusQuery = "UPDATE Appointments SET Status = 'Completed' WHERE AppointmentID = @AppointmentID";
+              using (var cmd = new SqlCommand(updateStatusQuery, connection, transaction))
+              {
+                cmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
+                await cmd.ExecuteNonQueryAsync();
+              }
+
+              // 6. Add Notification
+              string notificationQuery = @"INSERT INTO Notifications (PatientID, Message, Type) VALUES (@PatientID, @Message, 'Billing')";
+              using (var cmd = new SqlCommand(notificationQuery, connection, transaction))
+              {
+                cmd.Parameters.AddWithValue("@PatientID", patientId);
+                cmd.Parameters.AddWithValue("@Message", $"A new service fee of ₱{finalCost:N0} has been added to your account for your recent appointment.");
+                await cmd.ExecuteNonQueryAsync();
+              }
+
+              transaction.Commit();
+              return true;
+            }
+            catch (Exception)
+            {
+              transaction.Rollback();
+              throw;
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"UpdateAppointmentCost Failed: {ex.Message}");
+        return false;
+      }
+    }
+
+    public async Task<decimal> GetServiceBaseCostAsync(int serviceId)
+    {
+      try
+      {
+        string query = "SELECT Cost FROM Services WHERE ServiceID = @ServiceID";
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@ServiceID", serviceId);
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
+          }
+        }
+      }
+      catch { return 0; }
+    }
+
+    public async Task<bool> HasPastDueBalanceAsync(int patientId)
+    {
+      try
+      {
+        // Simple check: If OutstandingBalance > 0, they have a past due balance.
+        // You could refine this to check for "aged" debt if needed.
+        decimal balance = await GetPatientBalanceAsync(patientId);
+        return balance > 0;
+      }
+      catch { return false; }
+    }
+
+    public async Task<bool> RecordPaymentAsync(PaymentTransaction payment)
+    {
+      try
+      {
+        string query = @"
+                INSERT INTO Payments (PatientID, AppointmentID, Amount, PaymentDate, PaymentMethod, ReferenceNumber, Remarks)
+                VALUES (@PatientID, @AppointmentID, @Amount, @PaymentDate, @PaymentMethod, @ReferenceNumber, @Remarks)";
+
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@PatientID", payment.PatientID);
+            command.Parameters.AddWithValue("@AppointmentID", (object?)payment.AppointmentID ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Amount", payment.Amount);
+            command.Parameters.AddWithValue("@PaymentDate", payment.PaymentDate);
+            command.Parameters.AddWithValue("@PaymentMethod", payment.PaymentMethod);
+            command.Parameters.AddWithValue("@ReferenceNumber", (object?)payment.ReferenceNumber ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Remarks", (object?)payment.Remarks ?? DBNull.Value);
+
+            await command.ExecuteNonQueryAsync();
+            return true;
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"RecordPayment Failed: {ex.Message}");
+        return false;
+      }
+    }
+
+    public async Task<List<PaymentTransaction>> GetPaymentsByPatientIdAsync(int patientId)
+    {
+      var payments = new List<PaymentTransaction>();
+      try
+      {
+        string query = "SELECT * FROM Payments WHERE PatientID = @PatientID ORDER BY PaymentDate DESC";
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@PatientID", patientId);
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                payments.Add(new PaymentTransaction
+                {
+                  PaymentID = reader.GetInt32(reader.GetOrdinal("PaymentID")),
+                  PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                  AppointmentID = reader.IsDBNull(reader.GetOrdinal("AppointmentID")) ? null : reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                  Amount = reader.GetDecimal(reader.GetOrdinal("Amount")),
+                  PaymentDate = reader.GetDateTime(reader.GetOrdinal("PaymentDate")),
+                  PaymentMethod = reader.GetString(reader.GetOrdinal("PaymentMethod")),
+                  ReferenceNumber = reader.IsDBNull(reader.GetOrdinal("ReferenceNumber")) ? null : reader.GetString(reader.GetOrdinal("ReferenceNumber")),
+                  Remarks = reader.IsDBNull(reader.GetOrdinal("Remarks")) ? null : reader.GetString(reader.GetOrdinal("Remarks"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"GetPayments Failed: {ex.Message}");
+      }
+      return payments;
+    }
+
+    #endregion
+
+    #region Notifications
+
+    public async Task AddNotificationAsync(int patientId, string message, string type)
+    {
+      try
+      {
+        string query = @"INSERT INTO Notifications (PatientID, Message, Type) VALUES (@PatientID, @Message, @Type)";
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@PatientID", patientId);
+            command.Parameters.AddWithValue("@Message", message);
+            command.Parameters.AddWithValue("@Type", type);
+            await command.ExecuteNonQueryAsync();
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error adding notification: {ex.Message}");
+      }
+    }
+
+    public async Task<List<Notification>> GetNotificationsAsync(int patientId)
+    {
+      var notifications = new List<Notification>();
+      try
+      {
+        string query = "SELECT * FROM Notifications WHERE PatientID = @PatientID ORDER BY DateCreated DESC";
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@PatientID", patientId);
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                notifications.Add(new Notification
+                {
+                  NotificationID = reader.GetInt32(reader.GetOrdinal("NotificationID")),
+                  PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                  Message = reader.GetString(reader.GetOrdinal("Message")),
+                  DateCreated = reader.GetDateTime(reader.GetOrdinal("DateCreated")),
+                  IsRead = reader.GetBoolean(reader.GetOrdinal("IsRead")),
+                  Type = reader.GetString(reader.GetOrdinal("Type"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error fetching notifications: {ex.Message}");
+      }
+      return notifications;
+    }
+
+    public async Task MarkNotificationAsReadAsync(int notificationId)
+    {
+      try
+      {
+        string query = "UPDATE Notifications SET IsRead = 1 WHERE NotificationID = @NotificationID";
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+          using (var command = new SqlCommand(query, connection))
+          {
+            command.Parameters.AddWithValue("@NotificationID", notificationId);
+            await command.ExecuteNonQueryAsync();
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error marking notification as read: {ex.Message}");
+      }
+    }
+
+    #endregion
+
   }
 }

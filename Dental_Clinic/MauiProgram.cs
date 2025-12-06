@@ -45,6 +45,9 @@ namespace Dental_Clinic
             // Register Chat Service
             builder.Services.AddScoped<ChatService>();
 
+            // Register PayMongo Service
+            builder.Services.AddScoped<PayMongoService>();
+
             // Register Email Service
             builder.Services.AddSingleton<EmailService>();
 
@@ -65,7 +68,19 @@ namespace Dental_Clinic
             builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            // Run Database Schema Migration
+            Task.Run(async () =>
+            {
+                using (var scope = app.Services.CreateScope())
+                {
+                    var dbService = scope.ServiceProvider.GetRequiredService<DatabaseService>();
+                    await dbService.EnsureDatabaseSchemaAsync();
+                }
+            });
+
+            return app;
         }
     }
 }

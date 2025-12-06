@@ -516,6 +516,14 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
         System.Diagnostics.Debug.WriteLine($"[AppointmentService] ==> BOOKING APPOINTMENT");
         System.Diagnostics.Debug.WriteLine($"[AppointmentService] Date: {model.AppointmentDate:yyyy-MM-dd}, Time: {model.StartTime}-{model.EndTime}, Dentist: {model.DentistID}");
 
+        // 1. Check for Past Due Balance (The "Blocker")
+        bool hasPastDue = await _onlineDb.HasPastDueBalanceAsync(model.PatientID);
+        if (hasPastDue)
+        {
+          System.Diagnostics.Debug.WriteLine($"[AppointmentService] BLOCKED: Patient {model.PatientID} has past due balance.");
+          return (false, "Appointment Blocked: Patient has an outstanding balance from a previous appointment. Please settle the balance first.", null);
+        }
+
         // Check if this time slot is already booked
         string checkQuery = @"
         SELECT AppointmentID FROM Appointments 
@@ -643,6 +651,17 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
     {
       try
       {
+        // Get PatientID for notification
+        int patientId = 0;
+        string getPatientQuery = "SELECT PatientID FROM Appointments WHERE AppointmentID = @AppointmentID";
+        var patientParams = new[] { new SqlParameter("@AppointmentID", appointmentId) };
+
+        DataTable dt;
+        if (IsOffline) dt = await _localDb.GetDataTableAsync(getPatientQuery, patientParams);
+        else dt = await _onlineDb.ExecuteReaderAsync(getPatientQuery, patientParams);
+
+        if (dt.Rows.Count > 0) patientId = Convert.ToInt32(dt.Rows[0]["PatientID"]);
+
         string query = @"
       UPDATE Appointments
      SET Status = 'Cancelled',
@@ -668,9 +687,15 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
           rowsAffected = await _onlineDb.ExecuteNonQueryAsync(query, parameters);
         }
 
-        return rowsAffected > 0
-        ? (true, "Appointment cancelled successfully")
-        : (false, "Appointment not found");
+        if (rowsAffected > 0)
+        {
+          if (!IsOffline && patientId > 0)
+          {
+            await _onlineDb.AddNotificationAsync(patientId, "Your appointment has been cancelled.", "Appointment");
+          }
+          return (true, "Appointment cancelled successfully");
+        }
+        return (false, "Appointment not found");
       }
       catch (Exception ex)
       {
@@ -683,11 +708,43 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
     {
       try
       {
+        // 1. Get Appointment Details (Service and Patient)
+        string getApptQuery = "SELECT ServiceID, PatientID FROM Appointments WHERE AppointmentID = @AppointmentID";
+        var apptParams = new[] { new SqlParameter("@AppointmentID", appointmentId) };
+
+        DataTable apptTable;
+        if (IsOffline)
+          apptTable = await _localDb.GetDataTableAsync(getApptQuery, apptParams);
+        else
+          apptTable = await _onlineDb.ExecuteReaderAsync(getApptQuery, apptParams);
+
+        if (apptTable.Rows.Count == 0) return (false, "Appointment not found");
+
+        int serviceId = Convert.ToInt32(apptTable.Rows[0]["ServiceID"]);
+        int patientId = Convert.ToInt32(apptTable.Rows[0]["PatientID"]);
+
+        // 2. Get Service Cost
+        string getCostQuery = "SELECT Cost FROM Services WHERE ServiceID = @ServiceID";
+        var costParams = new[] { new SqlParameter("@ServiceID", serviceId) };
+
+        DataTable costTable;
+        if (IsOffline)
+          costTable = await _localDb.GetDataTableAsync(getCostQuery, costParams);
+        else
+          costTable = await _onlineDb.ExecuteReaderAsync(getCostQuery, costParams);
+
+        decimal cost = 0;
+        if (costTable.Rows.Count > 0 && costTable.Rows[0]["Cost"] != DBNull.Value)
+        {
+          cost = Convert.ToDecimal(costTable.Rows[0]["Cost"]);
+        }
+
+        // 3. Update Appointment Status
         string query = @"UPDATE Appointments SET Status = 'Confirmed', ModifiedDate = @ModifiedDate WHERE AppointmentID = @AppointmentID";
         var parameters = new[] {
- new SqlParameter("@AppointmentID", appointmentId),
- new SqlParameter("@ModifiedDate", DateTime.Now)
- };
+            new SqlParameter("@AppointmentID", appointmentId),
+            new SqlParameter("@ModifiedDate", DateTime.Now)
+        };
 
         int rows;
         if (IsOffline)
@@ -700,7 +757,41 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
           rows = await _onlineDb.ExecuteNonQueryAsync(query, parameters);
         }
 
-        return rows > 0 ? (true, "Appointment confirmed") : (false, "Appointment not found");
+        if (rows > 0)
+        {
+          // 4. Update Patient Balance (Charge the patient)
+          // COMMENTED OUT: We are moving to "Service First, Pay Later" where the Dentist adds the fee at completion.
+          /*
+          if (cost > 0)
+          {
+            string updateBalanceQuery = "UPDATE Patient SET OutstandingBalance = ISNULL(OutstandingBalance, 0) + @Cost WHERE PatientID = @PatientID";
+            var balanceParams = new[]
+            {
+                    new SqlParameter("@Cost", cost),
+                    new SqlParameter("@PatientID", patientId)
+                };
+
+            if (IsOffline)
+            {
+              await _localDb.ExecuteNonQueryAsync(updateBalanceQuery, balanceParams);
+            }
+            else
+            {
+              await _onlineDb.ExecuteNonQueryAsync(updateBalanceQuery, balanceParams);
+            }
+          }
+          */
+
+          // 5. Send Notification
+          if (!IsOffline)
+          {
+            await _onlineDb.AddNotificationAsync(patientId, "Your appointment has been confirmed.", "Appointment");
+          }
+
+          return (true, "Appointment confirmed");
+        }
+
+        return (false, "Appointment not found");
       }
       catch (Exception ex)
       {

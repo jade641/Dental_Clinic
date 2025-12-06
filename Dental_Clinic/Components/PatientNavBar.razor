@@ -1,5 +1,6 @@
 @using System.Diagnostics
 @inject Dental_Clinic.Services.SessionService SessionService
+@inject Dental_Clinic.Services.DatabaseService DatabaseService
 @inject NavigationManager Navigation
 
 <style>
@@ -130,12 +131,42 @@
             <input type="text" placeholder="Search services, appointments..." />
         </div>
 
-        <button class="icon-button" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span class="notification-badge">2</span>
-        </button>
+        <div class="settings-wrapper">
+            <button class="icon-button" type="button" aria-label="Notifications" @onclick="ToggleNotifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                @if (unreadCount > 0)
+                {
+                    <span class="notification-badge">@unreadCount</span>
+                }
+            </button>
+
+            @if (showNotifications)
+            {
+                <div class="settings-panel" style="width: 320px;">
+                    <div class="settings-header">
+                        <div class="settings-user-name">Notifications</div>
+                    </div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        @if (notifications.Count == 0)
+                        {
+                            <div style="padding: 20px; text-align: center; color: #64748b; font-size: 13px;">No notifications</div>
+                        }
+                        else
+                        {
+                            @foreach (var notif in notifications)
+                            {
+                                <div class="settings-item" style="flex-direction: column; align-items: flex-start; gap: 4px; background: @(notif.IsRead ? "white" : "#f0f9ff"); cursor: default;">
+                                    <div style="font-size: 13px; color: #0f172a; line-height: 1.4;">@notif.Message</div>
+                                    <div style="font-size: 11px; color: #94a3b8;">@notif.DateCreated.ToString("MMM dd, h:mm tt")</div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
 
         <div class="settings-wrapper">
             <button class="icon-btn settings-btn" type="button" aria-label="Settings" title="Settings" @onclick="ToggleSettings">
@@ -254,6 +285,11 @@
     private bool showSettings = false;
     private bool appointmentReminders = true;
     
+    // Notifications
+    private List<Dental_Clinic.Models.Notification> notifications = new();
+    private bool showNotifications = false;
+    private int unreadCount => notifications.Count(n => !n.IsRead);
+
     // Edit Profile Modal State
     private bool showEditProfileModal = false;
     private string editFullName = "";
@@ -271,12 +307,23 @@
                 return;
             }
             patientName = session.UserName ?? "Patient";
+            
+            if (session.RoleSpecificId.HasValue)
+            {
+                 notifications = await DatabaseService.GetNotificationsAsync(session.RoleSpecificId.Value);
+            }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[PatientNavBar] Error loading: {ex.Message}");
             patientName = "Patient";
         }
+    }
+
+    private void ToggleNotifications()
+    {
+        showNotifications = !showNotifications;
+        if (showNotifications) showSettings = false;
     }
 
     private void ToggleSettings() => showSettings = !showSettings;
