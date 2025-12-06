@@ -13,10 +13,14 @@ namespace Dental_Clinic.Services
         public PayMongoService(IConfiguration configuration)
         {
             _secretKey = configuration["PayMongo:SecretKey"] ?? throw new InvalidOperationException("PayMongo Secret Key is missing in configuration.");
-            
+
+            // Ensure TLS 1.2 is used (required by many payment gateways)
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
             _httpClient = new HttpClient();
             _httpClient.BaseAddress = new Uri("https://api.paymongo.com/v1/");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(_secretKey + ":")));
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public async Task<(string Id, string Url)> CreatePaymentLinkAsync(decimal amount, string description)
@@ -54,13 +58,14 @@ namespace Dental_Clinic.Services
                 {
                     var error = await response.Content.ReadAsStringAsync();
                     System.Diagnostics.Debug.WriteLine($"PayMongo Error: {error}");
-                    return (string.Empty, string.Empty);
+                    // Return the error message in the URL field to display it
+                    return (string.Empty, $"ERROR: {error}");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"PayMongo Exception: {ex.Message}");
-                return (string.Empty, string.Empty);
+                return (string.Empty, $"EXCEPTION: {ex.Message}");
             }
         }
 

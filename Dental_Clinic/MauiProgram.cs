@@ -54,6 +54,9 @@ namespace Dental_Clinic
             // Register HttpClient
             builder.Services.AddSingleton<HttpClient>();
 
+            // Register Cloudinary Service
+            builder.Services.AddScoped<CloudinaryService>();
+
             // Register GoogleAuthService using DI factory so IConfiguration is injected correctly
             builder.Services.AddSingleton<GoogleAuthService>(sp =>
             {

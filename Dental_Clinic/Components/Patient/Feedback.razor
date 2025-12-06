@@ -1,0 +1,201 @@
+@page "/feedback"
+@using Dental_Clinic.Models
+@using Dental_Clinic.Services
+@using AppointmentModel = Dental_Clinic.Models.Appointment
+@inject DatabaseService DatabaseService
+@inject SessionService SessionService
+@inject NavigationManager Navigation
+
+<link href="css/patientdashboard.css" rel="stylesheet" />
+<link href="css/PatientFeedback.css" rel="stylesheet" />
+
+<div class="dashboard-page">
+    <PatientNavBar />
+
+    <div class="dashboard-content">
+        <div class="feedback-container">
+            <div class="feedback-header">
+                <h2>Share Your Experience</h2>
+                <p>Your feedback helps us improve our services. Please select a completed appointment to rate.</p>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="loading-spinner">Loading...</div>
+            }
+            else if (showSuccess)
+            {
+                <div class="success-message">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <div>
+                        <strong>Thank you!</strong>
+                        <p>Your feedback has been submitted successfully.</p>
+                    </div>
+                </div>
+                <button class="btn-secondary" @onclick="LoadAppointments">Rate Another Appointment</button>
+            }
+            else if (appointments.Count == 0)
+            {
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <h3>No appointments to rate</h3>
+                    <p>You can only rate completed appointments that haven't been reviewed yet.</p>
+                </div>
+            }
+            else
+            {
+                <div class="appointments-grid">
+                    @foreach (var appt in appointments)
+                    {
+                        <div class="appointment-card @(selectedAppointment?.AppointmentID == appt.AppointmentID ? "selected" : "")"
+                            @onclick="() => SelectAppointment(appt)">
+                            <div class="card-header">
+                                <span class="service-name">@appt.ServiceName</span>
+                                <span class="appt-date">@appt.AppointmentDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="dentist-info">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span>Dr. @appt.DentistName</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (selectedAppointment != null)
+                {
+                    <div class="feedback-form">
+                        <div class="rating-section">
+                            <label class="rating-label">How was your experience?</label>
+                            <div class="stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var starValue = i;
+                                    <button class="star-btn @(rating >= starValue ? "active" : "")"
+                                        @onclick="() => SetRating(starValue)" type="button">
+                                        <svg viewBox="0 0 24 24">
+                                            <polygon
+                                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                            </polygon>
+                                        </svg>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Additional Comments (Optional)</label>
+                            <textarea class="form-control" @bind="feedbackText"
+                                placeholder="Tell us what you liked or how we can improve..."></textarea>
+                        </div>
+
+                        <button class="submit-btn" @onclick="SubmitFeedback" disabled="@(rating == 0 || isSubmitting)">
+                            @(isSubmitting ? "Submitting..." : "Submit Feedback")
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<AppointmentModel> appointments = new();
+    private AppointmentModel? selectedAppointment;
+    private int rating = 0;
+    private string feedbackText = "";
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool showSuccess = false;
+    private int patientId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAppointments();
+    }
+
+    private async Task LoadAppointments()
+    {
+        isLoading = true;
+        showSuccess = false;
+        selectedAppointment = null;
+        rating = 0;
+        feedbackText = "";
+
+        try
+        {
+            var session = await SessionService.GetCurrentSessionAsync();
+            if (session == null || !session.RoleSpecificId.HasValue)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            patientId = session.RoleSpecificId.Value;
+            appointments = await DatabaseService.GetUnratedCompletedAppointmentsAsync(patientId);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading appointments: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectAppointment(AppointmentModel appt)
+    {
+        selectedAppointment = appt;
+        rating = 0;
+        feedbackText = "";
+    }
+
+    private void SetRating(int value)
+    {
+        rating = value;
+    }
+
+    private async Task SubmitFeedback()
+    {
+        if (selectedAppointment == null || rating == 0) return;
+
+        isSubmitting = true;
+        try
+        {
+            var feedback = new Dental_Clinic.Models.Feedback
+            {
+                PatientID = patientId,
+                AppointmentID = selectedAppointment.AppointmentID,
+                SubmissionDate = DateTime.Now,
+                RatingValue = rating,
+                FeedbackText = feedbackText
+            };
+
+            bool success = await DatabaseService.AddFeedbackAsync(feedback);
+            if (success)
+            {
+                showSuccess = true;
+                // Remove the rated appointment from the list locally
+                appointments.Remove(selectedAppointment);
+                selectedAppointment = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error submitting feedback: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

@@ -71,7 +71,7 @@ namespace Dental_Clinic.Services
    <p>For security, the link can only be used once.</p>
   </div>
   <div class='footer'>
-   <p>©2025 Jade Dental Clinic. All rights reserved.</p>
+   <p>ï¿½2025 Jade Dental Clinic. All rights reserved.</p>
    <p>This is an automated email. Please do not reply.</p>
   </div>
  </div>
@@ -178,6 +178,48 @@ VALUES (@Email, @Token, @ExpiryTime, 0)";
             {
                 Debug.WriteLine($"[EmailService] Error storing reset token: {ex.Message}");
                 throw; // rethrow so caller can handle
+            }
+        }
+
+        public async Task<bool> SendEmailAsync(string toEmail, string subject, string body)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(toEmail))
+                {
+                    Debug.WriteLine("[EmailService] Invalid email address");
+                    return false;
+                }
+
+                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort)
+                {
+                    EnableSsl = true,
+                    Credentials = new NetworkCredential(_fromEmail, _fromPassword)
+                };
+
+                if (string.IsNullOrEmpty(_fromPassword))
+                {
+                    Debug.WriteLine("[EmailService] SMTP password not configured.");
+                    return false;
+                }
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(_fromEmail, _fromName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+                mailMessage.To.Add(toEmail);
+
+                await smtpClient.SendMailAsync(mailMessage);
+                Debug.WriteLine($"[EmailService] Email sent to {toEmail}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[EmailService] Error sending email: {ex.Message}");
+                return false;
             }
         }
     }

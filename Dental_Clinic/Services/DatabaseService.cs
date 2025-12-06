@@ -39,7 +39,7 @@ namespace Dental_Clinic.Services
               "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Patient' AND COLUMN_NAME = 'OutstandingBalance'",
               conn);
 
-          int count = (int)await checkCmd.ExecuteScalarAsync();
+          int count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
 
           if (count == 0)
           {
@@ -55,7 +55,7 @@ namespace Dental_Clinic.Services
           var checkTableCmd = new SqlCommand(
               "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Payments'",
               conn);
-          int tableCount = (int)await checkTableCmd.ExecuteScalarAsync();
+          int tableCount = Convert.ToInt32(await checkTableCmd.ExecuteScalarAsync());
 
           if (tableCount == 0)
           {
@@ -79,7 +79,7 @@ namespace Dental_Clinic.Services
           var checkNotifTableCmd = new SqlCommand(
               "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Notifications'",
               conn);
-          int notifTableCount = (int)await checkNotifTableCmd.ExecuteScalarAsync();
+          int notifTableCount = Convert.ToInt32(await checkNotifTableCmd.ExecuteScalarAsync());
 
           if (notifTableCount == 0)
           {
@@ -95,6 +95,27 @@ namespace Dental_Clinic.Services
                   );", conn);
             await createNotifTableCmd.ExecuteNonQueryAsync();
             System.Diagnostics.Debug.WriteLine("Schema Updated: Created Notifications table.");
+          }
+
+          // Check if ImageUrl column exists in MarketingCampaign table
+          var checkCampaignColCmd = new SqlCommand(
+              "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'MarketingCampaign' AND COLUMN_NAME = 'ImageUrl'",
+              conn);
+
+          int campaignColCount = Convert.ToInt32(await checkCampaignColCmd.ExecuteScalarAsync());
+
+          if (campaignColCount == 0)
+          {
+            // Check if table exists first
+            var checkTableExistsCmd = new SqlCommand("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'MarketingCampaign'", conn);
+            if (Convert.ToInt32(await checkTableExistsCmd.ExecuteScalarAsync()) > 0)
+            {
+              var alterCmd = new SqlCommand(
+                  "ALTER TABLE MarketingCampaign ADD ImageUrl NVARCHAR(MAX) NULL;",
+                  conn);
+              await alterCmd.ExecuteNonQueryAsync();
+              System.Diagnostics.Debug.WriteLine("Schema Updated: Added ImageUrl to MarketingCampaign table.");
+            }
           }
         }
       }
@@ -796,7 +817,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
     #region Data Operations for Sync
 
-    public async Task<DataTable> ExecuteReaderAsync(string query, SqlParameter[] parameters = null)
+    public async Task<DataTable> ExecuteReaderAsync(string query, SqlParameter[]? parameters = null)
     {
       using (var connection = new SqlConnection(_onlineConnectionString))
       {
@@ -818,7 +839,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
       }
     }
 
-    public async Task<int> ExecuteNonQueryAsync(string query, SqlParameter[] parameters = null)
+    public async Task<int> ExecuteNonQueryAsync(string query, SqlParameter[]? parameters = null)
     {
       using (var connection = new SqlConnection(_onlineConnectionString))
       {
@@ -835,7 +856,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
       }
     }
 
-    public async Task<object> ExecuteScalarAsync(string query, SqlParameter[] parameters = null)
+    public async Task<object> ExecuteScalarAsync(string query, SqlParameter[]? parameters = null)
     {
       using (var connection = new SqlConnection(_onlineConnectionString))
       {
@@ -933,7 +954,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
           using (var checkCmd = new SqlCommand(checkStatusQuery, connection))
           {
             checkCmd.Parameters.AddWithValue("@AppointmentID", appointmentId);
-            var status = (string)await checkCmd.ExecuteScalarAsync();
+            var status = await checkCmd.ExecuteScalarAsync() as string;
             if (status == "Completed")
             {
               System.Diagnostics.Debug.WriteLine($"[DatabaseService] Blocked duplicate transaction for Appointment {appointmentId}. Already Completed.");
@@ -1237,6 +1258,401 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
       {
         System.Diagnostics.Debug.WriteLine($"Error marking notification as read: {ex.Message}");
       }
+    }
+
+    #endregion
+
+    #region Feedback
+
+    public async Task<bool> AddFeedbackAsync(Feedback feedback)
+    {
+      try
+      {
+        string query = @"
+                INSERT INTO Feedback (PatientID, AppointmentID, SubmissionDate, RatingValue, FeedbackText)
+                VALUES (@PatientID, @AppointmentID, @SubmissionDate, @RatingValue, @FeedbackText)";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@PatientID", feedback.PatientID);
+            cmd.Parameters.AddWithValue("@AppointmentID", (object)feedback.AppointmentID ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@SubmissionDate", feedback.SubmissionDate);
+            cmd.Parameters.AddWithValue("@RatingValue", (object)feedback.RatingValue ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@FeedbackText", (object)feedback.FeedbackText ?? DBNull.Value);
+
+            await cmd.ExecuteNonQueryAsync();
+          }
+        }
+        return true;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error adding feedback: {ex.Message}");
+        return false;
+      }
+    }
+
+    public async Task<List<Appointment>> GetUnratedCompletedAppointmentsAsync(int patientId)
+    {
+      var appointments = new List<Appointment>();
+      try
+      {
+        // Select completed appointments that don't have a corresponding entry in the Feedback table
+        // Note: Dentist table has UserID, we might need to join Users to get the name if DentistName isn't stored directly or if we want the name from Users table.
+        // Assuming Dentist table has a way to get name, or we join with Users.
+        // The schema shows Dentist table has UserID. Users table has FirstName, LastName.
+
+        string query = @"
+                SELECT a.AppointmentID, a.AppointmentDate, a.StartTime, a.EndTime, s.ServiceName, 
+                       u.FirstName + ' ' + u.LastName as DentistName
+                FROM Appointments a
+                JOIN Services s ON a.ServiceID = s.ServiceID
+                JOIN Dentist d ON a.DentistID = d.DentistID
+                JOIN Users u ON d.UserID = u.UserID
+                LEFT JOIN Feedback f ON a.AppointmentID = f.AppointmentID
+                WHERE a.PatientID = @PatientID 
+                  AND a.Status = 'Completed' 
+                  AND f.FeedbackID IS NULL
+                ORDER BY a.AppointmentDate DESC";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@PatientID", patientId);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                appointments.Add(new Appointment
+                {
+                  AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                  AppointmentDate = reader.GetDateTime(reader.GetOrdinal("AppointmentDate")),
+                  StartTime = reader.GetTimeSpan(reader.GetOrdinal("StartTime")),
+                  EndTime = reader.GetTimeSpan(reader.GetOrdinal("EndTime")),
+                  ServiceName = reader.IsDBNull(reader.GetOrdinal("ServiceName")) ? string.Empty : reader.GetString(reader.GetOrdinal("ServiceName")),
+                  DentistName = reader.IsDBNull(reader.GetOrdinal("DentistName")) ? "Unknown" : reader.GetString(reader.GetOrdinal("DentistName"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting unrated appointments: {ex.Message}");
+      }
+      return appointments;
+    }
+
+    #endregion
+
+    #region Marketing
+
+    public async Task<List<FeedbackDisplayModel>> GetAllFeedbackAsync()
+    {
+      var list = new List<FeedbackDisplayModel>();
+      try
+      {
+        // Join Feedback, Patient, Users to get names
+        string query = @"
+                SELECT f.FeedbackID, f.PatientID, f.RatingValue, f.FeedbackText, f.SubmissionDate,
+                       u.FirstName, u.LastName, u.Email
+                FROM Feedback f
+                JOIN Patient p ON f.PatientID = p.PatientID
+                JOIN Users u ON p.UserID = u.UserID
+                ORDER BY f.SubmissionDate DESC";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                var fname = reader.GetString(reader.GetOrdinal("FirstName"));
+                var lname = reader.GetString(reader.GetOrdinal("LastName"));
+                list.Add(new FeedbackDisplayModel
+                {
+                  FeedbackID = reader.GetInt32(reader.GetOrdinal("FeedbackID")),
+                  PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                  PatientName = $"{fname} {lname}",
+                  PatientEmail = reader.GetString(reader.GetOrdinal("Email")),
+                  Rating = reader.IsDBNull(reader.GetOrdinal("RatingValue")) ? 0 : reader.GetInt32(reader.GetOrdinal("RatingValue")),
+                  FeedbackText = reader.IsDBNull(reader.GetOrdinal("FeedbackText")) ? "" : reader.GetString(reader.GetOrdinal("FeedbackText")),
+                  Date = reader.GetDateTime(reader.GetOrdinal("SubmissionDate")),
+                  IsReplied = false // Not tracking replies in DB yet
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting feedback: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<List<PatientEmailModel>> GetAllPatientsWithEmailAsync()
+    {
+      var list = new List<PatientEmailModel>();
+      try
+      {
+        string query = @"
+                SELECT p.PatientID, u.FirstName, u.LastName, u.Email
+                FROM Patient p
+                JOIN Users u ON p.UserID = u.UserID
+                WHERE u.Email IS NOT NULL AND u.Email <> ''";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                var fname = reader.GetString(reader.GetOrdinal("FirstName"));
+                var lname = reader.GetString(reader.GetOrdinal("LastName"));
+                list.Add(new PatientEmailModel
+                {
+                  PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                  Name = $"{fname} {lname}",
+                  Email = reader.GetString(reader.GetOrdinal("Email"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting patients: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<List<PatientEmailModel>> GetPatientsByRatingAsync(int minRating)
+    {
+      var list = new List<PatientEmailModel>();
+      try
+      {
+        string query = @"
+                SELECT DISTINCT p.PatientID, u.FirstName, u.LastName, u.Email
+                FROM Patient p
+                JOIN Users u ON p.UserID = u.UserID
+                JOIN Feedback f ON p.PatientID = f.PatientID
+                WHERE f.Rating >= @MinRating AND u.Email IS NOT NULL AND u.Email != ''";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@MinRating", minRating);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new PatientEmailModel
+                {
+                  PatientID = reader.GetInt32(0),
+                  Name = $"{reader.GetString(1)} {reader.GetString(2)}",
+                  Email = reader.GetString(3)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+      return list;
+    }
+
+    public async Task<List<PatientEmailModel>> GetRecentPatientsAsync(int days)
+    {
+      var list = new List<PatientEmailModel>();
+      try
+      {
+        string query = @"
+                SELECT DISTINCT p.PatientID, u.FirstName, u.LastName, u.Email
+                FROM Patient p
+                JOIN Users u ON p.UserID = u.UserID
+                JOIN Appointment a ON p.PatientID = a.PatientID
+                WHERE a.AppointmentDate >= DATEADD(day, -@Days, GETDATE()) AND u.Email IS NOT NULL AND u.Email != ''";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Days", days);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new PatientEmailModel
+                {
+                  PatientID = reader.GetInt32(0),
+                  Name = $"{reader.GetString(1)} {reader.GetString(2)}",
+                  Email = reader.GetString(3)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+      return list;
+    }
+
+    public async Task<List<PatientEmailModel>> GetInactivePatientsAsync(int months)
+    {
+      var list = new List<PatientEmailModel>();
+      try
+      {
+        string query = @"
+                SELECT p.PatientID, u.FirstName, u.LastName, u.Email
+                FROM Patient p
+                JOIN Users u ON p.UserID = u.UserID
+                WHERE u.Email IS NOT NULL AND u.Email != ''
+                AND p.PatientID NOT IN (
+                    SELECT PatientID FROM Appointment 
+                    WHERE AppointmentDate >= DATEADD(month, -@Months, GETDATE())
+                )";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Months", months);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new PatientEmailModel
+                {
+                  PatientID = reader.GetInt32(0),
+                  Name = $"{reader.GetString(1)} {reader.GetString(2)}",
+                  Email = reader.GetString(3)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}"); }
+      return list;
+    }
+
+    public async Task<int> CreateMarketingCampaignAsync(string name, string template, DateTime end, string imageUrl = "")
+    {
+      try
+      {
+        string query = @"
+                INSERT INTO MarketingCampaign (CampaignName, StartDate, EndDate, ContextTemplate, ImageUrl)
+                VALUES (@Name, @Start, @End, @Template, @ImageUrl);
+                SELECT CAST(SCOPE_IDENTITY() as int);";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Name", name);
+            cmd.Parameters.AddWithValue("@Start", DateTime.Now);
+            cmd.Parameters.AddWithValue("@End", end);
+            cmd.Parameters.AddWithValue("@Template", template);
+            cmd.Parameters.AddWithValue("@ImageUrl", (object)imageUrl ?? DBNull.Value);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null ? Convert.ToInt32(result) : 0;
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error creating campaign: {ex.Message}");
+        return 0;
+      }
+    }
+
+    public async Task RecordCampaignRecipientAsync(int campaignId, int patientId)
+    {
+      try
+      {
+        string query = @"
+                INSERT INTO CampaignRecipient (CampaignID, PatientID, SentTime, Status)
+                VALUES (@CampaignID, @PatientID, @SentTime, 'Sent')";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@CampaignID", campaignId);
+            cmd.Parameters.AddWithValue("@PatientID", patientId);
+            cmd.Parameters.AddWithValue("@SentTime", DateTime.Now);
+            await cmd.ExecuteNonQueryAsync();
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error recording recipient: {ex.Message}");
+      }
+    }
+
+    public async Task<List<CampaignModel>> GetCampaignsAsync()
+    {
+      var list = new List<CampaignModel>();
+      try
+      {
+        // Get campaigns and count recipients
+        string query = @"
+                SELECT c.CampaignID, c.CampaignName, c.ContextTemplate, c.StartDate, c.EndDate,
+                       (SELECT COUNT(*) FROM CampaignRecipient cr WHERE cr.CampaignID = c.CampaignID) as SentCount
+                FROM MarketingCampaign c
+                ORDER BY c.StartDate DESC";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new CampaignModel
+                {
+                  CampaignID = reader.GetInt32(reader.GetOrdinal("CampaignID")),
+                  CampaignName = reader.GetString(reader.GetOrdinal("CampaignName")),
+                  Description = reader.IsDBNull(reader.GetOrdinal("ContextTemplate")) ? "" : reader.GetString(reader.GetOrdinal("ContextTemplate")),
+                  StartDate = reader.IsDBNull(reader.GetOrdinal("StartDate")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                  EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                  SentCount = reader.GetInt32(reader.GetOrdinal("SentCount"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting campaigns: {ex.Message}");
+      }
+      return list;
     }
 
     #endregion

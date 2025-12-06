@@ -16,18 +16,18 @@ namespace Dental_Clinic.Services
         private bool _configValidated = false;
         private bool _isConfigValid = false;
 
- // Load from configuration instead of hardcoding
+        // Load from configuration instead of hardcoding
         private string GoogleClientId => _configuration["GoogleOAuth:ClientId"] ?? "";
         private string GoogleClientSecret => _configuration["GoogleOAuth:ClientSecret"] ?? "";
         private string RedirectUri => _configuration["GoogleOAuth:RedirectUri"] ?? "http://127.0.0.1:5000/";
 
         public GoogleAuthService(DatabaseService databaseService, HttpClient httpClient, IConfiguration configuration)
         {
-   _databaseService = databaseService;
+            _databaseService = databaseService;
             _httpClient = httpClient;
             _configuration = configuration;
 
- // Validate config early but don't throw - just log
+            // Validate config early but don't throw - just log
             try
             {
                 _isConfigValid = ValidateConfiguration();
@@ -54,7 +54,7 @@ namespace Dental_Clinic.Services
                 Debug.WriteLine("[GoogleAuthService] Google ClientId looks invalid. Google OAuth features will be disabled.");
                 return false;
             }
-            if (string.IsNullOrWhiteSpace(GoogleClientSecret) || GoogleClientSecret.Length <10)
+            if (string.IsNullOrWhiteSpace(GoogleClientSecret) || GoogleClientSecret.Length < 10)
             {
                 Debug.WriteLine("[GoogleAuthService] Google ClientSecret missing or too short. Google OAuth features will be disabled.");
                 return false;
@@ -77,8 +77,8 @@ namespace Dental_Clinic.Services
         private string MaskClientId(string id)
         {
             if (string.IsNullOrEmpty(id)) return "(empty)";
-            if (id.Length <=8) return new string('*', id.Length);
-            return id.Substring(0,4) + new string('*', Math.Max(0, id.Length -8)) + id.Substring(id.Length -4);
+            if (id.Length <= 8) return new string('*', id.Length);
+            return id.Substring(0, 4) + new string('*', Math.Max(0, id.Length - 8)) + id.Substring(id.Length - 4);
         }
 
         public string GetGoogleAuthUrl()
@@ -139,7 +139,7 @@ namespace Dental_Clinic.Services
         private async Task<GoogleTokenResponse?> ExchangeCodeForTokenAsync(string code)
         {
             Debug.WriteLine("[GoogleOAuth] Exchanging code for token...");
-     var tokenRequest = new Dictionary<string, string>
+            var tokenRequest = new Dictionary<string, string>
             {
           {"code", code},
     {"client_id", GoogleClientId},
@@ -147,39 +147,39 @@ namespace Dental_Clinic.Services
            {"redirect_uri", RedirectUri},
    {"grant_type", "authorization_code"}
     };
-          var response = await _httpClient.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(tokenRequest));
+            var response = await _httpClient.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(tokenRequest));
             if (!response.IsSuccessStatusCode)
             {
-              var err = await response.Content.ReadAsStringAsync();
+                var err = await response.Content.ReadAsStringAsync();
                 Debug.WriteLine($"[GoogleOAuth] Token exchange FAILED: {response.StatusCode} - {err}");
-      return null;
-     }
+                return null;
+            }
             var json = await response.Content.ReadAsStringAsync();
-      Debug.WriteLine($"[GoogleOAuth] Token JSON: {json}");
-      
-     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            Debug.WriteLine($"[GoogleOAuth] Token JSON: {json}");
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var token = JsonSerializer.Deserialize<GoogleTokenResponse>(json, options);
-        Debug.WriteLine($"[GoogleOAuth] Deserialized AccessToken length: {token?.AccessToken?.Length ?? 0}");
+            Debug.WriteLine($"[GoogleOAuth] Deserialized AccessToken length: {token?.AccessToken?.Length ?? 0}");
             return token;
         }
 
         private async Task<GoogleUserInfo?> GetGoogleUserInfoAsync(string accessToken)
         {
             Debug.WriteLine($"[GoogleOAuth] Fetching user info with token: {accessToken?.Substring(0, Math.Min(20, accessToken?.Length ?? 0))}...");
-    var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
-       req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            var req = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
+            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
             var resp = await _httpClient.SendAsync(req);
- if (!resp.IsSuccessStatusCode)
-       {
-         var errBody = await resp.Content.ReadAsStringAsync();
-    Debug.WriteLine($"[GoogleOAuth] User info fetch FAILED: {resp.StatusCode} - {errBody}");
- return null;
+            if (!resp.IsSuccessStatusCode)
+            {
+                var errBody = await resp.Content.ReadAsStringAsync();
+                Debug.WriteLine($"[GoogleOAuth] User info fetch FAILED: {resp.StatusCode} - {errBody}");
+                return null;
             }
-    var json = await resp.Content.ReadAsStringAsync();
+            var json = await resp.Content.ReadAsStringAsync();
             Debug.WriteLine($"[GoogleOAuth] User info JSON: {json}");
-            
-  var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-      return JsonSerializer.Deserialize<GoogleUserInfo>(json, options);
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<GoogleUserInfo>(json, options);
         }
 
         private async Task<User?> GetOrCreateUserFromGoogleAsync(GoogleUserInfo g)
@@ -250,7 +250,7 @@ OUTPUT INSERTED.UserID VALUES (@Role,@UN,@PW,@FN,@LN,@EM,@PH)", conn);
                 cmdUser.Parameters.AddWithValue("@EM", g.Email);
                 cmdUser.Parameters.AddWithValue("@PH", DBNull.Value);
 
-                var newUserId = (int)await cmdUser.ExecuteScalarAsync();
+                var newUserId = Convert.ToInt32(await cmdUser.ExecuteScalarAsync());
                 Debug.WriteLine($"[GoogleOAuth] Created user ID={newUserId}");
 
                 using var cmdPatient = new SqlCommand(@"INSERT INTO Patient (UserID, Email, BirthDate)
@@ -259,7 +259,7 @@ OUTPUT INSERTED.PatientID VALUES (@U,@E,@B)", conn);
                 cmdPatient.Parameters.AddWithValue("@E", g.Email);
                 cmdPatient.Parameters.AddWithValue("@B", DateTime.UtcNow.AddYears(-25)); // Default age estimate
 
-                var newPatientId = (int)await cmdPatient.ExecuteScalarAsync();
+                var newPatientId = Convert.ToInt32(await cmdPatient.ExecuteScalarAsync());
                 Debug.WriteLine($"[GoogleOAuth] Created patient ID={newPatientId}");
 
                 return new User
@@ -301,13 +301,13 @@ OUTPUT INSERTED.PatientID VALUES (@U,@E,@B)", conn);
         {
             [JsonPropertyName("access_token")]
             public string AccessToken { get; set; } = string.Empty;
-    
+
             [JsonPropertyName("token_type")]
             public string TokenType { get; set; } = string.Empty;
-     
+
             [JsonPropertyName("expires_in")]
             public int ExpiresIn { get; set; }
-   
+
             [JsonPropertyName("refresh_token")]
             public string RefreshToken { get; set; } = string.Empty;
         }
@@ -316,25 +316,25 @@ OUTPUT INSERTED.PatientID VALUES (@U,@E,@B)", conn);
         {
             [JsonPropertyName("id")]
             public string Id { get; set; } = string.Empty;
-            
+
             [JsonPropertyName("email")]
             public string Email { get; set; } = string.Empty;
-      
+
             [JsonPropertyName("verified_email")]
             public bool VerifiedEmail { get; set; }
-       
+
             [JsonPropertyName("name")]
             public string Name { get; set; } = string.Empty;
-     
+
             [JsonPropertyName("given_name")]
             public string GivenName { get; set; } = string.Empty;
-      
+
             [JsonPropertyName("family_name")]
             public string FamilyName { get; set; } = string.Empty;
-            
+
             [JsonPropertyName("picture")]
             public string Picture { get; set; } = string.Empty;
-            
+
             [JsonPropertyName("locale")]
             public string Locale { get; set; } = string.Empty;
         }

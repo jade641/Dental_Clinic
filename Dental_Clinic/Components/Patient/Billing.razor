@@ -522,7 +522,7 @@
         // 1. Create PayMongo Link
         var (linkId, checkoutUrl) = await PayMongoService.CreatePaymentLinkAsync(paymentAmount, "Dental Service Payment");
 
-        if (!string.IsNullOrEmpty(checkoutUrl))
+        if (!string.IsNullOrEmpty(checkoutUrl) && !checkoutUrl.StartsWith("ERROR:") && !checkoutUrl.StartsWith("EXCEPTION:"))
         {
             // Open the link in the browser
             try
@@ -589,7 +589,8 @@
         }
         else
         {
-            paymentMessage = "Failed to connect to PayMongo. Please check your internet.";
+            // Show the actual error message
+            paymentMessage = string.IsNullOrEmpty(checkoutUrl) ? "Failed to connect to PayMongo. Please check your internet." : checkoutUrl;
         }
 
         isProcessing = false;

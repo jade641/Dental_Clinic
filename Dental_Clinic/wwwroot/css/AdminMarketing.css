@@ -781,3 +781,18 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.campaign-preview {
+    max-height: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+.campaign-preview img {
+    display: none;
+}
