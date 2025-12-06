@@ -1405,144 +1405,144 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
     public async Task<decimal> GetTotalRevenueAsync()
     {
-        try
+      try
+      {
+        string query = "SELECT SUM(Amount) FROM Payments";
+        using (var conn = GetConnection())
         {
-            string query = "SELECT SUM(Amount) FROM Payments";
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    var result = await cmd.ExecuteScalarAsync();
-                    return result != DBNull.Value ? Convert.ToDecimal(result) : 0;
-                }
-            }
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            var result = await cmd.ExecuteScalarAsync();
+            return result != DBNull.Value ? Convert.ToDecimal(result) : 0;
+          }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error getting total revenue: {ex.Message}");
-            return 0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting total revenue: {ex.Message}");
+        return 0;
+      }
     }
 
     public async Task<int> GetTotalPatientsAsync()
     {
-        try
+      try
+      {
+        string query = "SELECT COUNT(*) FROM Patient";
+        using (var conn = GetConnection())
         {
-            string query = "SELECT COUNT(*) FROM Patient";
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    return (int)await cmd.ExecuteScalarAsync();
-                }
-            }
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            return (int)await cmd.ExecuteScalarAsync();
+          }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error getting total patients: {ex.Message}");
-            return 0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting total patients: {ex.Message}");
+        return 0;
+      }
     }
 
     public async Task<int> GetTotalAppointmentsAsync()
     {
-        try
+      try
+      {
+        string query = "SELECT COUNT(*) FROM Appointments";
+        using (var conn = GetConnection())
         {
-            string query = "SELECT COUNT(*) FROM Appointments";
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    return (int)await cmd.ExecuteScalarAsync();
-                }
-            }
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            return (int)await cmd.ExecuteScalarAsync();
+          }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error getting total appointments: {ex.Message}");
-            return 0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting total appointments: {ex.Message}");
+        return 0;
+      }
     }
 
     public async Task<Dictionary<string, decimal>> GetMonthlyRevenueAsync(int months)
     {
-        var data = new Dictionary<string, decimal>();
-        try
-        {
-            string query = @"
+      var data = new Dictionary<string, decimal>();
+      try
+      {
+        string query = @"
                 SELECT FORMAT(PaymentDate, 'MMM') as Month, SUM(Amount) as Total
                 FROM Payments
                 WHERE PaymentDate >= DATEADD(month, -@Months, GETDATE())
                 GROUP BY FORMAT(PaymentDate, 'MMM'), MONTH(PaymentDate)
                 ORDER BY MONTH(PaymentDate)";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Months", months);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            data.Add(reader.GetString(0), reader.GetDecimal(1));
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting monthly revenue: {ex.Message}");
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Months", months);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                data.Add(reader.GetString(0), reader.GetDecimal(1));
+              }
+            }
+          }
         }
-        return data;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting monthly revenue: {ex.Message}");
+      }
+      return data;
     }
 
     public async Task<Dictionary<string, int>> GetServiceDistributionAsync()
     {
-        var data = new Dictionary<string, int>();
-        try
-        {
-            string query = @"
+      var data = new Dictionary<string, int>();
+      try
+      {
+        string query = @"
                 SELECT s.ServiceName, COUNT(a.AppointmentID) as Count
                 FROM Appointments a
                 JOIN Services s ON a.ServiceID = s.ServiceID
                 GROUP BY s.ServiceName
                 ORDER BY Count DESC";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            data.Add(reader.GetString(0), reader.GetInt32(1));
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting service distribution: {ex.Message}");
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                data.Add(reader.GetString(0), reader.GetInt32(1));
+              }
+            }
+          }
         }
-        return data;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting service distribution: {ex.Message}");
+      }
+      return data;
     }
 
     public async Task<Dictionary<string, decimal>> GetWeeklyRevenueAsync(int weeks)
     {
-        var data = new Dictionary<string, decimal>();
-        try
-        {
-            // Group by week start date (Monday)
-            string query = @"
+      var data = new Dictionary<string, decimal>();
+      try
+      {
+        // Group by week start date (Monday)
+        string query = @"
                 SET DATEFIRST 1;
                 SELECT 
                     FORMAT(DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE)), 'MM/dd') as WeekStart,
@@ -1552,41 +1552,41 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 GROUP BY DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE))
                 ORDER BY DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE))";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Weeks", weeks);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            data.Add(reader.GetString(0), reader.GetDecimal(1));
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting weekly revenue: {ex.Message}");
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Weeks", weeks);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                data.Add(reader.GetString(0), reader.GetDecimal(1));
+              }
+            }
+          }
         }
-        return data;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting weekly revenue: {ex.Message}");
+      }
+      return data;
     }
 
     public async Task<List<(string Service, decimal Amount, int Percentage)>> GetServiceRevenueAsync(int days)
     {
-        var list = new List<(string Service, decimal Amount, int Percentage)>();
-        try
-        {
-            decimal totalRevenue = 0;
-            
-            // First get total revenue for percentage calculation
-            string totalQuery = "SELECT SUM(Amount) FROM Payments WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())";
-            
-            // Then get breakdown
-            string query = @"
+      var list = new List<(string Service, decimal Amount, int Percentage)>();
+      try
+      {
+        decimal totalRevenue = 0;
+
+        // First get total revenue for percentage calculation
+        string totalQuery = "SELECT SUM(Amount) FROM Payments WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())";
+
+        // Then get breakdown
+        string query = @"
                 SELECT TOP 5 s.ServiceName, SUM(p.Amount) as TotalRevenue
                 FROM Payments p
                 JOIN Appointments a ON p.AppointmentID = a.AppointmentID
@@ -1595,114 +1595,114 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 GROUP BY s.ServiceName
                 ORDER BY TotalRevenue DESC";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                
-                using (var cmdTotal = new SqlCommand(totalQuery, conn))
-                {
-                    cmdTotal.Parameters.AddWithValue("@Days", days);
-                    var result = await cmdTotal.ExecuteScalarAsync();
-                    if (result != DBNull.Value)
-                        totalRevenue = Convert.ToDecimal(result);
-                }
-
-                if (totalRevenue > 0)
-                {
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@Days", days);
-                        using (var reader = await cmd.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                string service = reader.GetString(0);
-                                decimal amount = reader.GetDecimal(1);
-                                int percentage = (int)((amount / totalRevenue) * 100);
-                                list.Add((service, amount, percentage));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting service revenue: {ex.Message}");
+          await conn.OpenAsync();
+
+          using (var cmdTotal = new SqlCommand(totalQuery, conn))
+          {
+            cmdTotal.Parameters.AddWithValue("@Days", days);
+            var result = await cmdTotal.ExecuteScalarAsync();
+            if (result != DBNull.Value)
+              totalRevenue = Convert.ToDecimal(result);
+          }
+
+          if (totalRevenue > 0)
+          {
+            using (var cmd = new SqlCommand(query, conn))
+            {
+              cmd.Parameters.AddWithValue("@Days", days);
+              using (var reader = await cmd.ExecuteReaderAsync())
+              {
+                while (await reader.ReadAsync())
+                {
+                  string service = reader.GetString(0);
+                  decimal amount = reader.GetDecimal(1);
+                  int percentage = (int)((amount / totalRevenue) * 100);
+                  list.Add((service, amount, percentage));
+                }
+              }
+            }
+          }
         }
-        return list;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting service revenue: {ex.Message}");
+      }
+      return list;
     }
 
     public async Task<(List<string> Labels, List<int> Patients, List<decimal> Revenue)> GetDailyPerformanceAsync(int days)
     {
-        var labels = new List<string>();
-        var patients = new List<int>();
-        var revenue = new List<decimal>();
+      var labels = new List<string>();
+      var patients = new List<int>();
+      var revenue = new List<decimal>();
 
-        try
-        {
-            // We need a continuous date range, so we'll generate it in C# or use a recursive CTE
-            // For simplicity, let's fetch data and merge in C#
-            
-            var revenueData = new Dictionary<DateTime, decimal>();
-            var patientData = new Dictionary<DateTime, int>();
+      try
+      {
+        // We need a continuous date range, so we'll generate it in C# or use a recursive CTE
+        // For simplicity, let's fetch data and merge in C#
 
-            string revQuery = @"
+        var revenueData = new Dictionary<DateTime, decimal>();
+        var patientData = new Dictionary<DateTime, int>();
+
+        string revQuery = @"
                 SELECT CAST(PaymentDate as Date) as Date, SUM(Amount) as Revenue
                 FROM Payments
                 WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())
                 GROUP BY CAST(PaymentDate as Date)";
 
-            string patQuery = @"
+        string patQuery = @"
                 SELECT CAST(AppointmentDate as Date), COUNT(*) as Count
                 FROM Appointments
                 WHERE AppointmentDate >= DATEADD(day, -@Days, GETDATE())
                 GROUP BY CAST(AppointmentDate as Date)";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-
-                using (var cmd = new SqlCommand(revQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Days", days);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            revenueData[reader.GetDateTime(0)] = reader.GetDecimal(1);
-                        }
-                    }
-                }
-
-                using (var cmd = new SqlCommand(patQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Days", days);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            patientData[reader.GetDateTime(0)] = reader.GetInt32(1);
-                        }
-                    }
-                }
-            }
-
-            // Merge and fill gaps
-            for (int i = days - 1; i >= 0; i--)
-            {
-                var date = DateTime.Today.AddDays(-i);
-                labels.Add(date.ToString("MMM dd"));
-                revenue.Add(revenueData.ContainsKey(date) ? revenueData[date] : 0);
-                patients.Add(patientData.ContainsKey(date) ? patientData[date] : 0);
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting daily performance: {ex.Message}");
+          await conn.OpenAsync();
+
+          using (var cmd = new SqlCommand(revQuery, conn))
+          {
+            cmd.Parameters.AddWithValue("@Days", days);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                revenueData[reader.GetDateTime(0)] = reader.GetDecimal(1);
+              }
+            }
+          }
+
+          using (var cmd = new SqlCommand(patQuery, conn))
+          {
+            cmd.Parameters.AddWithValue("@Days", days);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                patientData[reader.GetDateTime(0)] = reader.GetInt32(1);
+              }
+            }
+          }
         }
 
-        return (labels, patients, revenue);
+        // Merge and fill gaps
+        for (int i = days - 1; i >= 0; i--)
+        {
+          var date = DateTime.Today.AddDays(-i);
+          labels.Add(date.ToString("MMM dd"));
+          revenue.Add(revenueData.ContainsKey(date) ? revenueData[date] : 0);
+          patients.Add(patientData.ContainsKey(date) ? patientData[date] : 0);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting daily performance: {ex.Message}");
+      }
+
+      return (labels, patients, revenue);
     }
 
     #endregion
