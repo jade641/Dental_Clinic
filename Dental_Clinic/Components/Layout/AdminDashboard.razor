@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
 @inject NavigationManager Navigation
+@inject Dental_Clinic.Services.DatabaseService DatabaseService
 
 <link rel="stylesheet" href="css/admindashboard.css" />
 
@@ -119,7 +120,7 @@
                 </div>
                 <div class="stat-details">
                     <div class="stat-label">Total Revenue</div>
-                    <div class="stat-value">₱781,000</div>
+                    <div class="stat-value">@TotalRevenue.ToString("C0")</div>
                     <div class="stat-trend positive">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 9L6 3M6 3L3 6M6 3L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -141,7 +142,7 @@
                 </div>
                 <div class="stat-details">
                     <div class="stat-label">Total Patients</div>
-                    <div class="stat-value">1250</div>
+                    <div class="stat-value">@TotalPatients</div>
                     <div class="stat-trend positive">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 9L6 3M6 3L3 6M6 3L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -161,7 +162,7 @@
                 </div>
                 <div class="stat-details">
                     <div class="stat-label">Appointments</div>
-                    <div class="stat-value">386</div>
+                    <div class="stat-value">@TotalAppointments</div>
                     <div class="stat-trend positive">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6 9L6 3M6 3L3 6M6 3L9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -186,46 +187,34 @@
             </div>
         </section>
 
-        <!-- Charts Section (Placeholder Design) -->
+        <!-- Charts Section -->
         <section class="charts-section">
             <!-- Monthly Revenue Chart -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Monthly Revenue</h3>
-                    <span class="chart-period">Last 7 months</span>
+                    <h3>Revenue Analytics</h3>
+                    <select class="chart-period-select" @onchange="OnRevenuePeriodChanged" value="@RevenuePeriod">
+                        <option value="Monthly">Monthly (Last 6)</option>
+                        <option value="Weekly">Weekly (Last 8)</option>
+                    </select>
                 </div>
                 <div class="chart-body">
                     <div class="chart-placeholder bar-chart-placeholder">
-                        <!-- Bar Chart Placeholder -->
                         <div class="bars-container">
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 60%;"></div>
-                                <span class="bar-label">Mar</span>
-                            </div>
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 68%;"></div>
-                                <span class="bar-label">Apr</span>
-                            </div>
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 54%;"></div>
-                                <span class="bar-label">May</span>
-                            </div>
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 78%;"></div>
-                                <span class="bar-label">Jun</span>
-                            </div>
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 85%;"></div>
-                                <span class="bar-label">Jul</span>
-                            </div>
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 95%;"></div>
-                                <span class="bar-label">Aug</span>
-                            </div>
-                            <div class="bar-wrapper">
-                                <div class="bar" style="height: 72%;"></div>
-                                <span class="bar-label">Sep</span>
-                            </div>
+                            @if (MonthlyRevenue.Any())
+                            {
+                                @foreach (var item in MonthlyRevenue)
+                                {
+                                    <div class="bar-wrapper" title="@item.Revenue.ToString("C0")">
+                                        <div class="bar" style="height: @GetBarHeight(item.Revenue);"></div>
+                                        <span class="bar-label">@item.Month</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="no-data">No revenue data available</div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -238,44 +227,40 @@
                 </div>
                 <div class="chart-body">
                     <div class="chart-placeholder pie-chart-layout">
-                        <!-- Pie Chart Placeholder (Design Only) -->
-                        <div class="pie-chart-circle">
-                            <svg width="200" height="200" viewBox="0 0 200 200">
-                                <!-- Pie segments -->
-                                <circle cx="100" cy="100" r="70" fill="none" stroke="#0EA5E9" stroke-width="60" stroke-dasharray="154 440" transform="rotate(-90 100 100)" />
-                                <circle cx="100" cy="100" r="70" fill="none" stroke="#10B981" stroke-width="60" stroke-dasharray="110 440" stroke-dashoffset="-154" transform="rotate(-90 100 100)" />
-                                <circle cx="100" cy="100" r="70" fill="none" stroke="#06B6D4" stroke-width="60" stroke-dasharray="66 440" stroke-dashoffset="-264" transform="rotate(-90 100 100)" />
-                                <circle cx="100" cy="100" r="70" fill="none" stroke="#F59E0B" stroke-width="60" stroke-dasharray="53 440" stroke-dashoffset="-330" transform="rotate(-90 100 100)" />
-                                <circle cx="100" cy="100" r="70" fill="none" stroke="#EF4444" stroke-width="60" stroke-dasharray="35 440" stroke-dashoffset="-383" transform="rotate(-90 100 100)" />
-                                <circle cx="100" cy="100" r="70" fill="none" stroke="#94A3B8" stroke-width="60" stroke-dasharray="22 440" stroke-dashoffset="-418" transform="rotate(-90 100 100)" />
-                            </svg>
-                        </div>
-                        <div class="pie-legend">
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: #0EA5E9;"></span>
-                                <span class="legend-text">Teeth Cleaning (35%)</span>
+                        @if (ServiceDistribution.Any())
+                        {
+                            <div class="pie-chart-circle">
+                                <svg width="200" height="200" viewBox="0 0 200 200">
+                                    @for (int i = 0; i < ServiceDistribution.Count; i++)
+                                    {
+                                        var item = ServiceDistribution[i];
+                                        var color = GetPieColor(i);
+                                        var dashArray = GetDashArray(item.Count);
+                                        var dashOffset = GetDashOffset(i);
+                                        
+                                        <circle cx="100" cy="100" r="70" fill="none" stroke="@color" stroke-width="60" 
+                                                stroke-dasharray="@dashArray 440" 
+                                                stroke-dashoffset="@dashOffset" 
+                                                transform="rotate(-90 100 100)" />
+                                    }
+                                </svg>
                             </div>
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: #10B981;"></span>
-                                <span class="legend-text">Dental Filling (25%)</span>
+                            <div class="pie-legend">
+                                @for (int i = 0; i < ServiceDistribution.Count; i++)
+                                {
+                                    var item = ServiceDistribution[i];
+                                    var color = GetPieColor(i);
+                                    <div class="legend-item">
+                                        <span class="legend-dot" style="background: @color;"></span>
+                                        <span class="legend-text">@item.ServiceName (@GetPercentage(item.Count))</span>
+                                    </div>
+                                }
                             </div>
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: #06B6D4;"></span>
-                                <span class="legend-text">Root Canal (15%)</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: #F59E0B;"></span>
-                                <span class="legend-text">Teeth Whitening (12%)</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: #EF4444;"></span>
-                                <span class="legend-text">Braces (8%)</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: #94A3B8;"></span>
-                                <span class="legend-text">Others (5%)</span>
-                            </div>
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="no-data">No service data available</div>
+                        }
                     </div>
                 </div>
             </div>
@@ -284,5 +269,93 @@
 </div>
 
 @code {
-    // Component code here
+    private decimal TotalRevenue;
+    private int TotalPatients;
+    private int TotalAppointments;
+    private List<(string Month, decimal Revenue)> MonthlyRevenue = new();
+    private List<(string ServiceName, int Count)> ServiceDistribution = new();
+
+    // For charts
+    private decimal MaxRevenue => MonthlyRevenue.Any() ? MonthlyRevenue.Max(m => m.Revenue) : 1;
+    private int TotalServiceCount => ServiceDistribution.Sum(s => s.Count);
+    
+    // Colors for pie chart
+    private string[] PieColors = new[] { "#0EA5E9", "#10B981", "#06B6D4", "#F59E0B", "#EF4444", "#94A3B8", "#8B5CF6", "#EC4899" };
+
+    private string RevenuePeriod = "Monthly";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        TotalRevenue = await DatabaseService.GetTotalRevenueAsync();
+        TotalPatients = await DatabaseService.GetTotalPatientsAsync();
+        TotalAppointments = await DatabaseService.GetTotalAppointmentsAsync();
+        
+        await LoadRevenueData();
+        
+        var serviceData = await DatabaseService.GetServiceDistributionAsync();
+        ServiceDistribution = serviceData.Select(x => (x.Key, x.Value)).ToList();
+    }
+
+    private async Task OnRevenuePeriodChanged(ChangeEventArgs e)
+    {
+        RevenuePeriod = e.Value?.ToString() ?? "Monthly";
+        await LoadRevenueData();
+    }
+
+    private async Task LoadRevenueData()
+    {
+        if (RevenuePeriod == "Monthly")
+        {
+            var data = await DatabaseService.GetMonthlyRevenueAsync(6);
+            MonthlyRevenue = data.Select(x => (x.Key, x.Value)).ToList();
+        }
+        else
+        {
+            var data = await DatabaseService.GetWeeklyRevenueAsync(8);
+            MonthlyRevenue = data.Select(x => (x.Key, x.Value)).ToList();
+        }
+    }
+
+    private string GetBarHeight(decimal revenue)
+    {
+        if (MaxRevenue == 0) return "0%";
+        var percentage = (revenue / MaxRevenue) * 100;
+        // Ensure at least a small bar is visible if there is revenue
+        if (percentage > 0 && percentage < 5) percentage = 5;
+        return $"{percentage}%";
+    }
+
+    private double GetDashArray(int count)
+    {
+        if (TotalServiceCount == 0) return 0;
+        // Circumference is approx 440 for r=70 (2 * PI * 70 = 439.82)
+        return ((double)count / TotalServiceCount) * 439.82;
+    }
+
+    private double GetDashOffset(int index)
+    {
+        if (index == 0) return 0;
+        double offset = 0;
+        for (int i = 0; i < index; i++)
+        {
+            offset += GetDashArray(ServiceDistribution[i].Count);
+        }
+        return -offset;
+    }
+    
+    private string GetPieColor(int index)
+    {
+        return PieColors[index % PieColors.Length];
+    }
+    
+    private string GetPercentage(int count)
+    {
+        if (TotalServiceCount == 0) return "0%";
+        return $"{((double)count / TotalServiceCount * 100):F1}%";
+    }
 }
