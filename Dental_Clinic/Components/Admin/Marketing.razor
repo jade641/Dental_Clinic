@@ -325,7 +325,8 @@
                                 </div>
                                 <div class="campaign-actions" style="display: flex; gap: 10px; margin-top: 15px;">
                                     <button class="btn-view" @onclick="() => ViewCampaign(campaign.Id)">View Details</button>
-                                    <button class="btn-secondary" @onclick="() => ResendCampaign(campaign.Id)" style="padding: 8px 16px; font-size: 0.9em;">Resend</button>
+                                    <button class="btn-secondary" @onclick="() => ResendCampaign(campaign.Id)"
+                                        style="padding: 8px 16px; font-size: 0.9em;">Resend</button>
                                 </div>
                             </div>
                         }
@@ -749,26 +750,29 @@
         currentFeedbackId = 0; // Mass campaign mode
         promoTitle = campaign.Title;
         uploadedImageUrl = campaign.ImageUrl;
-        
+
         // Clean up description for editing
         string desc = campaign.Description;
-        
+
         // Remove Image tag if present (it's usually at the start)
         // Regex to remove <img ... /> and following <br/>
-        desc = System.Text.RegularExpressions.Regex.Replace(desc, @"<img[^>]*>(\s*<br\s*/?>)?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        
+        desc = System.Text.RegularExpressions.Regex.Replace(desc, @"<img[^>]*>(\s*<br\s*/?>)?", "",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
         // Remove "Valid until" footer
         int validIndex = desc.LastIndexOf("Valid until:");
         if (validIndex > -1)
         {
             // Check for preceding <br/>s
             string beforeValid = desc.Substring(0, validIndex);
-            desc = System.Text.RegularExpressions.Regex.Replace(beforeValid, @"(\s*<br\s*/?>\s*)+$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            desc = System.Text.RegularExpressions.Regex.Replace(beforeValid, @"(\s*<br\s*/?>\s*)+$", "",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
-        
+
         // Convert BR to Newline for textarea
-        promoDescription = System.Text.RegularExpressions.Regex.Replace(desc, @"<br\s*/?>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
-        
+        promoDescription = System.Text.RegularExpressions.Regex.Replace(desc, @"<br\s*/?>", "\n",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+
         showPromoModal = true;
     }
 
