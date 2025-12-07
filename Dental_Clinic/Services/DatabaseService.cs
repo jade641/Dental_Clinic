@@ -899,9 +899,71 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     #endregion
     #region Billing Methods
 
+    public async Task<List<Appointment>> GetAppointmentsForBillingAsync(int patientId)
+    {
+      var appointments = new List<Appointment>();
+      try
+      {
+        // Modified to fetch only Unpaid Completed Appointments
+        // Uses ServiceTransactions for the actual billed amount
+        string query = @"
+                SELECT a.AppointmentID, a.AppointmentDate, a.StartTime, a.EndTime, a.Status,
+                       s.ServiceName, 
+                       COALESCE(st.TotalAmount, s.Cost) as Cost,
+                       u.FirstName + ' ' + u.LastName as DentistName
+                FROM Appointments a
+                JOIN Services s ON a.ServiceID = s.ServiceID
+                JOIN Dentist d ON a.DentistID = d.DentistID
+                JOIN Users u ON d.UserID = u.UserID
+                LEFT JOIN ServiceTransactions st ON a.AppointmentID = st.AppointmentID
+                LEFT JOIN Payments p ON a.AppointmentID = p.AppointmentID
+                WHERE a.PatientID = @PatientID 
+                  AND a.Status = 'Completed'
+                  AND p.PaymentID IS NULL
+                ORDER BY a.AppointmentDate DESC";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@PatientID", patientId);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                appointments.Add(new Appointment
+                {
+                  AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                  AppointmentDate = reader.GetDateTime(reader.GetOrdinal("AppointmentDate")),
+                  StartTime = reader.GetTimeSpan(reader.GetOrdinal("StartTime")),
+                  EndTime = reader.GetTimeSpan(reader.GetOrdinal("EndTime")),
+                  Status = reader.GetString(reader.GetOrdinal("Status")),
+                  ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
+                  ServiceCost = reader.GetDecimal(reader.GetOrdinal("Cost")),
+                  DentistName = reader.GetString(reader.GetOrdinal("DentistName"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting appointments for billing: {ex.Message}");
+      }
+      return appointments;
+    }
+
     public async Task<decimal> GetPatientBalanceAsync(int patientId)
     {
-      string query = "SELECT OutstandingBalance FROM Patient WHERE PatientID = @PatientID";
+      // Calculate balance as Sum of Unpaid Service Transactions (Invoice-Based)
+      string query = @"
+        SELECT ISNULL(SUM(st.TotalAmount), 0)
+        FROM ServiceTransactions st
+        LEFT JOIN Payments p ON st.AppointmentID = p.AppointmentID
+        WHERE st.PatientID = @PatientID AND p.PaymentID IS NULL";
+
       using (var connection = GetConnection())
       {
         await connection.OpenAsync();
@@ -909,15 +971,12 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         {
           command.Parameters.AddWithValue("@PatientID", patientId);
           var result = await command.ExecuteScalarAsync();
-          if (result != null && result != DBNull.Value)
-          {
-            return Convert.ToDecimal(result);
-          }
-          return 0;
+          return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
         }
       }
     }
 
+    /*
     public async Task<(bool Success, string Message)> DeductPatientBalanceAsync(int patientId, decimal amount)
     {
       try
@@ -940,6 +999,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         return (false, ex.Message);
       }
     }
+    */
 
     public async Task<bool> UpdateAppointmentCostAndTreatmentAsync(int appointmentId, int patientId, decimal finalCost, string treatmentNotes, string diagnosis)
     {
@@ -1007,9 +1067,9 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 await cmd.ExecuteNonQueryAsync();
               }
 
-              // 3. Update Patient Balance (Add the FINAL cost to their balance)
-              // Note: We add the full final cost because "Service First, Pay Later" means they haven't paid yet.
-              // If they had paid a deposit, we would subtract that, but assuming standard flow:
+              // 3. Update Patient Balance (REMOVED: We now use Pay Per Appointment model)
+              // The balance is calculated dynamically based on unpaid ServiceTransactions.
+              /*
               string updateBalanceQuery = @"
                                 UPDATE Patient 
                                 SET OutstandingBalance = OutstandingBalance + @FinalCost 
@@ -1021,6 +1081,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 cmd.Parameters.AddWithValue("@PatientID", patientId);
                 await cmd.ExecuteNonQueryAsync();
               }
+              */
 
               // 4. Record Treatment Details
               string insertTreatmentQuery = @"
@@ -1414,7 +1475,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
           using (var cmd = new SqlCommand(query, conn))
           {
             var result = await cmd.ExecuteScalarAsync();
-            return result != DBNull.Value ? Convert.ToDecimal(result) : 0;
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
           }
         }
       }
@@ -1435,7 +1496,8 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
           await conn.OpenAsync();
           using (var cmd = new SqlCommand(query, conn))
           {
-            return (int)await cmd.ExecuteScalarAsync();
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
           }
         }
       }
@@ -1456,7 +1518,8 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
           await conn.OpenAsync();
           using (var cmd = new SqlCommand(query, conn))
           {
-            return (int)await cmd.ExecuteScalarAsync();
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
           }
         }
       }
@@ -1466,7 +1529,6 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         return 0;
       }
     }
-
     public async Task<Dictionary<string, decimal>> GetMonthlyRevenueAsync(int months)
     {
       var data = new Dictionary<string, decimal>();
@@ -1793,7 +1855,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 SELECT DISTINCT p.PatientID, u.FirstName, u.LastName, u.Email
                 FROM Patient p
                 JOIN Users u ON p.UserID = u.UserID
-                JOIN Appointment a ON p.PatientID = a.PatientID
+                JOIN Appointments a ON p.PatientID = a.PatientID
                 WHERE a.AppointmentDate >= DATEADD(day, -@Days, GETDATE()) AND u.Email IS NOT NULL AND u.Email != ''";
 
         using (var conn = GetConnection())
@@ -1832,7 +1894,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 JOIN Users u ON p.UserID = u.UserID
                 WHERE u.Email IS NOT NULL AND u.Email != ''
                 AND p.PatientID NOT IN (
-                    SELECT PatientID FROM Appointment 
+                    SELECT PatientID FROM Appointments 
                     WHERE AppointmentDate >= DATEADD(month, -@Months, GETDATE())
                 )";
 

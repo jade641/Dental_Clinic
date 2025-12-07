@@ -1,11 +1,24 @@
 @using Microsoft.AspNetCore.Components
+@using Dental_Clinic.Services
+@using Dental_Clinic.Models
+@inject DatabaseService DatabaseService
+@inject PayMongoService PayMongoService
+@inject IJSRuntime JSRuntime
+
+@using Microsoft.AspNetCore.Components
+@using Dental_Clinic.Services
+@using Dental_Clinic.Models
+@inject DatabaseService DatabaseService
+@inject PayMongoService PayMongoService
+@inject IJSRuntime JSRuntime
 
 <link href="css/QuickActions.css" rel="stylesheet" />
 
 <div class="quick-actions-component">
     <div class="quick-actions-grid">
         <button class="action-button blue" @onclick="OpenScheduleAppointmentModal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -14,7 +27,8 @@
             Schedule Appointment
         </button>
         <button class="action-button teal" @onclick="OpenRegisterPatientModal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="8.5" cy="7" r="4"></circle>
                 <line x1="20" y1="8" x2="20" y2="14"></line>
@@ -23,7 +37,8 @@
             Register Patient
         </button>
         <button class="action-button purple" @onclick="OpenWaitingRoomModal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -32,7 +47,324 @@
             Waiting Room
         </button>
     </div>
+
+    <!-- Walk-in Billing Button -->
+    <button class="action-button emerald full-width" @onclick="OpenBillingModal"
+        style="width: 100%; margin-top: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+        </svg>
+        Walk-in Billing
+    </button>
 </div>
+
+<!-- Billing Modal -->
+@if (showBillingModal)
+{
+    <div class="modal-overlay" @onclick="CloseBillingModal">
+        <div class="modal-content billing-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3>Walk-in Billing</h3>
+                <button class="close-btn" @onclick="CloseBillingModal">×</button>
+            </div>
+            <div class="modal-body">
+                @if (isProcessingPayment && !string.IsNullOrEmpty(paymentLinkUrl))
+                {
+                    <!-- Payment Waiting State -->
+                    <div class="payment-waiting-state" style="text-align: center; padding: 30px 0;">
+                        <div class="spinner"></div>
+                        <h4 style="margin-top: 20px; color: #333;">Waiting for Payment...</h4>
+                        <p style="color: #666; margin-bottom: 20px;">Please ask the patient to scan the QR code or use the link.</p>
+                        
+                        <div class="qr-container" style="background: white; padding: 15px; border: 1px solid #eee; border-radius: 8px; display: inline-block; margin-bottom: 20px;">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=@System.Net.WebUtility.UrlEncode(paymentLinkUrl)"
+                                alt="Payment QR Code" style="width: 200px; height: 200px;" />
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <a href="@paymentLinkUrl" target="_blank" class="payment-link-btn">Open Payment Link Manually</a>
+                        </div>
+
+                        <p class="text-small text-muted">System is automatically checking payment status...</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Normal Billing Form -->
+                    <!-- Patient Search -->
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <div class="search-container">
+                            <input type="text" @bind="billingSearchTerm" @bind:event="oninput"
+                                placeholder="Search registered patient..." class="form-control" />
+                            @if (!string.IsNullOrEmpty(billingSearchTerm) && !isPatientSelected)
+                            {
+                                <div class="search-results">
+                                    @foreach (var patient in FilteredPatients)
+                                    {
+                                        <div class="search-item" @onclick="() => SelectPatientForBilling(patient)">
+                                            @patient.Name
+                                        </div>
+                                    }
+                                    @if (!FilteredPatients.Any())
+                                    {
+                                        <div class="search-item no-results">No patient found. Please register first.</div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        @if (selectedBillingPatient != null)
+                        {
+                            <div class="selected-patient-card">
+                                <div class="patient-icon">👤</div>
+                                <div>
+                                    <strong>@selectedBillingPatient.Name</strong>
+                                    <div class="text-muted">@selectedBillingPatient.Email</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Appointment Selection -->
+                    <div class="form-group">
+                        <label>Select Appointment to Pay</label>
+                        <select @onchange="OnBillingAppointmentChanged" disabled="@(billingAppointments.Count == 0)" class="form-control">
+                            <option value="">Select Appointment...</option>
+                            @foreach (var app in billingAppointments)
+                            {
+                                <option value="@app.AppointmentID">
+                                    @app.AppointmentDate.ToString("MMM dd") - @app.ServiceName (₱@app.ServiceCost.ToString("N0"))
+                                </option>
+                            }
+                        </select>
+                        @if (isPatientSelected && billingAppointments.Count == 0)
+                        {
+                            <small class="text-danger">No unpaid appointments found for this patient.</small>
+                        }
+                    </div>
+
+                    <div class="payment-options-grid">
+                        <!-- Payment Method -->
+                        <div class="form-group">
+                            <label>Payment Method</label>
+                            <select @bind="billingPaymentMethod" class="form-control">
+                                <option value="Cash">Cash</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="GCash">GCash (PayMongo)</option>
+                                <option value="Maya">Maya (PayMongo)</option>
+                            </select>
+                        </div>
+
+                        <!-- Payment Type -->
+                        <div class="form-group">
+                            <label>Payment Type</label>
+                            <div class="radio-group-styled">
+                                <label class="@(billingPaymentType == "Full" ? "active" : "")">
+                                    <input type="radio" name="paymentType" checked="@(billingPaymentType == "Full")"
+                                        @onchange="@(() => billingPaymentType = "Full")" />
+                                    Full
+                                </label>
+                                <label class="@(billingPaymentType == "Downpayment" ? "active" : "")">
+                                    <input type="radio" name="paymentType" checked="@(billingPaymentType == "Downpayment")"
+                                        @onchange="@(() => billingPaymentType = "Downpayment")" />
+                                    Partial
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amount Display / Input -->
+                    <div class="amount-summary-box">
+                        <div class="form-group">
+                            <label>Total Amount</label>
+                            <div class="amount-display">₱@billingTotalAmount.ToString("N2")</div>
+                        </div>
+
+                        @if (billingPaymentType == "Downpayment")
+                        {
+                            <div class="form-group">
+                                <label>Downpayment Amount</label>
+                                <input type="number" @bind="billingDownpaymentAmount" @bind:event="oninput" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label>Remaining Balance</label>
+                                <div class="amount-display small">₱@((billingTotalAmount - billingDownpaymentAmount).ToString("N2"))</div>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </div>
+            <div class="modal-footer">
+                @if (isProcessingPayment && !string.IsNullOrEmpty(paymentLinkUrl))
+                {
+                     <button class="btn-secondary" @onclick="CloseBillingModal">Cancel Payment</button>
+                     <button class="btn-secondary small" @onclick="CheckPaymentStatus">Check Status Manually</button>
+                }
+                else
+                {
+                    <button class="btn-secondary" @onclick="CloseBillingModal">Cancel</button>
+                    <button class="btn-primary emerald" @onclick="ProcessBilling" disabled="@(!CanProcessBilling || isProcessingPayment)">
+                        @(isProcessingPayment ? "Processing..." : "Process Payment")
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .selected-patient-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        padding: 10px;
+        border-radius: 6px;
+        margin-top: 5px;
+    }
+    .patient-icon {
+        background: #0ea5e9;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .payment-options-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .radio-group-styled {
+        display: flex;
+        gap: 5px;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 6px;
+    }
+    .radio-group-styled label {
+        flex: 1;
+        text-align: center;
+        padding: 6px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .radio-group-styled label.active {
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        font-weight: 600;
+        color: #0f172a;
+    }
+    .radio-group-styled input {
+        display: none;
+    }
+    .amount-summary-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    .amount-display {
+        font-size: 24px;
+        font-weight: bold;
+        color: #10b981;
+    }
+    .amount-display.small {
+        font-size: 18px;
+        color: #64748b;
+    }
+    .payment-link-btn {
+        display: inline-block;
+        padding: 8px 16px;
+        background: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    .payment-link-btn:hover {
+        background: #2563eb;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #10b981;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<!-- Receipt Modal -->
+@if (showReceiptModal && lastTransaction != null)
+{
+    <div class="modal-overlay" @onclick="CloseReceiptModal">
+        <div class="modal-content receipt-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3>Payment Receipt</h3>
+                <button class="close-btn" @onclick="CloseReceiptModal">×</button>
+            </div>
+            <div class="modal-body receipt-body">
+                <div class="receipt-header" style="text-align: center; margin-bottom: 20px;">
+                    <h4>Dental Clinic</h4>
+                    <p style="margin: 5px 0; color: #666;">123 Main St, City, Country</p>
+                    <p style="margin: 5px 0; color: #666;">Tel: (123) 456-7890</p>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;" />
+                <div class="receipt-details">
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Date:</span>
+                        <span style="font-weight: 500;">@lastTransaction.PaymentDate.ToString("MMM dd, yyyy hh:mm tt")</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Patient:</span>
+                        <span style="font-weight: 500;">@selectedBillingPatient?.Name</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Service:</span>
+                        <span style="font-weight: 500;">@selectedAppointment?.ServiceName</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Payment Method:</span>
+                        <span style="font-weight: 500;">@lastTransaction.PaymentMethod</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Reference #:</span>
+                        <span style="font-weight: 500;">@(string.IsNullOrEmpty(lastTransaction.ReferenceNumber) ? "N/A" : lastTransaction.ReferenceNumber)</span>
+                    </div>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;" />
+                <div class="receipt-total"
+                    style="display: flex; justify-content: space-between; align-items: center; font-size: 1.2em; font-weight: bold;">
+                    <span>Amount Paid:</span>
+                    <span class="amount" style="color: #10b981;">₱@lastTransaction.Amount.ToString("N2")</span>
+                </div>
+                <div class="receipt-footer" style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
+                    <p>Thank you for your visit!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseReceiptModal">Close</button>
+                <button class="btn-primary" @onclick="PrintReceipt">Print Receipt</button>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Schedule Appointment Modal -->
 @if (showScheduleModal)
@@ -41,7 +373,7 @@
         <div class="modal-content schedule-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Schedule New Appointment</h3>
-                <button class="close-btn" @onclick="CloseScheduleModal">�</button>
+                <button class="close-btn" @onclick="CloseScheduleModal">�</button>
             </div>
             <p class="modal-subtitle">Fill in the details to schedule a new appointment</p>
             <div class="modal-body">
@@ -107,7 +439,7 @@
         <div class="modal-content register-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Register New Patient</h3>
-                <button class="close-btn" @onclick="CloseRegisterModal">�</button>
+                <button class="close-btn" @onclick="CloseRegisterModal">�</button>
             </div>
             <p class="modal-subtitle">Enter patient information to create a new record</p>
             <div class="modal-body">
@@ -156,7 +488,8 @@
                 </div>
                 <div class="form-group">
                     <label>Medical History (Optional)</label>
-                    <textarea @bind="medicalHistory" rows="3" placeholder="Allergies, medications, conditions..."></textarea>
+                    <textarea @bind="medicalHistory" rows="3"
+                        placeholder="Allergies, medications, conditions..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -174,7 +507,8 @@
         <div class="modal-content waiting-room-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <div class="header-with-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -182,7 +516,7 @@
                     </svg>
                     <h3>Waiting Room - 1 Patient(s) Waiting</h3>
                 </div>
-                <button class="close-btn" @onclick="CloseWaitingRoomModal">�</button>
+                <button class="close-btn" @onclick="CloseWaitingRoomModal">�</button>
             </div>
             <p class="modal-subtitle">Manage patients currently in the waiting room</p>
             <div class="modal-body waiting-room-body">
@@ -197,22 +531,30 @@
                                 <p class="patient-service">@patient.Service</p>
                                 <div class="patient-details">
                                     <div class="detail-item">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
                                             <circle cx="12" cy="12" r="10"></circle>
                                             <polyline points="12 6 12 12 16 14"></polyline>
                                         </svg>
                                         <span>Scheduled: @patient.ScheduledTime</span>
                                     </div>
                                     <div class="detail-item">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
                                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                             <circle cx="12" cy="7" r="4"></circle>
                                         </svg>
                                         <span>@patient.Dentist</span>
                                     </div>
                                     <div class="detail-item">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                            </path>
                                         </svg>
                                         <span>@patient.Phone</span>
                                     </div>
@@ -220,7 +562,8 @@
                                 @if (patient.IsFirstTime)
                                 {
                                     <span class="first-time-badge">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <circle cx="12" cy="12" r="10"></circle>
                                             <line x1="12" y1="16" x2="12" y2="12"></line>
                                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -231,14 +574,16 @@
                             </div>
                             <div class="patient-actions">
                                 <button class="action-btn call-btn" @onclick="() => CallPatient(patient.Id)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                         <circle cx="12" cy="7" r="4"></circle>
                                     </svg>
                                     Call Patient
                                 </button>
                                 <button class="action-btn sms-btn" @onclick="() => SendSMS(patient.Id)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                     </svg>
                                     Send SMS
@@ -250,7 +595,8 @@
                 else
                 {
                     <div class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -265,6 +611,212 @@
 }
 
 @code {
+    // Billing Modal State
+    private bool showBillingModal = false;
+    private bool showReceiptModal = false; // New Receipt Modal
+    private string billingSearchTerm = "";
+    private PatientEmailModel? selectedBillingPatient;
+    private List<Appointment> billingAppointments = new(); // New: List of appointments
+    private Appointment? selectedAppointment; // New: Selected appointment
+    private decimal billingTotalAmount = 0;
+    private string billingPaymentMethod = "Cash";
+    private string billingPaymentType = "Full";
+    private decimal billingDownpaymentAmount = 0;
+    private string paymentLinkUrl = "";
+    private string paymentLinkId = "";
+    private bool isPatientSelected = false;
+    private PaymentTransaction? lastTransaction; // For Receipt
+
+    private List<PatientEmailModel> allPatients = new();
+    private List<PatientEmailModel> FilteredPatients =>
+    string.IsNullOrWhiteSpace(billingSearchTerm)
+    ? new List<PatientEmailModel>()
+    : allPatients.Where(p => p.Name.Contains(billingSearchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private bool CanProcessBilling => selectedBillingPatient != null && selectedAppointment != null && billingTotalAmount >
+    0 && (billingPaymentType == "Full" || billingDownpaymentAmount > 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load patients for search
+        allPatients = await DatabaseService.GetAllPatientsWithEmailAsync();
+    }
+
+    private void OpenBillingModal()
+    {
+        showBillingModal = true;
+        ResetBillingForm();
+    }
+
+    private void CloseBillingModal()
+    {
+        showBillingModal = false;
+        ResetBillingForm();
+    }
+
+    private void CloseReceiptModal()
+    {
+        showReceiptModal = false;
+        lastTransaction = null;
+        ResetBillingForm(); // Clean up billing form state after receipt is closed
+    }
+
+    private void ResetBillingForm()
+    {
+        billingSearchTerm = "";
+        selectedBillingPatient = null;
+        billingAppointments.Clear();
+        selectedAppointment = null;
+        billingTotalAmount = 0;
+        billingPaymentMethod = "Cash";
+        billingPaymentType = "Full";
+        billingDownpaymentAmount = 0;
+        paymentLinkUrl = "";
+        paymentLinkId = "";
+        isPatientSelected = false;
+    }
+
+    private async Task SelectPatientForBilling(PatientEmailModel patient)
+    {
+        selectedBillingPatient = patient;
+        billingSearchTerm = patient.Name;
+        isPatientSelected = true;
+
+        // Fetch appointments for this patient
+        billingAppointments = await DatabaseService.GetAppointmentsForBillingAsync(patient.PatientID);
+        selectedAppointment = null;
+        billingTotalAmount = 0;
+    }
+
+    private void OnBillingAppointmentChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int appId))
+        {
+            selectedAppointment = billingAppointments.FirstOrDefault(a => a.AppointmentID == appId);
+            if (selectedAppointment != null)
+            {
+                billingTotalAmount = selectedAppointment.ServiceCost;
+            }
+        }
+        else
+        {
+            selectedAppointment = null;
+            billingTotalAmount = 0;
+        }
+    }
+
+    private bool isProcessingPayment = false;
+    private string paymentStatusMessage = "";
+
+    private async Task ProcessBilling()
+    {
+        if (!CanProcessBilling) return;
+
+        isProcessingPayment = true;
+        paymentStatusMessage = "Processing...";
+        decimal amountToPay = billingPaymentType == "Full" ? billingTotalAmount : billingDownpaymentAmount;
+
+        if (billingPaymentMethod == "GCash" || billingPaymentMethod == "Maya" || billingPaymentMethod == "Credit Card")
+        {
+            // Create PayMongo Link
+            paymentStatusMessage = "Generating Payment Link...";
+            var result = await PayMongoService.CreatePaymentLinkAsync(amountToPay, $"{selectedAppointment?.ServiceName} for {selectedBillingPatient?.Name}");
+            
+            if (!string.IsNullOrEmpty(result.Url))
+            {
+                paymentLinkUrl = result.Url;
+                paymentLinkId = result.Id;
+                paymentStatusMessage = "Waiting for payment...";
+                StateHasChanged();
+
+                // Start Polling
+                bool isPaid = false;
+                int attempts = 0;
+                while (!isPaid && attempts < 60 && showBillingModal) // Timeout ~2 mins
+                {
+                    await Task.Delay(2000);
+                    var status = await PayMongoService.GetLinkStatusAsync(paymentLinkId);
+                    if (status == "paid")
+                    {
+                        isPaid = true;
+                        paymentStatusMessage = "Payment Verified!";
+                        StateHasChanged();
+                        await Task.Delay(1000); // Brief delay to show success message
+                        await RecordPayment(amountToPay, "Paid");
+                    }
+                    attempts++;
+                }
+
+                if (!isPaid && showBillingModal)
+                {
+                    paymentStatusMessage = "Payment timed out. Please try again or check status manually.";
+                    isProcessingPayment = false;
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to create payment link: " + result.Id);
+                isProcessingPayment = false;
+            }
+        }
+        else
+        {
+            // Cash / Bank Transfer - Record immediately
+            await RecordPayment(amountToPay, "Paid");
+            isProcessingPayment = false;
+        }
+    }
+
+    private async Task CheckPaymentStatus()
+    {
+        if (string.IsNullOrEmpty(paymentLinkId)) return;
+
+        var status = await PayMongoService.GetLinkStatusAsync(paymentLinkId);
+        if (status == "paid")
+        {
+            decimal amountToPay = billingPaymentType == "Full" ? billingTotalAmount : billingDownpaymentAmount;
+            await RecordPayment(amountToPay, "Paid");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Payment status: {status}");
+        }
+    }
+
+    private async Task RecordPayment(decimal amount, string status)
+    {
+        // Record to Database
+        var payment = new PaymentTransaction
+        {
+            PatientID = selectedBillingPatient!.PatientID,
+            AppointmentID = selectedAppointment!.AppointmentID,
+            Amount = amount,
+            PaymentDate = DateTime.Now,
+            PaymentMethod = billingPaymentMethod,
+            ReferenceNumber = !string.IsNullOrEmpty(paymentLinkId) ? paymentLinkId : $"CASH-{DateTime.Now.Ticks}", // Set Reference Number
+            Remarks = $"{selectedAppointment.ServiceName} - {billingPaymentType} ({status})"
+        };
+
+        bool success = await DatabaseService.RecordPaymentAsync(payment);
+
+        if (success)
+        {
+            lastTransaction = payment;
+            showBillingModal = false; // Hide billing modal but keep state for receipt
+            showReceiptModal = true; // Show Receipt
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error recording payment to database.");
+        }
+        isProcessingPayment = false;
+    }
+
+    private async Task PrintReceipt()
+    {
+        await JSRuntime.InvokeVoidAsync("print");
+    }
+
     // Modal visibility flags
     private bool showScheduleModal = false;
     private bool showRegisterModal = false;
@@ -292,19 +844,19 @@
 
     // Waiting Room data
     private List<WaitingPatient> waitingPatients = new List<WaitingPatient>
-    {
-        new WaitingPatient
-        {
-            Id = 1,
-            Name = "Maria Rodriguez",
-            Initials = "MR",
-            Service = "Teeth Cleaning",
-            ScheduledTime = "9:00 AM",
-            Dentist = "Dr. Jade",
-            Phone = "+63 912 345 6789",
-            IsFirstTime = true
-        }
-    };
+{
+new WaitingPatient
+{
+Id = 1,
+Name = "Maria Rodriguez",
+Initials = "MR",
+Service = "Teeth Cleaning",
+ScheduledTime = "9:00 AM",
+Dentist = "Dr. Jade",
+Phone = "+63 912 345 6789",
+IsFirstTime = true
+}
+};
 
     // Modal control methods
     private void OpenScheduleAppointmentModal()
