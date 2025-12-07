@@ -5,12 +5,12 @@
 <style>
     .top-navbar { background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); column-gap: 16px; }
     .navbar-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-    .clinic-brand { display: flex; align-items: center; gap: 6px; margin-right: 12px; }
+    .clinic-brand { display: flex; align-items: center; gap: 10px; margin-right: 12px; }
     .clinic-logo { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
     .clinic-logo img { width: 130%; height: 130%; object-fit: contain; display: block; }
-    .clinic-info { display: flex; flex-direction: column; }
-    .clinic-name { font-size: 11px; font-weight: 700; color: #0d6efd; letter-spacing: 0.5px; line-height: 1.2; margin: 0; }
-    .clinic-tagline { font-size: 8px; color: #64748b; letter-spacing: 0.8px; margin: 0; text-transform: uppercase; }
+    .clinic-info { display: flex; flex-direction: column; gap: 2px; }
+    .clinic-name { font-size: 14px; font-weight: 700; color: #0d6efd; letter-spacing: 0.3px; line-height: 1.2; margin: 0; }
+    .clinic-tagline { font-size: 10px; color: #64748b; letter-spacing: 0.6px; margin: 0; text-transform: uppercase; font-weight: 500; }
     .nav-tabs { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
     .nav-tab { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; color: #64748b; transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease; cursor: pointer; border: none; outline: none; }
     .nav-tab:hover { background: #f1f5f9; color: #0f172a; }
@@ -46,6 +46,8 @@
     .settings-item:hover { background: #f8fafc; }
     .settings-item.logout { color: #ef4444; border-top: 1px solid #e2e8f0; }
     .settings-item.logout:hover { background: #fef2f2; }
+    .settings-item.logout .settings-item-text { color: #ef4444; }
+    .settings-item.logout .settings-item-icon { color: #ef4444; }
     .settings-item-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #64748b; }
     .settings-item-text { flex: 1; font-size: 14px; font-weight: 500; color: #334155; line-height: 1.4; }
 
@@ -67,8 +69,8 @@
     .modal-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end; }
     .btn-secondary { padding: 10px 20px; border: 1px solid #e2e8f0; background: white; color: #64748b; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
     .btn-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
-    .btn-primary { padding: 10px 24px; border: none; background: #14b8a6; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
-    .btn-primary:hover { background: #0d9488; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3); }
+    .btn-primary { padding: 10px 24px; border: none; background: #2563eb; color: white; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
 </style>
 
 <header class="top-navbar">
