@@ -347,6 +347,36 @@
     align-items: center;
     gap: 16px;
     min-height: 100px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Left border accent */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--border);
+}
+
+/* Border accent colors based on icon type */
+.stat-card:has(.stat-icon.blue)::before {
+    background: #3b82f6;
+}
+
+.stat-card:has(.stat-icon.green)::before {
+    background: #10b981;
+}
+
+.stat-card:has(.stat-icon.orange)::before {
+    background: #f59e0b;
+}
+
+.stat-card:has(.stat-icon.purple)::before {
+    background: #8b5cf6;
 }
 
 .stat-icon {
