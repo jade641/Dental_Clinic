@@ -110,6 +110,43 @@ namespace Dental_Clinic.Services
             }
         }
 
+        public async Task<bool> SendEmailAsync(string toEmail, string subject, string body)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(toEmail)) return false;
+
+                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort)
+                {
+                    EnableSsl = true,
+                    Credentials = new NetworkCredential(_fromEmail, _fromPassword)
+                };
+
+                if (string.IsNullOrEmpty(_fromPassword))
+                {
+                    Debug.WriteLine("[EmailService] SMTP password not configured.");
+                    return false;
+                }
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(_fromEmail, _fromName),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+                mailMessage.To.Add(toEmail);
+
+                await smtpClient.SendMailAsync(mailMessage);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[EmailService] Error sending email: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<string?> GenerateAndSendResetTokenAsync(string email, DatabaseService databaseService)
         {
             try
@@ -181,46 +218,6 @@ VALUES (@Email, @Token, @ExpiryTime, 0)";
             }
         }
 
-        public async Task<bool> SendEmailAsync(string toEmail, string subject, string body)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(toEmail))
-                {
-                    Debug.WriteLine("[EmailService] Invalid email address");
-                    return false;
-                }
 
-                using var smtpClient = new SmtpClient(_smtpServer, _smtpPort)
-                {
-                    EnableSsl = true,
-                    Credentials = new NetworkCredential(_fromEmail, _fromPassword)
-                };
-
-                if (string.IsNullOrEmpty(_fromPassword))
-                {
-                    Debug.WriteLine("[EmailService] SMTP password not configured.");
-                    return false;
-                }
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(_fromEmail, _fromName),
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = true
-                };
-                mailMessage.To.Add(toEmail);
-
-                await smtpClient.SendMailAsync(mailMessage);
-                Debug.WriteLine($"[EmailService] Email sent to {toEmail}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[EmailService] Error sending email: {ex.Message}");
-                return false;
-            }
-        }
     }
 }

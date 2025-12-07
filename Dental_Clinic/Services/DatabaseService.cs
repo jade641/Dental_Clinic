@@ -2025,5 +2025,221 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
     #endregion
 
+    #region Patient Management
+
+    public class PatientDetailedModel
+    {
+      public int PatientID { get; set; }
+      public int UserID { get; set; }
+      public string FirstName { get; set; } = "";
+      public string LastName { get; set; } = "";
+      public string Email { get; set; } = "";
+      public string PhoneNumber { get; set; } = "";
+      public DateTime BirthDate { get; set; }
+      public string Address { get; set; } = "";
+      public string Sex { get; set; } = "";
+      public string MaritalStatus { get; set; } = "";
+      public string MedicalHistory { get; set; } = "";
+      public string MedicalAlerts { get; set; } = "";
+      public string InsuranceProvider { get; set; } = "";
+      public string InsurancePolicyNumber { get; set; } = "";
+      public DateTime? LastVisit { get; set; }
+      public DateTime? NextVisit { get; set; }
+
+      public string FullName => $"{FirstName} {LastName}";
+      public string Initials => $"{(string.IsNullOrEmpty(FirstName) ? "" : FirstName[0].ToString())}{(string.IsNullOrEmpty(LastName) ? "" : LastName[0].ToString())}";
+    }
+
+    public async Task<List<PatientDetailedModel>> GetAllPatientsDetailedAsync()
+    {
+      var list = new List<PatientDetailedModel>();
+      try
+      {
+        string query = @"
+                SELECT 
+                    p.PatientID, p.UserID, p.BirthDate, p.Address, p.MaritalStatus, p.MedicalHistory, p.MedicalAlerts, p.InsuranceProvider, p.InsurancePolicyNumber,
+                    u.FirstName, u.LastName, u.Email, u.PhoneNumber, u.Sex,
+                    (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID AND AppointmentDate < GETDATE() AND Status = 'Completed' ORDER BY AppointmentDate DESC) as LastVisit,
+                    (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID AND AppointmentDate >= GETDATE() AND Status IN ('Pending', 'Confirmed') ORDER BY AppointmentDate ASC) as NextVisit
+                FROM Patient p
+                JOIN Users u ON p.UserID = u.UserID
+                ORDER BY u.LastName, u.FirstName";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new PatientDetailedModel
+                {
+                  PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                  UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                  FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                  LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                  Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? "" : reader.GetString(reader.GetOrdinal("Email")),
+                  PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? "" : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                  BirthDate = reader.GetDateTime(reader.GetOrdinal("BirthDate")),
+                  Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? "" : reader.GetString(reader.GetOrdinal("Address")),
+                  Sex = reader.IsDBNull(reader.GetOrdinal("Sex")) ? "" : reader.GetString(reader.GetOrdinal("Sex")),
+                  MaritalStatus = reader.IsDBNull(reader.GetOrdinal("MaritalStatus")) ? "" : reader.GetString(reader.GetOrdinal("MaritalStatus")),
+                  MedicalHistory = reader.IsDBNull(reader.GetOrdinal("MedicalHistory")) ? "" : reader.GetString(reader.GetOrdinal("MedicalHistory")),
+                  MedicalAlerts = reader.IsDBNull(reader.GetOrdinal("MedicalAlerts")) ? "" : reader.GetString(reader.GetOrdinal("MedicalAlerts")),
+                  InsuranceProvider = reader.IsDBNull(reader.GetOrdinal("InsuranceProvider")) ? "" : reader.GetString(reader.GetOrdinal("InsuranceProvider")),
+                  InsurancePolicyNumber = reader.IsDBNull(reader.GetOrdinal("InsurancePolicyNumber")) ? "" : reader.GetString(reader.GetOrdinal("InsurancePolicyNumber")),
+                  LastVisit = reader.IsDBNull(reader.GetOrdinal("LastVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("LastVisit")),
+                  NextVisit = reader.IsDBNull(reader.GetOrdinal("NextVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("NextVisit"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting detailed patients: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<(bool Success, string Message)> AddPatientAsync(PatientDetailedModel model, string password)
+    {
+      using (var conn = GetConnection())
+      {
+        await conn.OpenAsync();
+        using (var transaction = conn.BeginTransaction())
+        {
+          try
+          {
+            // 1. Create User
+            string userQuery = @"
+                        INSERT INTO Users (RoleName, UserName, Password, FirstName, LastName, PhoneNumber, Email, Sex, Age)
+                        VALUES ('Patient', @Email, @Password, @FirstName, @LastName, @PhoneNumber, @Email, @Sex, @Age);
+                        SELECT SCOPE_IDENTITY();";
+
+            int userId;
+            using (var cmd = new SqlCommand(userQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+              cmd.Parameters.AddWithValue("@Password", password); // Should be hashed in real app
+              cmd.Parameters.AddWithValue("@FirstName", model.FirstName);
+              cmd.Parameters.AddWithValue("@LastName", model.LastName);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Sex", model.Sex);
+
+              // Calculate Age
+              int age = DateTime.Now.Year - model.BirthDate.Year;
+              if (model.BirthDate.Date > DateTime.Now.AddYears(-age)) age--;
+              cmd.Parameters.AddWithValue("@Age", age);
+
+              userId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            }
+
+            // 2. Create Patient
+            string patientQuery = @"
+                        INSERT INTO Patient (UserID, BirthDate, Address, MaritalStatus, MedicalHistory, MedicalAlerts, InsuranceProvider, InsurancePolicyNumber, PhoneNumber, Email)
+                        VALUES (@UserID, @BirthDate, @Address, @MaritalStatus, @MedicalHistory, @MedicalAlerts, @InsuranceProvider, @InsurancePolicyNumber, @PhoneNumber, @Email)";
+
+            using (var cmd = new SqlCommand(patientQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@UserID", userId);
+              cmd.Parameters.AddWithValue("@BirthDate", model.BirthDate);
+              cmd.Parameters.AddWithValue("@Address", model.Address);
+              cmd.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus);
+              cmd.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory);
+              cmd.Parameters.AddWithValue("@MedicalAlerts", model.MedicalAlerts);
+              cmd.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider);
+              cmd.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+
+              await cmd.ExecuteNonQueryAsync();
+            }
+
+            transaction.Commit();
+            return (true, "Patient added successfully.");
+          }
+          catch (Exception ex)
+          {
+            transaction.Rollback();
+            return (false, $"Error adding patient: {ex.Message}");
+          }
+        }
+      }
+    }
+
+    public async Task<(bool Success, string Message)> UpdatePatientAsync(PatientDetailedModel model)
+    {
+      using (var conn = GetConnection())
+      {
+        await conn.OpenAsync();
+        using (var transaction = conn.BeginTransaction())
+        {
+          try
+          {
+            // 1. Update User
+            string userQuery = @"
+                        UPDATE Users 
+                        SET FirstName = @FirstName, LastName = @LastName, PhoneNumber = @PhoneNumber, Email = @Email, Sex = @Sex, Age = @Age
+                        WHERE UserID = @UserID";
+
+            using (var cmd = new SqlCommand(userQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@UserID", model.UserID);
+              cmd.Parameters.AddWithValue("@FirstName", model.FirstName);
+              cmd.Parameters.AddWithValue("@LastName", model.LastName);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+              cmd.Parameters.AddWithValue("@Sex", model.Sex);
+
+              int age = DateTime.Now.Year - model.BirthDate.Year;
+              if (model.BirthDate.Date > DateTime.Now.AddYears(-age)) age--;
+              cmd.Parameters.AddWithValue("@Age", age);
+
+              await cmd.ExecuteNonQueryAsync();
+            }
+
+            // 2. Update Patient
+            string patientQuery = @"
+                        UPDATE Patient 
+                        SET BirthDate = @BirthDate, Address = @Address, MaritalStatus = @MaritalStatus, 
+                            MedicalHistory = @MedicalHistory, MedicalAlerts = @MedicalAlerts,
+                            InsuranceProvider = @InsuranceProvider, InsurancePolicyNumber = @InsurancePolicyNumber,
+                            PhoneNumber = @PhoneNumber, Email = @Email
+                        WHERE PatientID = @PatientID";
+
+            using (var cmd = new SqlCommand(patientQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@PatientID", model.PatientID);
+              cmd.Parameters.AddWithValue("@BirthDate", model.BirthDate);
+              cmd.Parameters.AddWithValue("@Address", model.Address);
+              cmd.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus);
+              cmd.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory);
+              cmd.Parameters.AddWithValue("@MedicalAlerts", model.MedicalAlerts);
+              cmd.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider);
+              cmd.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+
+              await cmd.ExecuteNonQueryAsync();
+            }
+
+            transaction.Commit();
+            return (true, "Patient updated successfully.");
+          }
+          catch (Exception ex)
+          {
+            transaction.Rollback();
+            return (false, $"Error updating patient: {ex.Message}");
+          }
+        }
+      }
+    }
+
+    #endregion
+
   }
 }
