@@ -1,0 +1,219 @@
+@page "/patient-profile"
+@using Dental_Clinic.Services
+@using Dental_Clinic.Models
+@inject SessionService SessionService
+@inject DatabaseService DatabaseService
+@inject CloudinaryService CloudinaryService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<link href="css/patientdashboard.css" rel="stylesheet" />
+
+<div class="dashboard-page">
+    <PatientNavBar />
+
+    <div class="dashboard-content">
+        <div class="profile-container" style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+            <div class="profile-header" style="margin-bottom: 2rem;">
+                <h2>Edit Profile</h2>
+                <p class="text-muted">Update your personal information and profile picture</p>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="loading-spinner">Loading...</div>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    <h4>Error Loading Profile</h4>
+                    <p>@errorMessage</p>
+                    <button class="btn btn-primary" @onclick="ReloadProfile">Retry</button>
+                </div>
+            }
+            else if (currentUser != null)
+            {
+                <div class="profile-card"
+                    style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+
+                    <!-- Profile Picture Section -->
+                    <div class="avatar-section"
+                        style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem;">
+                        <div class="avatar-wrapper"
+                            style="position: relative; width: 120px; height: 120px; margin-bottom: 1rem;">
+                            @if (!string.IsNullOrEmpty(currentUser.Avatar))
+                            {
+                                <img src="@currentUser.Avatar" alt="Profile Picture"
+                                    style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                            }
+                            else
+                            {
+                                <div class="avatar-placeholder"
+                                    style="width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, #0d6efd 0%, #00b4d8 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: bold;">
+                                    @(string.IsNullOrEmpty(currentUser.FirstName) ? "U" : currentUser.FirstName.Substring(0,
+                                                                1).ToUpper())
+                                </div>
+                            }
+
+                            <label for="avatar-upload" class="avatar-upload-btn"
+                                style="position: absolute; bottom: 0; right: 0; background: #0d6efd; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                    </path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </label>
+                            <InputFile OnChange="UploadProfilePicture" id="avatar-upload" style="display: none;"
+                                accept=".jpg,.jpeg,.png" />
+                        </div>
+
+                        @if (isUploading)
+                        {
+                            <div class="upload-status" style="color: #0d6efd; font-size: 0.9rem;">Uploading...</div>
+                        }
+                        @if (!string.IsNullOrEmpty(uploadError))
+                        {
+                            <div class="upload-error" style="color: #dc3545; font-size: 0.9rem;">@uploadError</div>
+                        }
+                    </div>
+
+                    <!-- Basic Info Form -->
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Full Name</label>
+                        <input type="text" value="@currentUser.FullName" readonly class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #dee2e6; border-radius: 6px; background-color: #f8f9fa;" />
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email Address</label>
+                        <input type="email" value="@currentUser.Email" readonly class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #dee2e6; border-radius: 6px; background-color: #f8f9fa;" />
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Role</label>
+                        <input type="text" value="@currentUser.RoleName" readonly class="form-control"
+                            style="width: 100%; padding: 0.75rem; border: 1px solid #dee2e6; border-radius: 6px; background-color: #f8f9fa;" />
+                    </div>
+
+                    <div class="form-actions"
+                        style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button @onclick="GoBack" class="btn-cancel"
+                            style="padding: 0.75rem 1.5rem; border: 1px solid #dee2e6; background: white; border-radius: 6px; cursor: pointer;">Back
+                            to Dashboard</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private User? currentUser;
+    private bool isLoading = true;
+    private bool isUploading = false;
+    private string uploadError = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfile();
+    }
+
+    private async Task ReloadProfile()
+    {
+        isLoading = true;
+        errorMessage = "";
+        await LoadProfile();
+    }
+
+    private async Task LoadProfile()
+    {
+        try
+        {
+            var session = await SessionService.GetCurrentSessionAsync();
+            if (session == null)
+            {
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            currentUser = await DatabaseService.GetUserByIdAsync(session.UserId);
+
+            if (currentUser == null)
+            {
+                // Fallback if user not found in DB (shouldn't happen if session is valid)
+                currentUser = new User
+                {
+                    FirstName = session.UserName, // Fallback
+                    RoleName = session.Role,
+                    UserID = session.UserId
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading profile: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task UploadProfilePicture(InputFileChangeEventArgs e)
+    {
+        isUploading = true;
+        uploadError = "";
+
+        try
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                // 1. Upload to Cloudinary
+                var imageUrl = await CloudinaryService.UploadImageAsync(file);
+
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    // 2. Update Database
+                    var success = await DatabaseService.UpdateUserAvatarAsync(currentUser.UserID, imageUrl);
+
+                    if (success)
+                    {
+                        // 3. Update Local State
+                        currentUser.Avatar = imageUrl;
+
+                        // 4. Update Session (optional but recommended so navbar updates)
+                        // We might need a method in SessionService to update the stored session
+                        // For now, we just update the UI
+                    }
+                    else
+                    {
+                        uploadError = "Failed to update profile picture in database.";
+                    }
+                }
+                else
+                {
+                    uploadError = "Failed to upload image to cloud.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            uploadError = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/dashboard");
+    }
+}

@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject NavigationManager Navigation
 @inject Dental_Clinic.Services.DatabaseService DatabaseService
+@inject Dental_Clinic.Services.SessionService SessionService
 
 <link rel="stylesheet" href="css/admindashboard.css" />
 
@@ -85,10 +86,17 @@
             </button>
 
             <div class="user-profile">
-                <div class="user-avatar">DA</div>
+                @if (!string.IsNullOrEmpty(userAvatar))
+                {
+                    <img src="@userAvatar" alt="Profile" class="user-avatar-img" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="user-avatar">@(string.IsNullOrEmpty(userName) ? "A" : userName.Substring(0, 1).ToUpper())</div>
+                }
                 <div class="user-details">
-                    <span class="user-name">Dr. Admin</span>
-                    <span class="user-role">Administrator</span>
+                    <span class="user-name">@userName</span>
+                    <span class="user-role">@userRole</span>
                 </div>
             </div>
         </div>
@@ -274,6 +282,9 @@
     private int TotalAppointments;
     private List<(string Month, decimal Revenue)> MonthlyRevenue = new();
     private List<(string ServiceName, int Count)> ServiceDistribution = new();
+    private string userAvatar;
+    private string userName = "Administrator";
+    private string userRole = "Administrator";
 
     // For charts
     private decimal MaxRevenue => MonthlyRevenue.Any() ? MonthlyRevenue.Max(m => m.Revenue) : 1;
@@ -286,6 +297,17 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var session = await SessionService.GetCurrentSessionAsync();
+        if (session != null && session.UserId != 0)
+        {
+            var user = await DatabaseService.GetUserByIdAsync(session.UserId);
+            if (user != null)
+            {
+                userAvatar = user.Avatar;
+                userName = $"{user.FirstName} {user.LastName}";
+                userRole = user.RoleName;
+            }
+        }
         await LoadDashboardData();
     }
 

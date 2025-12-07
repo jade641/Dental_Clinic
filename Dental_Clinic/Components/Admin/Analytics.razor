@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Routing
 @inject NavigationManager Navigation
 @inject Dental_Clinic.Services.DatabaseService DatabaseService
+@inject IJSRuntime JSRuntime
 
 <link rel="stylesheet" href="css/AdminAnalytics.css">
 <link rel="stylesheet" href="css/admindashboard.css" />
@@ -134,110 +135,227 @@
         </div>
 
         <div class="dashboard-grid">
-            <!-- Weekly Performance Chart -->
-            <div class="card card-large">
+            <!-- Weekly Performance (Dual Axis) -->
+            <div class="card">
                 <h3 class="card-title">Weekly Performance</h3>
-                <div class="chart-container">
+                <div class="chart-container" style="height: 300px;">
                     <canvas id="weeklyChart"></canvas>
                 </div>
             </div>
 
-            <!-- Service Revenue Breakdown -->
+            <!-- Sales Management (Revenue Trends) -->
             <div class="card">
-                <h3 class="card-title">Service Revenue Breakdown</h3>
-                <div class="revenue-list">
-                    @foreach (var item in serviceRevenue)
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 class="card-title">Sales Management</h3>
+                    <div class="period-toggle">
+                        <button class="btn-toggle @(revenuePeriod == "Daily" ? "active" : "")" @onclick='() => ChangeRevenuePeriod("Daily")'>Daily</button>
+                        <button class="btn-toggle @(revenuePeriod == "Monthly" ? "active" : "")" @onclick='() => ChangeRevenuePeriod("Monthly")'>Monthly</button>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Service Distribution (Doughnut) -->
+            <div class="card">
+                <h3 class="card-title">Service Distribution</h3>
+                <div class="chart-container" style="height: 300px; position: relative;">
+                    <canvas id="serviceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Performing Staff -->
+            <div class="card">
+                <h3 class="card-title">Top Performing Staff</h3>
+                <div class="staff-list">
+                    @foreach (var staff in topStaff.Select((value, i) => new { i, value }))
                     {
-                        <div class="revenue-item">
-                            <div class="revenue-info">
-                                <span class="revenue-indicator" style="background-color: @item.Color"></span>
-                                <span class="revenue-service">@item.Service</span>
+                        <div class="staff-item" style="display: flex; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
+                            <div class="staff-rank" style="width: 30px; height: 30px; background: @GetRankColor(staff.i); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 1rem;">
+                                #@(staff.i + 1)
                             </div>
-                            <div class="revenue-stats">
-                                <span class="revenue-amount">₱@item.Amount.ToString("N0")</span>
-                                <span class="revenue-percentage">@item.Percentage% of total</span>
+                            <div class="staff-info" style="flex: 1;">
+                                <div class="staff-name" style="font-weight: 600; color: #1f2937;">@staff.value.Name</div>
+                                <div class="staff-sub" style="font-size: 0.875rem; color: #6b7280;">@staff.value.AppointmentsCount appointments</div>
+                            </div>
+                            <div class="staff-stats" style="text-align: right;">
+                                <div class="staff-revenue" style="font-weight: 600; color: #1f2937;">₱@staff.value.Revenue.ToString("N0")</div>
+                                <div class="staff-rating" style="font-size: 0.875rem; color: #f59e0b;">⭐ @staff.value.Rating.ToString("F1")</div>
                             </div>
                         </div>
                     }
                 </div>
             </div>
         </div>
+
+        <style>
+            .dashboard-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+                margin-top: 1.5rem;
+            }
+            .card {
+                background: white;
+                border-radius: 1rem;
+                padding: 1.5rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .btn-toggle {
+                padding: 0.5rem 1rem;
+                border: 1px solid #e5e7eb;
+                background: white;
+                cursor: pointer;
+                border-radius: 0.5rem;
+                font-size: 0.875rem;
+            }
+            .btn-toggle.active {
+                background: #3b82f6;
+                color: white;
+                border-color: #3b82f6;
+            }
+            .period-toggle {
+                display: flex;
+                gap: 0.5rem;
+            }
+        </style>
     </main>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    window.initWeeklyChart = function (labels, patientData, revenueData) {
-        try {
-            const ctxEl = document.getElementById('weeklyChart');
-            if (!ctxEl) return;
-
-            // Destroy existing chart instance if it exists
-            if (window.myWeeklyChart) {
-                window.myWeeklyChart.destroy();
-            }
-
-            const ctx = ctxEl.getContext('2d');
-            if (!window.Chart || !ctx) return;
-
-            window.myWeeklyChart = new Chart(ctx, {
+    window.initCharts = function (weeklyLabels, weeklyPatients, weeklyRevenue, revenueLabels, revenueData, serviceLabels, serviceData, serviceColors) {
+        // Weekly Performance Chart (Dual Axis)
+        const ctxWeekly = document.getElementById('weeklyChart');
+        if (ctxWeekly) {
+            if (window.weeklyChartInstance) window.weeklyChartInstance.destroy();
+            window.weeklyChartInstance = new Chart(ctxWeekly, {
                 type: 'line',
                 data: {
-                    labels: labels || [],
+                    labels: weeklyLabels,
                     datasets: [
                         {
-                            label: 'Patients',
-                            data: patientData || [],
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            tension: 0.4,
-                            yAxisID: 'y'
+                            label: 'patients',
+                            data: weeklyPatients,
+                            borderColor: '#3b82f6',
+                            backgroundColor: '#3b82f6',
+                            yAxisID: 'y',
+                            tension: 0.4
                         },
                         {
-                            label: 'Revenue',
-                            data: revenueData || [],
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.4,
-                            yAxisID: 'y1'
+                            label: 'revenue',
+                            data: weeklyRevenue,
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            yAxisID: 'y1',
+                            tension: 0.4
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { display: true } },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     scales: {
                         y: {
                             type: 'linear',
                             display: true,
                             position: 'left',
-                            beginAtZero: true,
-                            grid: { drawBorder: false, color: '#f3f4f6' },
                             title: { display: true, text: 'Patients' }
                         },
                         y1: {
                             type: 'linear',
                             display: true,
                             position: 'right',
-                            beginAtZero: true,
                             grid: { drawOnChartArea: false },
-                            title: { display: true, text: 'Revenue (₱)' }
+                            title: { display: true, text: 'Revenue' }
                         },
                         x: { grid: { display: false } }
                     }
                 }
             });
-        } catch (e) {
-            console.error('initWeeklyChart error', e);
+        }
+
+        // Revenue Chart
+        const ctxRev = document.getElementById('revenueChart');
+        if (ctxRev) {
+            if (window.revenueChartInstance) window.revenueChartInstance.destroy();
+            window.revenueChartInstance = new Chart(ctxRev, {
+                type: 'line',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: revenueData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [2, 2] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Service Chart (Doughnut)
+        const ctxSvc = document.getElementById('serviceChart');
+        if (ctxSvc) {
+            if (window.serviceChartInstance) window.serviceChartInstance.destroy();
+            window.serviceChartInstance = new Chart(ctxSvc, {
+                type: 'doughnut',
+                data: {
+                    labels: serviceLabels,
+                    datasets: [{
+                        data: serviceData,
+                        backgroundColor: serviceColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { usePointStyle: true, padding: 20 }
+                        }
+                    }
+                }
+            });
         }
     };
 </script>
 
 @code {
-    private string selectedPeriod = "7";
-    private List<ServiceRevenueItem> serviceRevenue = new();
+    private string revenuePeriod = "Monthly";
+    private List<Dental_Clinic.Services.DatabaseService.StaffPerformanceModel> topStaff = new();
+    
+    // Weekly Performance Data
+    private List<string> weeklyLabels = new();
+    private List<int> weeklyPatients = new();
+    private List<decimal> weeklyRevenue = new();
+
+    // Revenue Trends Data
+    private List<string> revenueLabels = new();
+    private List<decimal> revenueData = new();
+    
+    // Service Distribution Data
+    private List<string> serviceLabels = new();
+    private List<int> serviceData = new();
+    private List<string> serviceColors = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -249,23 +367,37 @@
 
     private async Task LoadAnalyticsData()
     {
-        if (int.TryParse(selectedPeriod, out int days))
-        {
-            // Load Service Revenue
-            var services = await DatabaseService.GetServiceRevenueAsync(days);
-            serviceRevenue = services.Select((s, index) => new ServiceRevenueItem
-            {
-                Service = s.Service,
-                Amount = (int)s.Amount,
-                Percentage = (int)s.Percentage,
-                Color = GetColor(index)
-            }).ToList();
-            StateHasChanged();
+        // Load Weekly Performance
+        var weekly = await DatabaseService.GetWeeklyPerformanceAsync();
+        weeklyLabels = weekly.Select(w => w.Day).ToList();
+        weeklyPatients = weekly.Select(w => w.Patients).ToList();
+        weeklyRevenue = weekly.Select(w => w.Revenue).ToList();
 
-            // Load Chart Data
-            var (labels, patients, revenue) = await DatabaseService.GetDailyPerformanceAsync(days);
-            await JSRuntime.InvokeVoidAsync("initWeeklyChart", labels, patients, revenue);
-        }
+        // Load Revenue Trends
+        var trends = await DatabaseService.GetRevenueTrendsAsync(revenuePeriod);
+        revenueLabels = trends.Labels;
+        revenueData = trends.Revenue;
+
+        // Load Service Distribution
+        var services = await DatabaseService.GetServiceRevenueAsync(30); // Last 30 days for distribution
+        serviceLabels = services.Select(s => $"{s.Service} ({s.Percentage}%)").ToList();
+        serviceData = services.Select(s => (int)s.Amount).ToList(); // Using Amount for proportion
+        serviceColors = services.Select((s, i) => GetColor(i)).ToList();
+
+        // Load Top Staff
+        topStaff = await DatabaseService.GetTopPerformingStaffAsync();
+
+        StateHasChanged();
+        await JSRuntime.InvokeVoidAsync("initCharts", 
+            weeklyLabels, weeklyPatients, weeklyRevenue,
+            revenueLabels, revenueData, 
+            serviceLabels, serviceData, serviceColors);
+    }
+
+    private async Task ChangeRevenuePeriod(string period)
+    {
+        revenuePeriod = period;
+        await LoadAnalyticsData();
     }
 
     private string GetColor(int index)
@@ -274,36 +406,24 @@
         return colors[index % colors.Length];
     }
 
-    private async Task OnPeriodChanged(ChangeEventArgs e)
+    private string GetRankColor(int index)
     {
-        selectedPeriod = e.Value?.ToString() ?? "7";
-        await LoadAnalyticsData();
-    }
-
-    private void ShowNotifications()
-    {
-        // Show notifications logic
-    }
-
-    private void ToggleTheme()
-    {
-        // Toggle theme logic
+        return index switch
+        {
+            0 => "#fbbf24", // Gold
+            1 => "#9ca3af", // Silver
+            2 => "#b45309", // Bronze
+            _ => "#e5e7eb"  // Gray
+        };
     }
 
     private void ExportData()
     {
-        // Export data logic
-        Console.WriteLine($"Exporting analytics data for period: {selectedPeriod} days");
+        Console.WriteLine("Exporting data...");
     }
-
-    public class ServiceRevenueItem
+    
+    private void OnPeriodChanged(ChangeEventArgs e)
     {
-        public string Service { get; set; } = "";
-        public int Amount { get; set; }
-        public int Percentage { get; set; }
-        public string Color { get; set; } = "";
+        // Placeholder if needed
     }
-
-    [Inject]
-    private IJSRuntime JSRuntime { get; set; } = default!;
 }

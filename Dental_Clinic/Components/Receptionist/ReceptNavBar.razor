@@ -1,6 +1,7 @@
 @namespace Dental_Clinic.Components.Receptionist
 @using Microsoft.AspNetCore.Components
 @inject NavigationManager Navigation
+@inject Dental_Clinic.Services.DatabaseService DatabaseService
 
 <style>
     .top-navbar { background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); column-gap: 16px; }
@@ -169,9 +170,16 @@
         </div>
 
         <div class="user-profile">
-            <div class="user-avatar">RD</div>
+            @if (!string.IsNullOrEmpty(userAvatar))
+            {
+                <img src="@userAvatar" alt="Profile" class="user-avatar" style="object-fit: cover;" />
+            }
+            else
+            {
+                <div class="user-avatar">@(string.IsNullOrWhiteSpace(receptionistName) ? "R" : receptionistName.Substring(0, 1).ToUpper())</div>
+            }
             <div class="user-details">
-                <span class="user-name">Receptionist</span>
+                <span class="user-name">@receptionistName</span>
                 <span class="user-role">Front Desk</span>
             </div>
         </div>
@@ -223,6 +231,7 @@
     private bool showSettings = false;
     private bool showEditProfileModal = false;
     private string receptionistName = "Receptionist";
+    private string? userAvatar;
 
     private string editFullName = "";
     private string editEmail = "";
@@ -234,6 +243,15 @@
         {
             var session = await SessionService.GetCurrentSessionAsync();
             receptionistName = session?.UserName ?? "Receptionist";
+            
+            if (session != null)
+            {
+                var user = await DatabaseService.GetUserByIdAsync(session.UserId);
+                if (user != null)
+                {
+                    userAvatar = user.Avatar;
+                }
+            }
         }
         catch { receptionistName = "Receptionist"; }
     }

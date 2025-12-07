@@ -97,6 +97,21 @@ namespace Dental_Clinic.Services
             System.Diagnostics.Debug.WriteLine("Schema Updated: Created Notifications table.");
           }
 
+          // Check if Avatar column exists in Users table
+          var checkAvatarCmd = new SqlCommand(
+              "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'Avatar'",
+              conn);
+          int avatarCount = Convert.ToInt32(await checkAvatarCmd.ExecuteScalarAsync());
+
+          if (avatarCount == 0)
+          {
+            var alterAvatarCmd = new SqlCommand(
+                "ALTER TABLE Users ADD Avatar NVARCHAR(MAX) NULL;",
+                conn);
+            await alterAvatarCmd.ExecuteNonQueryAsync();
+            System.Diagnostics.Debug.WriteLine("Schema Updated: Added Avatar to Users table.");
+          }
+
           // Check if ImageUrl column exists in MarketingCampaign table
           var checkCampaignColCmd = new SqlCommand(
               "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'MarketingCampaign' AND COLUMN_NAME = 'ImageUrl'",
@@ -541,6 +556,62 @@ namespace Dental_Clinic.Services
           }
         }
       }
+    }
+
+    public async Task<bool> UpdateUserAvatarAsync(int userId, string avatarUrl)
+    {
+      using (var connection = GetConnection())
+      {
+        await connection.OpenAsync();
+        string query = "UPDATE Users SET Avatar = @Avatar WHERE UserID = @UserID";
+        using (var command = new SqlCommand(query, connection))
+        {
+          command.Parameters.AddWithValue("@Avatar", avatarUrl ?? (object)DBNull.Value);
+          command.Parameters.AddWithValue("@UserID", userId);
+          int rowsAffected = await command.ExecuteNonQueryAsync();
+          return rowsAffected > 0;
+        }
+      }
+    }
+
+    public async Task<User?> GetUserByIdAsync(int userId)
+    {
+      using (var connection = GetConnection())
+      {
+        await connection.OpenAsync();
+        string query = "SELECT * FROM Users WHERE UserID = @UserID";
+        using (var command = new SqlCommand(query, connection))
+        {
+          command.Parameters.AddWithValue("@UserID", userId);
+          using (var reader = await command.ExecuteReaderAsync())
+          {
+            if (await reader.ReadAsync())
+            {
+              return new User
+              {
+                UserID = Convert.ToInt32(reader["UserID"]),
+                FirstName = reader["FirstName"].ToString(),
+                LastName = reader["LastName"].ToString(),
+                Email = reader["Email"].ToString(),
+                RoleName = reader["RoleName"].ToString(),
+                Avatar = HasColumn(reader, "Avatar") && reader["Avatar"] != DBNull.Value ? reader["Avatar"].ToString() : string.Empty,
+                UserName = reader["UserName"] != DBNull.Value ? reader["UserName"].ToString() : string.Empty
+              };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    private bool HasColumn(SqlDataReader reader, string columnName)
+    {
+      for (int i = 0; i < reader.FieldCount; i++)
+      {
+        if (reader.GetName(i).Equals(columnName, StringComparison.InvariantCultureIgnoreCase))
+          return true;
+      }
+      return false;
     }
 
     public async Task<(bool Success, string Message)> ToggleUserStatusAsync(int userId, bool isActive)
@@ -1693,6 +1764,181 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         System.Diagnostics.Debug.WriteLine($"Error getting service revenue: {ex.Message}");
       }
       return list;
+    }
+
+    public class WeeklyPerformanceModel
+    {
+      public string Day { get; set; } = string.Empty;
+      public int Patients { get; set; }
+      public decimal Revenue { get; set; }
+    }
+
+    public async Task<List<WeeklyPerformanceModel>> GetWeeklyPerformanceAsync()
+    {
+      var result = new List<WeeklyPerformanceModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    WITH DateRange AS (
+                        SELECT CAST(GETDATE() - 6 AS DATE) AS DateValue
+                        UNION ALL
+                        SELECT DATEADD(day, 1, DateValue)
+                        FROM DateRange
+                        WHERE DateValue < CAST(GETDATE() AS DATE)
+                    ),
+                    DailyPatients AS (
+                        SELECT CAST(AppointmentDate AS DATE) as DateValue, COUNT(DISTINCT PatientID) as PatientCount
+                        FROM Appointments
+                        WHERE AppointmentDate >= CAST(GETDATE() - 6 AS DATE) AND Status = 'Completed'
+                        GROUP BY CAST(AppointmentDate AS DATE)
+                    ),
+                    DailyRevenue AS (
+                        SELECT CAST(TransactionDate AS DATE) as DateValue, SUM(TotalAmount) as RevenueAmount
+                        FROM ServiceTransactions
+                        WHERE TransactionDate >= CAST(GETDATE() - 6 AS DATE)
+                        GROUP BY CAST(TransactionDate AS DATE)
+                    )
+                    SELECT 
+                        FORMAT(dr.DateValue, 'ddd') as DayName,
+                        ISNULL(dp.PatientCount, 0) as Patients,
+                        ISNULL(rev.RevenueAmount, 0) as Revenue
+                    FROM DateRange dr
+                    LEFT JOIN DailyPatients dp ON dr.DateValue = dp.DateValue
+                    LEFT JOIN DailyRevenue rev ON dr.DateValue = rev.DateValue
+                    ORDER BY dr.DateValue
+                ";
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                result.Add(new WeeklyPerformanceModel
+                {
+                  Day = reader.GetString(0),
+                  Patients = reader.GetInt32(1),
+                  Revenue = reader.GetDecimal(2)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting weekly performance: {ex.Message}");
+      }
+      return result;
+    }
+
+    public class StaffPerformanceModel
+    {
+      public string Name { get; set; } = string.Empty;
+      public int AppointmentsCount { get; set; }
+      public decimal Revenue { get; set; }
+      public double Rating { get; set; }
+    }
+
+    public async Task<List<StaffPerformanceModel>> GetTopPerformingStaffAsync()
+    {
+      var list = new List<StaffPerformanceModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT TOP 5
+                        u.FirstName + ' ' + u.LastName as Name,
+                        COUNT(DISTINCT st.AppointmentID) as AppointmentsCount,
+                        ISNULL(SUM(st.TotalAmount), 0) as Revenue,
+                        ISNULL(AVG(CAST(f.RatingValue as FLOAT)), 0) as Rating
+                    FROM Users u
+                    JOIN ServiceTransactions st ON u.UserID = st.DentistID
+                    LEFT JOIN Feedback f ON st.AppointmentID = f.AppointmentID
+                    WHERE u.RoleName = 'Dentist'
+                    GROUP BY u.UserID, u.FirstName, u.LastName
+                    ORDER BY Revenue DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new StaffPerformanceModel
+                {
+                  Name = reader.GetString(0),
+                  AppointmentsCount = reader.GetInt32(1),
+                  Revenue = reader.GetDecimal(2),
+                  Rating = reader.GetDouble(3)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting top staff: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<(List<string> Labels, List<decimal> Revenue)> GetRevenueTrendsAsync(string period)
+    {
+      var labels = new List<string>();
+      var revenue = new List<decimal>();
+
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = "";
+
+          if (period == "Monthly")
+          {
+            query = @"
+                        SELECT FORMAT(TransactionDate, 'MMM yyyy') as Label, SUM(TotalAmount) as Revenue
+                        FROM ServiceTransactions
+                        WHERE TransactionDate >= DATEADD(month, -12, GETDATE())
+                        GROUP BY FORMAT(TransactionDate, 'MMM yyyy'), YEAR(TransactionDate), MONTH(TransactionDate)
+                        ORDER BY YEAR(TransactionDate), MONTH(TransactionDate)";
+          }
+          else // Daily
+          {
+            query = @"
+                        SELECT FORMAT(TransactionDate, 'MMM dd') as Label, SUM(TotalAmount) as Revenue
+                        FROM ServiceTransactions
+                        WHERE TransactionDate >= DATEADD(day, -30, GETDATE())
+                        GROUP BY FORMAT(TransactionDate, 'MMM dd'), CAST(TransactionDate as Date)
+                        ORDER BY CAST(TransactionDate as Date)";
+          }
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                labels.Add(reader.GetString(0));
+                revenue.Add(reader.GetDecimal(1));
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting revenue trends: {ex.Message}");
+      }
+
+      return (labels, revenue);
     }
 
     public async Task<(List<string> Labels, List<int> Patients, List<decimal> Revenue)> GetDailyPerformanceAsync(int days)
