@@ -153,6 +153,73 @@ namespace Dental_Clinic.Services
 
     #endregion
 
+    #region Marketing Emails
+
+    public async Task<List<PatientEmailModel>> GetPatientEmailsAsync(string audience)
+    {
+      var results = new List<PatientEmailModel>();
+      try
+      {
+        using (var connection = GetConnection())
+        {
+          await connection.OpenAsync();
+
+          string query = @"SELECT PatientID, FirstName + ' ' + LastName AS Name, Email, Rating = ISNULL(Feedback.Rating, 0), LastVisit = ISNULL(LastVisitDate, GETDATE())
+                           FROM Patient
+                           LEFT JOIN (
+                               SELECT PatientID, MAX(VisitDate) AS LastVisitDate FROM Appointment GROUP BY PatientID
+                           ) v ON v.PatientID = Patient.PatientID
+                           LEFT JOIN (
+                               SELECT TOP 1 PatientID, Rating FROM Feedback ORDER BY Date DESC
+                           ) Feedback ON Feedback.PatientID = Patient.PatientID";
+
+          using (var command = new SqlCommand(query, connection))
+          using (var reader = await command.ExecuteReaderAsync())
+          {
+            while (await reader.ReadAsync())
+            {
+              var email = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+              if (string.IsNullOrWhiteSpace(email)) continue;
+
+              var patient = new PatientEmailModel
+              {
+                PatientID = reader.GetInt32(0),
+                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                Email = email
+              };
+
+              // Audience filtering (best-effort based on available fields)
+              if (audience == "Patients with 4-5 Stars")
+              {
+                int rating = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
+                if (rating < 4) continue;
+              }
+              else if (audience == "Inactive Patients (No visit in 6+ months)")
+              {
+                DateTime lastVisit = reader.IsDBNull(4) ? DateTime.MinValue : reader.GetDateTime(4);
+                if ((DateTime.Now - lastVisit).TotalDays < 180) continue;
+              }
+              else if (audience == "Recent Visitors (This Month)")
+              {
+                DateTime lastVisit = reader.IsDBNull(4) ? DateTime.MinValue : reader.GetDateTime(4);
+                if (lastVisit.Month != DateTime.Now.Month || lastVisit.Year != DateTime.Now.Year) continue;
+              }
+
+              results.Add(patient);
+            }
+          }
+        }
+      }
+      catch
+      {
+        // Fallback: return empty list on error
+      }
+
+      return results;
+    }
+
+    #endregion
+
     #region User Authentication
 
     public async Task<User?> AuthenticateUserAsync(string emailOrUsername, string password)
