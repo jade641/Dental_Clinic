@@ -1902,6 +1902,222 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
       return result;
     }
 
+    #region Reports
+
+    public class FinancialReportModel
+    {
+      public DateTime Date { get; set; }
+      public string Description { get; set; }
+      public string Type { get; set; }
+      public decimal Amount { get; set; }
+      public string PaymentMethod { get; set; }
+    }
+
+    public async Task<List<FinancialReportModel>> GetFinancialReportAsync(DateTime start, DateTime end)
+    {
+      var list = new List<FinancialReportModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT 
+                        PaymentDate, 
+                        'Payment for Appointment #' + CAST(ISNULL(AppointmentID, 0) as NVARCHAR) as Description,
+                        'Income' as Type,
+                        Amount,
+                        PaymentMethod
+                    FROM Payments
+                    WHERE PaymentDate BETWEEN @Start AND @End
+                    ORDER BY PaymentDate DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Start", start);
+            cmd.Parameters.AddWithValue("@End", end);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new FinancialReportModel
+                {
+                  Date = reader.GetDateTime(0),
+                  Description = reader.GetString(1),
+                  Type = reader.GetString(2),
+                  Amount = reader.GetDecimal(3),
+                  PaymentMethod = reader.GetString(4)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Financial Report Error: {ex.Message}"); }
+      return list;
+    }
+
+    public class PatientReportModel
+    {
+      public int PatientID { get; set; }
+      public string Name { get; set; }
+      public DateTime DateAdded { get; set; }
+      public int VisitCount { get; set; }
+      public decimal TotalSpent { get; set; }
+    }
+
+    public async Task<List<PatientReportModel>> GetPatientReportAsync(DateTime start, DateTime end)
+    {
+      var list = new List<PatientReportModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT 
+                        p.PatientID,
+                        p.FirstName + ' ' + p.LastName as Name,
+                        p.DateCreated,
+                        COUNT(DISTINCT a.AppointmentID) as VisitCount,
+                        ISNULL(SUM(pay.Amount), 0) as TotalSpent
+                    FROM Patient p
+                    LEFT JOIN Appointments a ON p.PatientID = a.PatientID AND a.AppointmentDate BETWEEN @Start AND @End
+                    LEFT JOIN Payments pay ON p.PatientID = pay.PatientID AND pay.PaymentDate BETWEEN @Start AND @End
+                    GROUP BY p.PatientID, p.FirstName, p.LastName, p.DateCreated
+                    HAVING COUNT(DISTINCT a.AppointmentID) > 0 OR ISNULL(SUM(pay.Amount), 0) > 0
+                    ORDER BY TotalSpent DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Start", start);
+            cmd.Parameters.AddWithValue("@End", end);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new PatientReportModel
+                {
+                  PatientID = reader.GetInt32(0),
+                  Name = reader.GetString(1),
+                  DateAdded = reader.GetDateTime(2),
+                  VisitCount = reader.GetInt32(3),
+                  TotalSpent = reader.GetDecimal(4)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Patient Report Error: {ex.Message}"); }
+      return list;
+    }
+
+    public class ServiceReportModel
+    {
+      public string ServiceName { get; set; }
+      public int UsageCount { get; set; }
+      public decimal TotalRevenue { get; set; }
+    }
+
+    public async Task<List<ServiceReportModel>> GetServiceReportAsync(DateTime start, DateTime end)
+    {
+      var list = new List<ServiceReportModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT 
+                        s.ServiceName,
+                        COUNT(a.AppointmentID) as UsageCount,
+                        ISNULL(SUM(st.TotalAmount), 0) as TotalRevenue
+                    FROM Services s
+                    JOIN Appointments a ON s.ServiceID = a.ServiceID
+                    LEFT JOIN ServiceTransactions st ON a.AppointmentID = st.AppointmentID
+                    WHERE a.AppointmentDate BETWEEN @Start AND @End
+                    GROUP BY s.ServiceName
+                    ORDER BY TotalRevenue DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Start", start);
+            cmd.Parameters.AddWithValue("@End", end);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new ServiceReportModel
+                {
+                  ServiceName = reader.GetString(0),
+                  UsageCount = reader.GetInt32(1),
+                  TotalRevenue = reader.GetDecimal(2)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Service Report Error: {ex.Message}"); }
+      return list;
+    }
+
+    public class StaffReportModel
+    {
+      public string StaffName { get; set; }
+      public string Role { get; set; }
+      public int AppointmentsHandled { get; set; }
+      public decimal RevenueGenerated { get; set; }
+    }
+
+    public async Task<List<StaffReportModel>> GetStaffReportAsync(DateTime start, DateTime end)
+    {
+      var list = new List<StaffReportModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT 
+                        u.FirstName + ' ' + u.LastName as StaffName,
+                        u.RoleName as Role,
+                        COUNT(DISTINCT a.AppointmentID) as AppointmentsHandled,
+                        ISNULL(SUM(st.TotalAmount), 0) as RevenueGenerated
+                    FROM Users u
+                    LEFT JOIN Appointments a ON u.UserID = a.DentistID AND a.AppointmentDate BETWEEN @Start AND @End
+                    LEFT JOIN ServiceTransactions st ON a.AppointmentID = st.AppointmentID
+                    WHERE u.RoleName IN ('Dentist', 'Admin')
+                    GROUP BY u.UserID, u.FirstName, u.LastName, u.RoleName
+                    ORDER BY RevenueGenerated DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Start", start);
+            cmd.Parameters.AddWithValue("@End", end);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new StaffReportModel
+                {
+                  StaffName = reader.GetString(0),
+                  Role = reader.GetString(1),
+                  AppointmentsHandled = reader.GetInt32(2),
+                  RevenueGenerated = reader.GetDecimal(3)
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Staff Report Error: {ex.Message}"); }
+      return list;
+    }
+
+    #endregion
+
     public class StaffPerformanceModel
     {
       public string Name { get; set; } = string.Empty;
@@ -2553,6 +2769,150 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     }
 
     #endregion
+
+    public class TransactionReportModel
+    {
+      public DateTime Date { get; set; }
+      public string Description { get; set; }
+      public decimal Amount { get; set; }
+      public string Type { get; set; }
+    }
+
+    public class AppointmentReportModel
+    {
+      public DateTime Date { get; set; }
+      public string PatientName { get; set; }
+      public string DentistName { get; set; }
+      public string ServiceName { get; set; }
+      public string Status { get; set; }
+    }
+
+    public class PatientDemographicModel
+    {
+      public string Name { get; set; }
+      public string Email { get; set; }
+      public string Phone { get; set; }
+      public DateTime LastVisit { get; set; }
+    }
+
+    public async Task<List<TransactionReportModel>> GetTransactionsAsync()
+    {
+      var list = new List<TransactionReportModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT PaymentDate, 'Payment for ' + ISNULL(ReferenceNumber, 'Service'), Amount, PaymentMethod
+                    FROM Payments
+                    ORDER BY PaymentDate DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          using (var reader = await cmd.ExecuteReaderAsync())
+          {
+            while (await reader.ReadAsync())
+            {
+              list.Add(new TransactionReportModel
+              {
+                Date = reader.GetDateTime(0),
+                Description = reader.IsDBNull(1) ? "Payment" : reader.GetString(1),
+                Amount = reader.GetDecimal(2),
+                Type = reader.GetString(3)
+              });
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Error getting transactions: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<List<AppointmentReportModel>> GetAppointmentsAsync()
+    {
+      var list = new List<AppointmentReportModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT a.AppointmentDate, 
+                           p.FirstName + ' ' + p.LastName as PatientName,
+                           u.FirstName + ' ' + u.LastName as DentistName,
+                           s.ServiceName,
+                           a.Status
+                    FROM Appointments a
+                    JOIN Patient p ON a.PatientID = p.PatientID
+                    LEFT JOIN Users u ON a.DentistID = u.UserID
+                    LEFT JOIN Services s ON a.ServiceID = s.ServiceID
+                    ORDER BY a.AppointmentDate DESC";
+
+          using (var cmd = new SqlCommand(query, conn))
+          using (var reader = await cmd.ExecuteReaderAsync())
+          {
+            while (await reader.ReadAsync())
+            {
+              list.Add(new AppointmentReportModel
+              {
+                Date = reader.GetDateTime(0),
+                PatientName = reader.GetString(1),
+                DentistName = reader.IsDBNull(2) ? "Unassigned" : reader.GetString(2),
+                ServiceName = reader.IsDBNull(3) ? "General" : reader.GetString(3),
+                Status = reader.GetString(4)
+              });
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Error getting appointments: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<List<PatientDemographicModel>> GetPatientsAsync()
+    {
+      var list = new List<PatientDemographicModel>();
+      try
+      {
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          string query = @"
+                    SELECT p.FirstName + ' ' + p.LastName as Name,
+                           p.Email,
+                           p.PhoneNumber,
+                           (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID ORDER BY AppointmentDate DESC) as LastVisit
+                    FROM Patient p
+                    ORDER BY p.LastName";
+
+          using (var cmd = new SqlCommand(query, conn))
+          using (var reader = await cmd.ExecuteReaderAsync())
+          {
+            while (await reader.ReadAsync())
+            {
+              list.Add(new PatientDemographicModel
+              {
+                Name = reader.GetString(0),
+                Email = reader.IsDBNull(1) ? "" : reader.GetString(1),
+                Phone = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                LastVisit = reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3)
+              });
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"Error getting patients: {ex.Message}");
+      }
+      return list;
+    }
 
   }
 }

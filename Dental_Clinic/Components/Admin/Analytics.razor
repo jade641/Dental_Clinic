@@ -44,11 +44,14 @@
 
             <!-- Sales Management (Revenue Trends) -->
             <div class="card">
-                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="card-header"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <h3 class="card-title">Sales Management</h3>
                     <div class="period-toggle">
-                        <button class="btn-toggle @(revenuePeriod == "Daily" ? "active" : "")" @onclick='() => ChangeRevenuePeriod("Daily")'>Daily</button>
-                        <button class="btn-toggle @(revenuePeriod == "Monthly" ? "active" : "")" @onclick='() => ChangeRevenuePeriod("Monthly")'>Monthly</button>
+                        <button class="btn-toggle @(revenuePeriod == "Daily" ? "active" : "")"
+                            @onclick='() => ChangeRevenuePeriod("Daily")'>Daily</button>
+                        <button class="btn-toggle @(revenuePeriod == "Monthly" ? "active" : "")"
+                            @onclick='() => ChangeRevenuePeriod("Monthly")'>Monthly</button>
                     </div>
                 </div>
                 <div class="chart-container" style="height: 300px;">
@@ -70,17 +73,22 @@
                 <div class="staff-list">
                     @foreach (var staff in topStaff.Select((value, i) => new { i, value }))
                     {
-                        <div class="staff-item" style="display: flex; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
-                            <div class="staff-rank" style="width: 30px; height: 30px; background: @GetRankColor(staff.i); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 1rem;">
+                        <div class="staff-item"
+                            style="display: flex; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
+                            <div class="staff-rank"
+                                style="width: 30px; height: 30px; background: @GetRankColor(staff.i); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 1rem;">
                                 #@(staff.i + 1)
                             </div>
                             <div class="staff-info" style="flex: 1;">
                                 <div class="staff-name" style="font-weight: 600; color: #1f2937;">@staff.value.Name</div>
-                                <div class="staff-sub" style="font-size: 0.875rem; color: #6b7280;">@staff.value.AppointmentsCount appointments</div>
+                                <div class="staff-sub" style="font-size: 0.875rem; color: #6b7280;">
+                                    @staff.value.AppointmentsCount appointments</div>
                             </div>
                             <div class="staff-stats" style="text-align: right;">
-                                <div class="staff-revenue" style="font-weight: 600; color: #1f2937;">₱@staff.value.Revenue.ToString("N0")</div>
-                                <div class="staff-rating" style="font-size: 0.875rem; color: #f59e0b;">⭐ @staff.value.Rating.ToString("F1")</div>
+                                <div class="staff-revenue" style="font-weight: 600; color: #1f2937;">
+                                    ₱@staff.value.Revenue.ToString("N0")</div>
+                                <div class="staff-rating" style="font-size: 0.875rem; color: #f59e0b;">⭐
+                                    @staff.value.Rating.ToString("F1")</div>
                             </div>
                         </div>
                     }
@@ -95,12 +103,14 @@
                 gap: 1.5rem;
                 margin-top: 1.5rem;
             }
+
             .card {
                 background: white;
                 border-radius: 1rem;
                 padding: 1.5rem;
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             }
+
             .btn-toggle {
                 padding: 0.5rem 1rem;
                 border: 1px solid #e5e7eb;
@@ -109,11 +119,13 @@
                 border-radius: 0.5rem;
                 font-size: 0.875rem;
             }
+
             .btn-toggle.active {
                 background: #3b82f6;
                 color: white;
                 border-color: #3b82f6;
             }
+
             .period-toggle {
                 display: flex;
                 gap: 0.5rem;
@@ -122,8 +134,30 @@
     </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Ensures Chart.js is loaded before initCharts runs to avoid intermittent JSExceptions on navigation.
+    window.ensureChartJs = function () {
+        if (window.Chart) {
+            return Promise.resolve();
+        }
+        return new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[data-chartjs]');
+            if (existing) {
+                existing.addEventListener('load', () => resolve());
+                existing.addEventListener('error', reject);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.async = true;
+            script.defer = true;
+            script.dataset.chartjs = 'true';
+            script.onload = () => resolve();
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    };
+
     window.initCharts = function (weeklyLabels, weeklyPatients, weeklyRevenue, revenueLabels, revenueData, serviceLabels, serviceData, serviceColors) {
         // Weekly Performance Chart (Dual Axis)
         const ctxWeekly = document.getElementById('weeklyChart');
@@ -241,7 +275,7 @@
 @code {
     private string revenuePeriod = "Monthly";
     private List<Dental_Clinic.Services.DatabaseService.StaffPerformanceModel> topStaff = new();
-    
+
     // Weekly Performance Data
     private List<string> weeklyLabels = new();
     private List<int> weeklyPatients = new();
@@ -250,7 +284,7 @@
     // Revenue Trends Data
     private List<string> revenueLabels = new();
     private List<decimal> revenueData = new();
-    
+
     // Service Distribution Data
     private List<string> serviceLabels = new();
     private List<int> serviceData = new();
@@ -287,10 +321,11 @@
         topStaff = await DatabaseService.GetTopPerformingStaffAsync();
 
         StateHasChanged();
-        await JSRuntime.InvokeVoidAsync("initCharts", 
-            weeklyLabels, weeklyPatients, weeklyRevenue,
-            revenueLabels, revenueData, 
-            serviceLabels, serviceData, serviceColors);
+        await JSRuntime.InvokeVoidAsync("ensureChartJs");
+        await JSRuntime.InvokeVoidAsync("initCharts",
+        weeklyLabels, weeklyPatients, weeklyRevenue,
+        revenueLabels, revenueData,
+        serviceLabels, serviceData, serviceColors);
     }
 
     private async Task ChangeRevenuePeriod(string period)
@@ -312,7 +347,7 @@
             0 => "#fbbf24", // Gold
             1 => "#9ca3af", // Silver
             2 => "#b45309", // Bronze
-            _ => "#e5e7eb"  // Gray
+            _ => "#e5e7eb" // Gray
         };
     }
 
@@ -320,7 +355,7 @@
     {
         Console.WriteLine("Exporting data...");
     }
-    
+
     private void OnPeriodChanged(ChangeEventArgs e)
     {
         // Placeholder if needed
