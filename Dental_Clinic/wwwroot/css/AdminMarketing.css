@@ -204,19 +204,33 @@ body {
     border-left: none;
     min-height: auto;
     justify-content: flex-start;
+    position: relative;
+    overflow: hidden;
 }
 
-    .stat-card.yellow-border {
-        border-left-color: #fbbf24;
-    }
+/* Left border accent for stat cards */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #e5e7eb; /* neutral default */
+}
 
-    .stat-card.green-border {
-        border-left-color: #10b981;
-    }
+/* Specific card type accents */
+.stat-card.rating::before { /* Average Rating */
+    background: #f59e0b; /* amber/yellow */
+}
 
-    .stat-card.blue-border {
-        border-left-color: #3b82f6;
-    }
+.stat-card.happy::before { /* Happy Patients */
+    background: #10b981; /* green/teal */
+}
+
+.stat-card.pending::before { /* Pending Replies */
+    background: #3b82f6; /* blue */
+}
 
 .stat-left {
     display: flex;

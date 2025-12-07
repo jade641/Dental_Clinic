@@ -389,11 +389,41 @@
     box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
     border: 1px solid #f1f5f9;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .stat-card:hover {
     box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
     transform: translateY(-3px);
+}
+
+/* Left border accent for stat cards */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #E2E8F0; /* default neutral */
+}
+
+/* Color variants matching icon themes */
+.stat-card:has(.revenue-icon)::before {
+    background: #10B981; /* green/teal */
+}
+
+.stat-card:has(.patients-icon)::before {
+    background: #3B82F6; /* blue */
+}
+
+.stat-card:has(.appointments-icon)::before {
+    background: #8B5CF6; /* purple */
+}
+
+.stat-card:has(.rating-icon)::before {
+    background: #F59E0B; /* amber/yellow */
 }
 
 .stat-icon-wrapper {

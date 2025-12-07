@@ -3,9 +3,12 @@
 /* Quick Actions Grid */
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     margin-bottom: 24px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Action Buttons */
@@ -26,6 +29,11 @@
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     position: relative;
     overflow: hidden;
+}
+
+/* Full-width button spans all columns */
+.action-button.full {
+    grid-column: 1 / -1;
 }
 
 .action-button::before {
@@ -87,16 +95,6 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
 }
 
 /* Modal Content */
@@ -108,18 +106,6 @@
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(40px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
 }
 
 /* Waiting Room Modal - Larger */
@@ -167,20 +153,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9;
+    background: transparent;
     border: none;
-    border-radius: 8px;
+    border-radius: 0;
     font-size: 24px;
     color: #64748b;
     cursor: pointer;
-    transition: all 0.2s ease;
     flex-shrink: 0;
-}
-
-.close-btn:hover {
-    background: #e2e8f0;
-    color: #0f172a;
-    transform: rotate(90deg);
 }
 
 /* Modal Body */

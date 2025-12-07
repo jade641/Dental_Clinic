@@ -46,18 +46,16 @@
             </svg>
             Waiting Room
         </button>
+        <button class="action-button emerald" @onclick="OpenBillingModal"
+            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            Walk-in Billing
+        </button>
     </div>
-
-    <!-- Walk-in Billing Button -->
-    <button class="action-button emerald full-width" @onclick="OpenBillingModal"
-        style="width: 100%; margin-top: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-            <line x1="2" y1="10" x2="22" y2="10"></line>
-        </svg>
-        Walk-in Billing
-    </button>
 </div>
 
 <!-- Billing Modal -->
@@ -67,7 +65,7 @@
         <div class="modal-content billing-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Walk-in Billing</h3>
-                <button class="close-btn" @onclick="CloseBillingModal">×</button>
+                <button type="button" class="close-btn" @onclick="CloseBillingModal" aria-label="Close" tabindex="0">×</button>
             </div>
             <div class="modal-body">
                 @if (isProcessingPayment && !string.IsNullOrEmpty(paymentLinkUrl))
@@ -373,7 +371,7 @@
         <div class="modal-content schedule-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Schedule New Appointment</h3>
-                <button class="close-btn" @onclick="CloseScheduleModal">�</button>
+                <button type="button" class="close-btn" @onclick="CloseScheduleModal" aria-label="Close" tabindex="0">×</button>
             </div>
             <p class="modal-subtitle">Fill in the details to schedule a new appointment</p>
             <div class="modal-body">
@@ -439,7 +437,7 @@
         <div class="modal-content register-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Register New Patient</h3>
-                <button class="close-btn" @onclick="CloseRegisterModal">�</button>
+                <button type="button" class="close-btn" @onclick="CloseRegisterModal" aria-label="Close" tabindex="0">×</button>
             </div>
             <p class="modal-subtitle">Enter patient information to create a new record</p>
             <div class="modal-body">
@@ -516,7 +514,7 @@
                     </svg>
                     <h3>Waiting Room - 1 Patient(s) Waiting</h3>
                 </div>
-                <button class="close-btn" @onclick="CloseWaitingRoomModal">�</button>
+                <button type="button" class="close-btn" @onclick="CloseWaitingRoomModal" aria-label="Close" tabindex="0">×</button>
             </div>
             <p class="modal-subtitle">Manage patients currently in the waiting room</p>
             <div class="modal-body waiting-room-body">
