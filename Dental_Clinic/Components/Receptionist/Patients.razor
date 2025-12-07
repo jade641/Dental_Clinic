@@ -2,6 +2,11 @@
 @page "/receptionist/patients"
 @using Microsoft.AspNetCore.Components
 @using Dental_Clinic.Components.Receptionist
+@using Dental_Clinic.Services
+@using Dental_Clinic.Models
+@inject DatabaseService DatabaseService
+@inject EmailService EmailService
+@inject IJSRuntime JSRuntime
 <link href="css/receptionistdashboard.css" rel="stylesheet" />
 <link href="css/ReceptPatients.css" rel="stylesheet" />
 
@@ -10,164 +15,478 @@
 
     <main class="dashboard-main">
         <div class="patients-container">
-        <header class="patients-header">
-            <div class="header-left">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <h1>Patient Directory</h1>
+            <header class="patients-header">
+                <div class="header-left">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <h1>Patient Directory</h1>
+                </div>
+                <button class="btn-add-patient" @onclick="OpenAddModal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Add New Patient
+                </button>
+            </header>
+
+            <div class="search-section">
+                <div class="search-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21L16.65 16.65"></path>
+                    </svg>
+                    <input type="text" @bind="searchTerm" @bind:event="oninput" placeholder="Search patients by name, phone, or email..." />
+                </div>
             </div>
-            <button class="btn-add-patient">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add New Patient
-            </button>
-        </header>
-        <div class="search-section">
-            <div class="search-box">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="M21 21L16.65 16.65"></path>
-                </svg>
-                <input type="text" placeholder="Search patients by name, phone, or email..." />
-            </div>
-        </div>
-        <div class="patients-list">
-            <div class="patient-card">
-                <div class="patient-info">
-                    <div class="patient-avatar">MR</div>
-                    <div class="patient-details">
-                        <h3 class="patient-name">Maria Rodriguez</h3>
-                        <div class="contact-info">
-                            <span class="contact-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                                </svg>
-                                +63 912 345 6789
-                            </span>
-                            <span class="contact-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                    <polyline points="22,6 12,13 2,6"></polyline>
-                                </svg>
-                                maria.r@email.com
-                            </span>
+
+            <div class="patients-list">
+                @if (isLoading)
+                {
+                    <div class="loading-state">Loading patients...</div>
+                }
+                else if (!FilteredPatients.Any())
+                {
+                    <div class="empty-state">No patients found.</div>
+                }
+                else
+                {
+                    @foreach (var patient in FilteredPatients)
+                    {
+                        <div class="patient-card">
+                            <div class="patient-info">
+                                <div class="patient-avatar">@patient.Initials</div>
+                                <div class="patient-details">
+                                    <h3 class="patient-name">@patient.FullName</h3>
+                                    <div class="contact-info">
+                                        <span class="contact-item">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                            </svg>
+                                            @patient.PhoneNumber
+                                        </span>
+                                        <span class="contact-item">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                <polyline points="22,6 12,13 2,6"></polyline>
+                                            </svg>
+                                            @patient.Email
+                                        </span>
+                                    </div>
+                                    <div class="visit-info">
+                                        <span>Last Visit: @(patient.LastVisit?.ToString("dd/MM/yyyy") ?? "N/A")</span>
+                                        <span class="next-visit">Next: @(patient.NextVisit?.ToString("dd/MM/yyyy") ?? "None")</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="patient-actions">
+                                <a href="tel:@patient.PhoneNumber" class="action-btn" title="Call">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                    </svg>
+                                </a>
+                                <button class="action-btn" title="Email Reminder" @onclick="() => OpenEmailModal(patient)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </svg>
+                                </button>
+                                <button class="action-btn" title="Edit" @onclick="() => OpenEditModal(patient)">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="visit-info"><span>Last Visit: 15/09/2025</span><span class="next-visit">Next: 15/10/2025</span></div>
-                    </div>
-                </div>
-                <div class="patient-actions">
-                    <button class="action-btn" title="Call">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                    </button>
-                    <button class="action-btn" title="Email">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                    </button>
-                    <button class="action-btn" title="Edit">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                </div>
+                    }
+                }
             </div>
-            <div class="patient-card">
-                <div class="patient-info">
-                    <div class="patient-avatar">JS</div>
-                    <div class="patient-details">
-                        <h3 class="patient-name">Juan Santos</h3>
-                        <div class="contact-info">
-                            <span class="contact-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                                </svg>
-                                +63 998 765 4321
-                            </span>
-                            <span class="contact-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                    <polyline points="22,6 12,13 2,6"></polyline>
-                                </svg>
-                                juan.s@email.com
-                            </span>
-                        </div>
-                        <div class="visit-info"><span>Last Visit: 01/09/2025</span><span class="next-visit">Next: 15/09/2025</span></div>
-                    </div>
-                </div>
-                <div class="patient-actions">
-                    <button class="action-btn" title="Call">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                    </button>
-                    <button class="action-btn" title="Email">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                    </button>
-                    <button class="action-btn" title="Edit">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <div class="patient-card">
-                <div class="patient-info">
-                    <div class="patient-avatar">ADC</div>
-                    <div class="patient-details">
-                        <h3 class="patient-name">Ana Dela Cruz</h3>
-                        <div class="contact-info">
-                            <span class="contact-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                                </svg>
-                                +63 917 888 9999
-                            </span>
-                            <span class="contact-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                    <polyline points="22,6 12,13 2,6"></polyline>
-                                </svg>
-                                ana.dc@email.com
-                            </span>
-                        </div>
-                        <div class="visit-info"><span>Last Visit: 20/08/2025</span><span class="next-visit">Next: 15/09/2025</span></div>
-                    </div>
-                </div>
-                <div class="patient-actions">
-                    <button class="action-btn" title="Call">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                    </button>
-                    <button class="action-btn" title="Email">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                    </button>
-                    <button class="action-btn" title="Edit">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
         </div>
     </main>
 </div>
+
+<!-- Add/Edit Patient Modal -->
+@if (showAddEditModal)
+{
+    <div class="modal-overlay" @onclick="CloseAddEditModal">
+        <div class="modal-content patient-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3>@(isEditing ? "Edit Patient" : "Add New Patient")</h3>
+                <button class="close-btn" @onclick="CloseAddEditModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" @bind="currentPatient.FirstName" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" @bind="currentPatient.LastName" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email (Username)</label>
+                        <input type="email" @bind="currentPatient.Email" class="form-control" disabled="@isEditing" />
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" @bind="currentPatient.PhoneNumber" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Birth Date</label>
+                        <input type="date" @bind="currentPatient.BirthDate" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label>Sex</label>
+                        <select @bind="currentPatient.Sex" class="form-control">
+                            <option value="">Select...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" @bind="currentPatient.Address" class="form-control" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Marital Status</label>
+                        <select @bind="currentPatient.MaritalStatus" class="form-control">
+                            <option value="">Select...</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Widowed">Widowed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Insurance Provider</label>
+                        <input type="text" @bind="currentPatient.InsuranceProvider" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Medical Alerts (Allergies, etc.)</label>
+                    <textarea @bind="currentPatient.MedicalAlerts" class="form-control" rows="2"></textarea>
+                </div>
+                
+                @if (!isEditing)
+                {
+                    <div class="form-group">
+                        <label>Initial Password</label>
+                        <input type="password" @bind="newPatientPassword" class="form-control" placeholder="Default: 123456" />
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseAddEditModal">Cancel</button>
+                <button class="btn-primary" @onclick="SavePatient">@(isEditing ? "Save Changes" : "Create Account")</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Email Modal -->
+@if (showEmailModal && selectedPatientForEmail != null)
+{
+    <div class="modal-overlay" @onclick="CloseEmailModal">
+        <div class="modal-content email-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3>Send Email to @selectedPatientForEmail.FirstName</h3>
+                <button class="close-btn" @onclick="CloseEmailModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" @bind="emailSubject" class="form-control" placeholder="e.g., Appointment Reminder" />
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea @bind="emailBody" class="form-control" rows="6" placeholder="Type your message here..."></textarea>
+                </div>
+                <div class="quick-templates">
+                    <small>Quick Templates:</small>
+                    <button class="btn-xs" @onclick="UseReminderTemplate">Reminder</button>
+                    <button class="btn-xs" @onclick="UseFollowUpTemplate">Follow-up</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseEmailModal">Cancel</button>
+                <button class="btn-primary" @onclick="SendEmail" disabled="@isSendingEmail">
+                    @(isSendingEmail ? "Sending..." : "Send Email")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<DatabaseService.PatientDetailedModel> patients = new();
+    private string searchTerm = "";
+    private bool isLoading = true;
+
+    // Add/Edit State
+    private bool showAddEditModal = false;
+    private bool isEditing = false;
+    private DatabaseService.PatientDetailedModel currentPatient = new();
+    private string newPatientPassword = "";
+
+    // Email State
+    private bool showEmailModal = false;
+    private DatabaseService.PatientDetailedModel? selectedPatientForEmail;
+    private string emailSubject = "";
+    private string emailBody = "";
+    private bool isSendingEmail = false;
+
+    private List<DatabaseService.PatientDetailedModel> FilteredPatients =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? patients
+            : patients.Where(p => 
+                p.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                p.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                p.PhoneNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatients();
+    }
+
+    private async Task LoadPatients()
+    {
+        isLoading = true;
+        patients = await DatabaseService.GetAllPatientsDetailedAsync();
+        isLoading = false;
+    }
+
+    // --- Add / Edit Logic ---
+
+    private void OpenAddModal()
+    {
+        isEditing = false;
+        currentPatient = new DatabaseService.PatientDetailedModel { BirthDate = DateTime.Now.AddYears(-20) };
+        newPatientPassword = "Password123!"; // Default suggestion
+        showAddEditModal = true;
+    }
+
+    private void OpenEditModal(DatabaseService.PatientDetailedModel patient)
+    {
+        isEditing = true;
+        // Clone to avoid editing the list directly before save
+        currentPatient = new DatabaseService.PatientDetailedModel
+        {
+            PatientID = patient.PatientID,
+            UserID = patient.UserID,
+            FirstName = patient.FirstName,
+            LastName = patient.LastName,
+            Email = patient.Email,
+            PhoneNumber = patient.PhoneNumber,
+            BirthDate = patient.BirthDate,
+            Address = patient.Address,
+            Sex = patient.Sex,
+            MaritalStatus = patient.MaritalStatus,
+            MedicalAlerts = patient.MedicalAlerts,
+            InsuranceProvider = patient.InsuranceProvider,
+            InsurancePolicyNumber = patient.InsurancePolicyNumber
+        };
+        showAddEditModal = true;
+    }
+
+    private void CloseAddEditModal()
+    {
+        showAddEditModal = false;
+    }
+
+    private async Task SavePatient()
+    {
+        if (string.IsNullOrWhiteSpace(currentPatient.FirstName) || string.IsNullOrWhiteSpace(currentPatient.LastName) || string.IsNullOrWhiteSpace(currentPatient.Email))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please fill in required fields (Name, Email).");
+            return;
+        }
+
+        bool success;
+        string message;
+
+        if (isEditing)
+        {
+            (success, message) = await DatabaseService.UpdatePatientAsync(currentPatient);
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(newPatientPassword)) newPatientPassword = "Password123!";
+            (success, message) = await DatabaseService.AddPatientAsync(currentPatient, newPatientPassword);
+        }
+
+        if (success)
+        {
+            await LoadPatients();
+            CloseAddEditModal();
+            await JSRuntime.InvokeVoidAsync("alert", message);
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error: " + message);
+        }
+    }
+
+    // --- Email Logic ---
+
+    private void OpenEmailModal(DatabaseService.PatientDetailedModel patient)
+    {
+        selectedPatientForEmail = patient;
+        emailSubject = "";
+        emailBody = "";
+        showEmailModal = true;
+    }
+
+    private void CloseEmailModal()
+    {
+        showEmailModal = false;
+        selectedPatientForEmail = null;
+    }
+
+    private void UseReminderTemplate()
+    {
+        if (selectedPatientForEmail == null) return;
+        emailSubject = "Appointment Reminder - Jade Dental Clinic";
+        emailBody = $"Dear {selectedPatientForEmail.FirstName},\n\nThis is a friendly reminder for your upcoming appointment at Jade Dental Clinic.\n\nPlease let us know if you need to reschedule.\n\nBest regards,\nJade Dental Clinic Team";
+    }
+
+    private void UseFollowUpTemplate()
+    {
+        if (selectedPatientForEmail == null) return;
+        emailSubject = "Follow-up: How are you feeling?";
+        emailBody = $"Dear {selectedPatientForEmail.FirstName},\n\nWe hope you are recovering well after your recent visit.\n\nIf you experience any unusual pain or discomfort, please do not hesitate to contact us immediately.\n\nBest regards,\nJade Dental Clinic Team";
+    }
+
+    private async Task SendEmail()
+    {
+        if (selectedPatientForEmail == null || string.IsNullOrWhiteSpace(emailSubject) || string.IsNullOrWhiteSpace(emailBody))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Please enter a subject and message.");
+            return;
+        }
+
+        isSendingEmail = true;
+        bool success = await EmailService.SendEmailAsync(selectedPatientForEmail.Email, emailSubject, emailBody.Replace("\n", "<br>"));
+        isSendingEmail = false;
+
+        if (success)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Email sent successfully!");
+            CloseEmailModal();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to send email. Please check configuration.");
+        }
+    }
+}
+
+<style>
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .patient-modal { max-width: 700px; }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+    }
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    .modal-footer {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+    }
+    .btn-primary {
+        background: #0066FF;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #64748b;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    .btn-xs {
+        padding: 4px 8px;
+        font-size: 12px;
+        background: #e2e8f0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 5px;
+    }
+    .quick-templates {
+        margin-top: 5px;
+    }
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-style: italic;
+    }
+</style>

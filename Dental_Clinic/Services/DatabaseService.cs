@@ -966,9 +966,71 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     #endregion
     #region Billing Methods
 
+    public async Task<List<Appointment>> GetAppointmentsForBillingAsync(int patientId)
+    {
+      var appointments = new List<Appointment>();
+      try
+      {
+        // Modified to fetch only Unpaid Completed Appointments
+        // Uses ServiceTransactions for the actual billed amount
+        string query = @"
+                SELECT a.AppointmentID, a.AppointmentDate, a.StartTime, a.EndTime, a.Status,
+                       s.ServiceName, 
+                       COALESCE(st.TotalAmount, s.Cost) as Cost,
+                       u.FirstName + ' ' + u.LastName as DentistName
+                FROM Appointments a
+                JOIN Services s ON a.ServiceID = s.ServiceID
+                JOIN Dentist d ON a.DentistID = d.DentistID
+                JOIN Users u ON d.UserID = u.UserID
+                LEFT JOIN ServiceTransactions st ON a.AppointmentID = st.AppointmentID
+                LEFT JOIN Payments p ON a.AppointmentID = p.AppointmentID
+                WHERE a.PatientID = @PatientID 
+                  AND a.Status = 'Completed'
+                  AND p.PaymentID IS NULL
+                ORDER BY a.AppointmentDate DESC";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@PatientID", patientId);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                appointments.Add(new Appointment
+                {
+                  AppointmentID = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                  AppointmentDate = reader.GetDateTime(reader.GetOrdinal("AppointmentDate")),
+                  StartTime = reader.GetTimeSpan(reader.GetOrdinal("StartTime")),
+                  EndTime = reader.GetTimeSpan(reader.GetOrdinal("EndTime")),
+                  Status = reader.GetString(reader.GetOrdinal("Status")),
+                  ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
+                  ServiceCost = reader.GetDecimal(reader.GetOrdinal("Cost")),
+                  DentistName = reader.GetString(reader.GetOrdinal("DentistName"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting appointments for billing: {ex.Message}");
+      }
+      return appointments;
+    }
+
     public async Task<decimal> GetPatientBalanceAsync(int patientId)
     {
-      string query = "SELECT OutstandingBalance FROM Patient WHERE PatientID = @PatientID";
+      // Calculate balance as Sum of Unpaid Service Transactions (Invoice-Based)
+      string query = @"
+        SELECT ISNULL(SUM(st.TotalAmount), 0)
+        FROM ServiceTransactions st
+        LEFT JOIN Payments p ON st.AppointmentID = p.AppointmentID
+        WHERE st.PatientID = @PatientID AND p.PaymentID IS NULL";
+
       using (var connection = GetConnection())
       {
         await connection.OpenAsync();
@@ -976,15 +1038,12 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         {
           command.Parameters.AddWithValue("@PatientID", patientId);
           var result = await command.ExecuteScalarAsync();
-          if (result != null && result != DBNull.Value)
-          {
-            return Convert.ToDecimal(result);
-          }
-          return 0;
+          return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
         }
       }
     }
 
+    /*
     public async Task<(bool Success, string Message)> DeductPatientBalanceAsync(int patientId, decimal amount)
     {
       try
@@ -1007,6 +1066,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         return (false, ex.Message);
       }
     }
+    */
 
     public async Task<bool> UpdateAppointmentCostAndTreatmentAsync(int appointmentId, int patientId, decimal finalCost, string treatmentNotes, string diagnosis)
     {
@@ -1074,9 +1134,9 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 await cmd.ExecuteNonQueryAsync();
               }
 
-              // 3. Update Patient Balance (Add the FINAL cost to their balance)
-              // Note: We add the full final cost because "Service First, Pay Later" means they haven't paid yet.
-              // If they had paid a deposit, we would subtract that, but assuming standard flow:
+              // 3. Update Patient Balance (REMOVED: We now use Pay Per Appointment model)
+              // The balance is calculated dynamically based on unpaid ServiceTransactions.
+              /*
               string updateBalanceQuery = @"
                                 UPDATE Patient 
                                 SET OutstandingBalance = OutstandingBalance + @FinalCost 
@@ -1088,6 +1148,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 cmd.Parameters.AddWithValue("@PatientID", patientId);
                 await cmd.ExecuteNonQueryAsync();
               }
+              */
 
               // 4. Record Treatment Details
               string insertTreatmentQuery = @"
@@ -1472,144 +1533,145 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
     public async Task<decimal> GetTotalRevenueAsync()
     {
-        try
+      try
+      {
+        string query = "SELECT SUM(Amount) FROM Payments";
+        using (var conn = GetConnection())
         {
-            string query = "SELECT SUM(Amount) FROM Payments";
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    var result = await cmd.ExecuteScalarAsync();
-                    return result != DBNull.Value ? Convert.ToDecimal(result) : 0;
-                }
-            }
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
+          }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error getting total revenue: {ex.Message}");
-            return 0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting total revenue: {ex.Message}");
+        return 0;
+      }
     }
 
     public async Task<int> GetTotalPatientsAsync()
     {
-        try
+      try
+      {
+        string query = "SELECT COUNT(*) FROM Patient";
+        using (var conn = GetConnection())
         {
-            string query = "SELECT COUNT(*) FROM Patient";
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    return (int)await cmd.ExecuteScalarAsync();
-                }
-            }
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+          }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error getting total patients: {ex.Message}");
-            return 0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting total patients: {ex.Message}");
+        return 0;
+      }
     }
 
     public async Task<int> GetTotalAppointmentsAsync()
     {
-        try
+      try
+      {
+        string query = "SELECT COUNT(*) FROM Appointments";
+        using (var conn = GetConnection())
         {
-            string query = "SELECT COUNT(*) FROM Appointments";
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    return (int)await cmd.ExecuteScalarAsync();
-                }
-            }
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+          }
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error getting total appointments: {ex.Message}");
-            return 0;
-        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting total appointments: {ex.Message}");
+        return 0;
+      }
     }
-
     public async Task<Dictionary<string, decimal>> GetMonthlyRevenueAsync(int months)
     {
-        var data = new Dictionary<string, decimal>();
-        try
-        {
-            string query = @"
+      var data = new Dictionary<string, decimal>();
+      try
+      {
+        string query = @"
                 SELECT FORMAT(PaymentDate, 'MMM') as Month, SUM(Amount) as Total
                 FROM Payments
                 WHERE PaymentDate >= DATEADD(month, -@Months, GETDATE())
                 GROUP BY FORMAT(PaymentDate, 'MMM'), MONTH(PaymentDate)
                 ORDER BY MONTH(PaymentDate)";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Months", months);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            data.Add(reader.GetString(0), reader.GetDecimal(1));
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting monthly revenue: {ex.Message}");
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Months", months);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                data.Add(reader.GetString(0), reader.GetDecimal(1));
+              }
+            }
+          }
         }
-        return data;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting monthly revenue: {ex.Message}");
+      }
+      return data;
     }
 
     public async Task<Dictionary<string, int>> GetServiceDistributionAsync()
     {
-        var data = new Dictionary<string, int>();
-        try
-        {
-            string query = @"
+      var data = new Dictionary<string, int>();
+      try
+      {
+        string query = @"
                 SELECT s.ServiceName, COUNT(a.AppointmentID) as Count
                 FROM Appointments a
                 JOIN Services s ON a.ServiceID = s.ServiceID
                 GROUP BY s.ServiceName
                 ORDER BY Count DESC";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            data.Add(reader.GetString(0), reader.GetInt32(1));
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting service distribution: {ex.Message}");
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                data.Add(reader.GetString(0), reader.GetInt32(1));
+              }
+            }
+          }
         }
-        return data;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting service distribution: {ex.Message}");
+      }
+      return data;
     }
 
     public async Task<Dictionary<string, decimal>> GetWeeklyRevenueAsync(int weeks)
     {
-        var data = new Dictionary<string, decimal>();
-        try
-        {
-            // Group by week start date (Monday)
-            string query = @"
+      var data = new Dictionary<string, decimal>();
+      try
+      {
+        // Group by week start date (Monday)
+        string query = @"
                 SET DATEFIRST 1;
                 SELECT 
                     FORMAT(DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE)), 'MM/dd') as WeekStart,
@@ -1619,41 +1681,41 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 GROUP BY DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE))
                 ORDER BY DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE))";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                using (var cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Weeks", weeks);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            data.Add(reader.GetString(0), reader.GetDecimal(1));
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting weekly revenue: {ex.Message}");
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@Weeks", weeks);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                data.Add(reader.GetString(0), reader.GetDecimal(1));
+              }
+            }
+          }
         }
-        return data;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting weekly revenue: {ex.Message}");
+      }
+      return data;
     }
 
     public async Task<List<(string Service, decimal Amount, int Percentage)>> GetServiceRevenueAsync(int days)
     {
-        var list = new List<(string Service, decimal Amount, int Percentage)>();
-        try
-        {
-            decimal totalRevenue = 0;
-            
-            // First get total revenue for percentage calculation
-            string totalQuery = "SELECT SUM(Amount) FROM Payments WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())";
-            
-            // Then get breakdown
-            string query = @"
+      var list = new List<(string Service, decimal Amount, int Percentage)>();
+      try
+      {
+        decimal totalRevenue = 0;
+
+        // First get total revenue for percentage calculation
+        string totalQuery = "SELECT SUM(Amount) FROM Payments WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())";
+
+        // Then get breakdown
+        string query = @"
                 SELECT TOP 5 s.ServiceName, SUM(p.Amount) as TotalRevenue
                 FROM Payments p
                 JOIN Appointments a ON p.AppointmentID = a.AppointmentID
@@ -1662,114 +1724,114 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 GROUP BY s.ServiceName
                 ORDER BY TotalRevenue DESC";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-                
-                using (var cmdTotal = new SqlCommand(totalQuery, conn))
-                {
-                    cmdTotal.Parameters.AddWithValue("@Days", days);
-                    var result = await cmdTotal.ExecuteScalarAsync();
-                    if (result != DBNull.Value)
-                        totalRevenue = Convert.ToDecimal(result);
-                }
-
-                if (totalRevenue > 0)
-                {
-                    using (var cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@Days", days);
-                        using (var reader = await cmd.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                string service = reader.GetString(0);
-                                decimal amount = reader.GetDecimal(1);
-                                int percentage = (int)((amount / totalRevenue) * 100);
-                                list.Add((service, amount, percentage));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting service revenue: {ex.Message}");
+          await conn.OpenAsync();
+
+          using (var cmdTotal = new SqlCommand(totalQuery, conn))
+          {
+            cmdTotal.Parameters.AddWithValue("@Days", days);
+            var result = await cmdTotal.ExecuteScalarAsync();
+            if (result != DBNull.Value)
+              totalRevenue = Convert.ToDecimal(result);
+          }
+
+          if (totalRevenue > 0)
+          {
+            using (var cmd = new SqlCommand(query, conn))
+            {
+              cmd.Parameters.AddWithValue("@Days", days);
+              using (var reader = await cmd.ExecuteReaderAsync())
+              {
+                while (await reader.ReadAsync())
+                {
+                  string service = reader.GetString(0);
+                  decimal amount = reader.GetDecimal(1);
+                  int percentage = (int)((amount / totalRevenue) * 100);
+                  list.Add((service, amount, percentage));
+                }
+              }
+            }
+          }
         }
-        return list;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting service revenue: {ex.Message}");
+      }
+      return list;
     }
 
     public async Task<(List<string> Labels, List<int> Patients, List<decimal> Revenue)> GetDailyPerformanceAsync(int days)
     {
-        var labels = new List<string>();
-        var patients = new List<int>();
-        var revenue = new List<decimal>();
+      var labels = new List<string>();
+      var patients = new List<int>();
+      var revenue = new List<decimal>();
 
-        try
-        {
-            // We need a continuous date range, so we'll generate it in C# or use a recursive CTE
-            // For simplicity, let's fetch data and merge in C#
-            
-            var revenueData = new Dictionary<DateTime, decimal>();
-            var patientData = new Dictionary<DateTime, int>();
+      try
+      {
+        // We need a continuous date range, so we'll generate it in C# or use a recursive CTE
+        // For simplicity, let's fetch data and merge in C#
 
-            string revQuery = @"
+        var revenueData = new Dictionary<DateTime, decimal>();
+        var patientData = new Dictionary<DateTime, int>();
+
+        string revQuery = @"
                 SELECT CAST(PaymentDate as Date) as Date, SUM(Amount) as Revenue
                 FROM Payments
                 WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())
                 GROUP BY CAST(PaymentDate as Date)";
 
-            string patQuery = @"
+        string patQuery = @"
                 SELECT CAST(AppointmentDate as Date), COUNT(*) as Count
                 FROM Appointments
                 WHERE AppointmentDate >= DATEADD(day, -@Days, GETDATE())
                 GROUP BY CAST(AppointmentDate as Date)";
 
-            using (var conn = GetConnection())
-            {
-                await conn.OpenAsync();
-
-                using (var cmd = new SqlCommand(revQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Days", days);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            revenueData[reader.GetDateTime(0)] = reader.GetDecimal(1);
-                        }
-                    }
-                }
-
-                using (var cmd = new SqlCommand(patQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Days", days);
-                    using (var reader = await cmd.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            patientData[reader.GetDateTime(0)] = reader.GetInt32(1);
-                        }
-                    }
-                }
-            }
-
-            // Merge and fill gaps
-            for (int i = days - 1; i >= 0; i--)
-            {
-                var date = DateTime.Today.AddDays(-i);
-                labels.Add(date.ToString("MMM dd"));
-                revenue.Add(revenueData.ContainsKey(date) ? revenueData[date] : 0);
-                patients.Add(patientData.ContainsKey(date) ? patientData[date] : 0);
-            }
-        }
-        catch (Exception ex)
+        using (var conn = GetConnection())
         {
-            System.Diagnostics.Debug.WriteLine($"Error getting daily performance: {ex.Message}");
+          await conn.OpenAsync();
+
+          using (var cmd = new SqlCommand(revQuery, conn))
+          {
+            cmd.Parameters.AddWithValue("@Days", days);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                revenueData[reader.GetDateTime(0)] = reader.GetDecimal(1);
+              }
+            }
+          }
+
+          using (var cmd = new SqlCommand(patQuery, conn))
+          {
+            cmd.Parameters.AddWithValue("@Days", days);
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                patientData[reader.GetDateTime(0)] = reader.GetInt32(1);
+              }
+            }
+          }
         }
 
-        return (labels, patients, revenue);
+        // Merge and fill gaps
+        for (int i = days - 1; i >= 0; i--)
+        {
+          var date = DateTime.Today.AddDays(-i);
+          labels.Add(date.ToString("MMM dd"));
+          revenue.Add(revenueData.ContainsKey(date) ? revenueData[date] : 0);
+          patients.Add(patientData.ContainsKey(date) ? patientData[date] : 0);
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting daily performance: {ex.Message}");
+      }
+
+      return (labels, patients, revenue);
     }
 
     #endregion
@@ -1860,7 +1922,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 SELECT DISTINCT p.PatientID, u.FirstName, u.LastName, u.Email
                 FROM Patient p
                 JOIN Users u ON p.UserID = u.UserID
-                JOIN Appointment a ON p.PatientID = a.PatientID
+                JOIN Appointments a ON p.PatientID = a.PatientID
                 WHERE a.AppointmentDate >= DATEADD(day, -@Days, GETDATE()) AND u.Email IS NOT NULL AND u.Email != ''";
 
         using (var conn = GetConnection())
@@ -1899,7 +1961,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
                 JOIN Users u ON p.UserID = u.UserID
                 WHERE u.Email IS NOT NULL AND u.Email != ''
                 AND p.PatientID NOT IN (
-                    SELECT PatientID FROM Appointment 
+                    SELECT PatientID FROM Appointments 
                     WHERE AppointmentDate >= DATEADD(month, -@Months, GETDATE())
                 )";
 
@@ -2026,6 +2088,222 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
         System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting campaigns: {ex.Message}");
       }
       return list;
+    }
+
+    #endregion
+
+    #region Patient Management
+
+    public class PatientDetailedModel
+    {
+      public int PatientID { get; set; }
+      public int UserID { get; set; }
+      public string FirstName { get; set; } = "";
+      public string LastName { get; set; } = "";
+      public string Email { get; set; } = "";
+      public string PhoneNumber { get; set; } = "";
+      public DateTime BirthDate { get; set; }
+      public string Address { get; set; } = "";
+      public string Sex { get; set; } = "";
+      public string MaritalStatus { get; set; } = "";
+      public string MedicalHistory { get; set; } = "";
+      public string MedicalAlerts { get; set; } = "";
+      public string InsuranceProvider { get; set; } = "";
+      public string InsurancePolicyNumber { get; set; } = "";
+      public DateTime? LastVisit { get; set; }
+      public DateTime? NextVisit { get; set; }
+
+      public string FullName => $"{FirstName} {LastName}";
+      public string Initials => $"{(string.IsNullOrEmpty(FirstName) ? "" : FirstName[0].ToString())}{(string.IsNullOrEmpty(LastName) ? "" : LastName[0].ToString())}";
+    }
+
+    public async Task<List<PatientDetailedModel>> GetAllPatientsDetailedAsync()
+    {
+      var list = new List<PatientDetailedModel>();
+      try
+      {
+        string query = @"
+                SELECT 
+                    p.PatientID, p.UserID, p.BirthDate, p.Address, p.MaritalStatus, p.MedicalHistory, p.MedicalAlerts, p.InsuranceProvider, p.InsurancePolicyNumber,
+                    u.FirstName, u.LastName, u.Email, u.PhoneNumber, u.Sex,
+                    (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID AND AppointmentDate < GETDATE() AND Status = 'Completed' ORDER BY AppointmentDate DESC) as LastVisit,
+                    (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID AND AppointmentDate >= GETDATE() AND Status IN ('Pending', 'Confirmed') ORDER BY AppointmentDate ASC) as NextVisit
+                FROM Patient p
+                JOIN Users u ON p.UserID = u.UserID
+                ORDER BY u.LastName, u.FirstName";
+
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+              while (await reader.ReadAsync())
+              {
+                list.Add(new PatientDetailedModel
+                {
+                  PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                  UserID = reader.GetInt32(reader.GetOrdinal("UserID")),
+                  FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                  LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                  Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? "" : reader.GetString(reader.GetOrdinal("Email")),
+                  PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? "" : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                  BirthDate = reader.GetDateTime(reader.GetOrdinal("BirthDate")),
+                  Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? "" : reader.GetString(reader.GetOrdinal("Address")),
+                  Sex = reader.IsDBNull(reader.GetOrdinal("Sex")) ? "" : reader.GetString(reader.GetOrdinal("Sex")),
+                  MaritalStatus = reader.IsDBNull(reader.GetOrdinal("MaritalStatus")) ? "" : reader.GetString(reader.GetOrdinal("MaritalStatus")),
+                  MedicalHistory = reader.IsDBNull(reader.GetOrdinal("MedicalHistory")) ? "" : reader.GetString(reader.GetOrdinal("MedicalHistory")),
+                  MedicalAlerts = reader.IsDBNull(reader.GetOrdinal("MedicalAlerts")) ? "" : reader.GetString(reader.GetOrdinal("MedicalAlerts")),
+                  InsuranceProvider = reader.IsDBNull(reader.GetOrdinal("InsuranceProvider")) ? "" : reader.GetString(reader.GetOrdinal("InsuranceProvider")),
+                  InsurancePolicyNumber = reader.IsDBNull(reader.GetOrdinal("InsurancePolicyNumber")) ? "" : reader.GetString(reader.GetOrdinal("InsurancePolicyNumber")),
+                  LastVisit = reader.IsDBNull(reader.GetOrdinal("LastVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("LastVisit")),
+                  NextVisit = reader.IsDBNull(reader.GetOrdinal("NextVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("NextVisit"))
+                });
+              }
+            }
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"[DatabaseService] Error getting detailed patients: {ex.Message}");
+      }
+      return list;
+    }
+
+    public async Task<(bool Success, string Message)> AddPatientAsync(PatientDetailedModel model, string password)
+    {
+      using (var conn = GetConnection())
+      {
+        await conn.OpenAsync();
+        using (var transaction = conn.BeginTransaction())
+        {
+          try
+          {
+            // 1. Create User
+            string userQuery = @"
+                        INSERT INTO Users (RoleName, UserName, Password, FirstName, LastName, PhoneNumber, Email, Sex, Age)
+                        VALUES ('Patient', @Email, @Password, @FirstName, @LastName, @PhoneNumber, @Email, @Sex, @Age);
+                        SELECT SCOPE_IDENTITY();";
+
+            int userId;
+            using (var cmd = new SqlCommand(userQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+              cmd.Parameters.AddWithValue("@Password", password); // Should be hashed in real app
+              cmd.Parameters.AddWithValue("@FirstName", model.FirstName);
+              cmd.Parameters.AddWithValue("@LastName", model.LastName);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Sex", model.Sex);
+
+              // Calculate Age
+              int age = DateTime.Now.Year - model.BirthDate.Year;
+              if (model.BirthDate.Date > DateTime.Now.AddYears(-age)) age--;
+              cmd.Parameters.AddWithValue("@Age", age);
+
+              userId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            }
+
+            // 2. Create Patient
+            string patientQuery = @"
+                        INSERT INTO Patient (UserID, BirthDate, Address, MaritalStatus, MedicalHistory, MedicalAlerts, InsuranceProvider, InsurancePolicyNumber, PhoneNumber, Email)
+                        VALUES (@UserID, @BirthDate, @Address, @MaritalStatus, @MedicalHistory, @MedicalAlerts, @InsuranceProvider, @InsurancePolicyNumber, @PhoneNumber, @Email)";
+
+            using (var cmd = new SqlCommand(patientQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@UserID", userId);
+              cmd.Parameters.AddWithValue("@BirthDate", model.BirthDate);
+              cmd.Parameters.AddWithValue("@Address", model.Address);
+              cmd.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus);
+              cmd.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory);
+              cmd.Parameters.AddWithValue("@MedicalAlerts", model.MedicalAlerts);
+              cmd.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider);
+              cmd.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+
+              await cmd.ExecuteNonQueryAsync();
+            }
+
+            transaction.Commit();
+            return (true, "Patient added successfully.");
+          }
+          catch (Exception ex)
+          {
+            transaction.Rollback();
+            return (false, $"Error adding patient: {ex.Message}");
+          }
+        }
+      }
+    }
+
+    public async Task<(bool Success, string Message)> UpdatePatientAsync(PatientDetailedModel model)
+    {
+      using (var conn = GetConnection())
+      {
+        await conn.OpenAsync();
+        using (var transaction = conn.BeginTransaction())
+        {
+          try
+          {
+            // 1. Update User
+            string userQuery = @"
+                        UPDATE Users 
+                        SET FirstName = @FirstName, LastName = @LastName, PhoneNumber = @PhoneNumber, Email = @Email, Sex = @Sex, Age = @Age
+                        WHERE UserID = @UserID";
+
+            using (var cmd = new SqlCommand(userQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@UserID", model.UserID);
+              cmd.Parameters.AddWithValue("@FirstName", model.FirstName);
+              cmd.Parameters.AddWithValue("@LastName", model.LastName);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+              cmd.Parameters.AddWithValue("@Sex", model.Sex);
+
+              int age = DateTime.Now.Year - model.BirthDate.Year;
+              if (model.BirthDate.Date > DateTime.Now.AddYears(-age)) age--;
+              cmd.Parameters.AddWithValue("@Age", age);
+
+              await cmd.ExecuteNonQueryAsync();
+            }
+
+            // 2. Update Patient
+            string patientQuery = @"
+                        UPDATE Patient 
+                        SET BirthDate = @BirthDate, Address = @Address, MaritalStatus = @MaritalStatus, 
+                            MedicalHistory = @MedicalHistory, MedicalAlerts = @MedicalAlerts,
+                            InsuranceProvider = @InsuranceProvider, InsurancePolicyNumber = @InsurancePolicyNumber,
+                            PhoneNumber = @PhoneNumber, Email = @Email
+                        WHERE PatientID = @PatientID";
+
+            using (var cmd = new SqlCommand(patientQuery, conn, transaction))
+            {
+              cmd.Parameters.AddWithValue("@PatientID", model.PatientID);
+              cmd.Parameters.AddWithValue("@BirthDate", model.BirthDate);
+              cmd.Parameters.AddWithValue("@Address", model.Address);
+              cmd.Parameters.AddWithValue("@MaritalStatus", model.MaritalStatus);
+              cmd.Parameters.AddWithValue("@MedicalHistory", model.MedicalHistory);
+              cmd.Parameters.AddWithValue("@MedicalAlerts", model.MedicalAlerts);
+              cmd.Parameters.AddWithValue("@InsuranceProvider", model.InsuranceProvider);
+              cmd.Parameters.AddWithValue("@InsurancePolicyNumber", model.InsurancePolicyNumber);
+              cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+              cmd.Parameters.AddWithValue("@Email", model.Email);
+
+              await cmd.ExecuteNonQueryAsync();
+            }
+
+            transaction.Commit();
+            return (true, "Patient updated successfully.");
+          }
+          catch (Exception ex)
+          {
+            transaction.Rollback();
+            return (false, $"Error updating patient: {ex.Message}");
+          }
+        }
+      }
     }
 
     #endregion
