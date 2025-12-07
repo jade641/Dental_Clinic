@@ -332,9 +332,10 @@
 
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(4, 220px);
+    gap: 24px; /* spacing between cards */
     margin-bottom: 22px;
+    justify-content: center; /* center the row */
 }
 
 .stat-card {
@@ -349,6 +350,10 @@
     min-height: 100px;
     position: relative;
     overflow: hidden;
+}
+.stat-card {
+    padding: 22px 24px;
+    max-width: 220px;
 }
 
 /* Left border accent */

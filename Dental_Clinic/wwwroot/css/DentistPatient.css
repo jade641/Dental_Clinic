@@ -90,7 +90,7 @@ body {
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    background-color: var(--teal);
+    background-color: #2563eb; /* match dentistschedule new-appointment-btn */
     color: white;
     border: none;
     border-radius: 10px;
@@ -101,7 +101,7 @@ body {
 }
 
 .add-patient-btn:hover {
-    background-color: var(--teal-dark);
+    background-color: #1d4ed8; /* slightly darker hover to match schedule button */
 }
 
 .add-patient-btn svg {

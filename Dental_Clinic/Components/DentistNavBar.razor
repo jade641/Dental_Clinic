@@ -234,6 +234,14 @@
     .settings-item.logout .settings-item-text { color: #ef4444; }
     .settings-item.logout .settings-item-icon { color: #ef4444; }
 
+    /* Toggle switch style (matches PatientNavBar) */
+    .settings-toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .settings-toggle input[type="checkbox"] { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: 0.25s; border-radius: 999px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; top: 3px; background-color: white; transition: 0.25s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+    .settings-toggle input:checked + .toggle-slider { background-color: #2563eb; }
+    .settings-toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+
     .user-profile {
         display: flex;
         align-items: center;
@@ -376,7 +384,7 @@
                         </span>
                         <span class="settings-item-text">Schedule & Availability</span>
                     </div>
-                    <div class="settings-item" @onclick="OpenPatientNotification">
+                    <div class="settings-item">
                         <span class="settings-item-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -384,6 +392,10 @@
                             </svg>
                         </span>
                         <span class="settings-item-text">Patient Notification</span>
+                        <label class="settings-toggle">
+                            <input type="checkbox" checked="@patientNotifications" @onchange="TogglePatientNotifications" />
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
                     <div class="settings-item logout" @onclick="Logout">
                         <span class="settings-item-icon">
@@ -449,6 +461,8 @@
     private void ToggleSettings() => showSettings = !showSettings;
     private void EditProfile() { showSettings = false; Navigation.NavigateTo("/dentist/profile"); }
     private void OpenScheduleAvailability() { showSettings = false; Navigation.NavigateTo("/schedule"); }
+    private bool patientNotifications = true;
+    private void TogglePatientNotifications(ChangeEventArgs e) { patientNotifications = e.Value is bool b ? b : patientNotifications; }
     private void OpenPatientNotification() { showSettings = false; Navigation.NavigateTo("/dentist/patients"); }
     private void Logout() { showSettings = false; Navigation.NavigateTo("/login", true); }
 }
