@@ -15,7 +15,9 @@ namespace Dental_Clinic.Services
             _secretKey = configuration["PayMongo:SecretKey"] ?? throw new InvalidOperationException("PayMongo Secret Key is missing in configuration.");
 
             // Ensure TLS 1.2 is used (required by many payment gateways)
+#pragma warning disable SYSLIB0014
             System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+#pragma warning restore SYSLIB0014
 
             _httpClient = new HttpClient();
             _httpClient.BaseAddress = new Uri("https://api.paymongo.com/v1/");

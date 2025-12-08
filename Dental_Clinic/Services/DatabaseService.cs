@@ -657,12 +657,12 @@ namespace Dental_Clinic.Services
               return new User
               {
                 UserID = Convert.ToInt32(reader["UserID"]),
-                FirstName = reader["FirstName"].ToString(),
-                LastName = reader["LastName"].ToString(),
-                Email = reader["Email"].ToString(),
-                RoleName = reader["RoleName"].ToString(),
-                Avatar = HasColumn(reader, "Avatar") && reader["Avatar"] != DBNull.Value ? reader["Avatar"].ToString() : string.Empty,
-                UserName = reader["UserName"] != DBNull.Value ? reader["UserName"].ToString() : string.Empty
+                FirstName = reader["FirstName"] as string ?? string.Empty,
+                LastName = reader["LastName"] as string ?? string.Empty,
+                Email = reader["Email"] as string ?? string.Empty,
+                RoleName = reader["RoleName"] as string ?? string.Empty,
+                Avatar = HasColumn(reader, "Avatar") && reader["Avatar"] != DBNull.Value ? reader["Avatar"]?.ToString() ?? string.Empty : string.Empty,
+                UserName = reader["UserName"] != DBNull.Value ? reader["UserName"]?.ToString() ?? string.Empty : string.Empty
               };
             }
           }
@@ -1477,9 +1477,9 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
           using (var cmd = new SqlCommand(query, conn))
           {
             cmd.Parameters.AddWithValue("@PatientID", feedback.PatientID);
-            cmd.Parameters.AddWithValue("@AppointmentID", (object)feedback.AppointmentID ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@AppointmentID", (object?)feedback.AppointmentID ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@SubmissionDate", feedback.SubmissionDate);
-            cmd.Parameters.AddWithValue("@RatingValue", (object)feedback.RatingValue ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@RatingValue", (object?)feedback.RatingValue ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@FeedbackText", (object)feedback.FeedbackText ?? DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
@@ -1907,10 +1907,10 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     public class FinancialReportModel
     {
       public DateTime Date { get; set; }
-      public string Description { get; set; }
-      public string Type { get; set; }
+      public string Description { get; set; } = string.Empty;
+      public string Type { get; set; } = string.Empty;
       public decimal Amount { get; set; }
-      public string PaymentMethod { get; set; }
+      public string PaymentMethod { get; set; } = string.Empty;
     }
 
     public async Task<List<FinancialReportModel>> GetFinancialReportAsync(DateTime start, DateTime end)
@@ -1960,7 +1960,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     public class PatientReportModel
     {
       public int PatientID { get; set; }
-      public string Name { get; set; }
+      public string Name { get; set; } = string.Empty;
       public DateTime DateAdded { get; set; }
       public int VisitCount { get; set; }
       public decimal TotalSpent { get; set; }
@@ -2015,7 +2015,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
     public class ServiceReportModel
     {
-      public string ServiceName { get; set; }
+      public string ServiceName { get; set; } = string.Empty;
       public int UsageCount { get; set; }
       public decimal TotalRevenue { get; set; }
     }
@@ -2065,8 +2065,8 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
     public class StaffReportModel
     {
-      public string StaffName { get; set; }
-      public string Role { get; set; }
+      public string StaffName { get; set; } = string.Empty;
+      public string Role { get; set; } = string.Empty;
       public int AppointmentsHandled { get; set; }
       public decimal RevenueGenerated { get; set; }
     }
@@ -2773,25 +2773,25 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
     public class TransactionReportModel
     {
       public DateTime Date { get; set; }
-      public string Description { get; set; }
+      public string Description { get; set; } = string.Empty;
       public decimal Amount { get; set; }
-      public string Type { get; set; }
+      public string Type { get; set; } = string.Empty;
     }
 
     public class AppointmentReportModel
     {
       public DateTime Date { get; set; }
-      public string PatientName { get; set; }
-      public string DentistName { get; set; }
-      public string ServiceName { get; set; }
-      public string Status { get; set; }
+      public string PatientName { get; set; } = string.Empty;
+      public string DentistName { get; set; } = string.Empty;
+      public string ServiceName { get; set; } = string.Empty;
+      public string Status { get; set; } = string.Empty;
     }
 
     public class PatientDemographicModel
     {
-      public string Name { get; set; }
-      public string Email { get; set; }
-      public string Phone { get; set; }
+      public string Name { get; set; } = string.Empty;
+      public string Email { get; set; } = string.Empty;
+      public string Phone { get; set; } = string.Empty;
       public DateTime LastVisit { get; set; }
     }
 

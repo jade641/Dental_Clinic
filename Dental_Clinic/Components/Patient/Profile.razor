@@ -180,6 +180,12 @@
                 if (!string.IsNullOrEmpty(imageUrl))
                 {
                     // 2. Update Database
+                    if (currentUser == null)
+                    {
+                        uploadError = "User profile not loaded yet.";
+                        return;
+                    }
+
                     var success = await DatabaseService.UpdateUserAvatarAsync(currentUser.UserID, imageUrl);
 
                     if (success)

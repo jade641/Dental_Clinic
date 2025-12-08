@@ -1,9 +1,12 @@
 ﻿@page "/receptionist/calendar"
 @page "/calendar"
+@using System.Linq
 @using Dental_Clinic.Models
 @using Dental_Clinic.Services
 @using Dental_Clinic.Components.Receptionist
+@using Dental_Clinic.Models
 @inject AppointmentService AppointmentService
+@inject DatabaseService DatabaseService
 @inject SessionService SessionService
 @inject NavigationManager Navigation
 
@@ -39,6 +42,11 @@
                 </div>
             </div>
             <div class="header-actions">
+                <div class="view-toggle">
+                    <button class="@($"toggle-btn {(viewMode == "Day" ? "active" : string.Empty)}")" @onclick="@(() => ChangeViewMode("Day"))">Day</button>
+                    <button class="@($"toggle-btn {(viewMode == "Week" ? "active" : string.Empty)}")" @onclick="@(() => ChangeViewMode("Week"))">Week</button>
+                    <button class="@($"toggle-btn {(viewMode == "Month" ? "active" : string.Empty)}")" @onclick="@(() => ChangeViewMode("Month"))">Month</button>
+                </div>
                 <input type="date" class="date-input" @bind="selectedDate" @bind:after="OnDateChanged" />
                 <button class="btn-refresh" @onclick="LoadDataAsync">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -70,9 +78,9 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    <h3>Appointments for @selectedDate.ToString("MMM dd")</h3>
+                    <h3>Appointments for @rangeLabel</h3>
                 </div>
-                <span class="section-date">@selectedDate.ToString("dddd, MMMM dd, yyyy")</span>
+                <span class="section-date">@rangeSubLabel</span>
             </div>
 
             <div class="appointments-list">
@@ -83,125 +91,136 @@
                         <p>Loading appointments...</p>
                     </div>
                 }
-                else if (appointments.Count == 0)
-                {
-                    <div class="empty-state">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <h4>No appointments scheduled</h4>
-                        <p>No appointments found for @selectedDate.ToString("MMM dd, yyyy")</p>
-                        <p class="mode-info">Current Mode: <strong>@(isOffline ? "Offline" : "Online")</strong></p>
-                        @if (!string.IsNullOrEmpty(errorMessage))
-                        {
-                            <div class="error-message">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                                <span><strong>Error:</strong> @errorMessage</span>
-                            </div>
-                        }
-                    </div>
-                }
                 else
                 {
-                    @foreach (var appt in appointments)
+                    if (appointments.Count == 0)
                     {
-                        <div class="appointment-card">
-                            <!-- Time -->
-                            <div class="appointment-time">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                <span class="time-text">@FormatTime(appt.StartTime)</span>
-                                <span class="duration-text">(@GetDuration(appt.StartTime, appt.EndTime) min)</span>
-                            </div>
-
-                            <!-- Details -->
-                            <div class="appointment-details">
-                                <div class="appointment-header">
-                                    <h4 class="patient-name">@appt.PatientName</h4>
-                                    <span class="status-badge @GetStatusClass(appt.Status)">@appt.Status</span>
-                                </div>
-                                <p class="appointment-service">@appt.ServiceName</p>
-                                <div class="appointment-meta">
-                                    <span class="meta-item">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="12" cy="7" r="4"></circle>
-                                        </svg>
-                                        Dr. @appt.DentistName
-                                    </span>
-                                    <span class="meta-item">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path
-                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                            </path>
-                                        </svg>
-                                        @appt.PatientPhone
-                                    </span>
-                                    @if (!string.IsNullOrEmpty(appt.Notes))
-                                    {
-                                        <span class="meta-item note-item">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                                <polyline points="10 9 9 9 8 9"></polyline>
-                                            </svg>
-                                            @appt.Notes
-                                        </span>
-                                    }
-                                </div>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="appointment-actions">
-                                @if (appt.Status == "Scheduled" || appt.Status == "Pending")
-                                {
-                                    <button class="btn-checkin" @onclick="() => ConfirmAppointment(appt)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <polyline points="20 6 9 17 4 12"></polyline>
-                                        </svg>
-                                        Check In
-                                    </button>
-                                }
-                                <button class="action-icon-btn" title="Edit" @onclick="() => OpenEditModal(appt)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        <div class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <h4>No appointments scheduled</h4>
+                            <p>No appointments found for @rangeLabel</p>
+                            <p class="mode-info">Current Mode: <strong>@(isOffline ? "Offline" : "Online")</strong></p>
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="error-message">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                     </svg>
-                                </button>
-                                @if (appt.Status != "Cancelled")
-                                {
-                                    <button class="action-icon-btn btn-cancel-appt" title="Cancel"
-                                        @onclick="() => CancelAppointment(appt)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                        </svg>
-                                    </button>
-                                }
-                            </div>
+                                    <span><strong>Error:</strong> @errorMessage</span>
+                                </div>
+                            }
                         </div>
+                    }
+                    else
+                    {
+                        @foreach (var group in groupedAppointments)
+                        {
+                            <div class="group-header">
+                                <div class="group-date">@group.Key.ToString("dddd, MMM dd")</div>
+                                <div class="group-count">@group.Count() appointments</div>
+                            </div>
+
+                            @foreach (var appt in group)
+                            {
+                                <div class="appointment-card">
+                                    <!-- Time -->
+                                    <div class="appointment-time">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        <span class="time-text">@FormatTime(appt.StartTime)</span>
+                                        <span class="duration-text">(@GetDuration(appt.StartTime, appt.EndTime) min)</span>
+                                    </div>
+
+                                    <!-- Details -->
+                                    <div class="appointment-details">
+                                        <div class="appointment-header">
+                                            <h4 class="patient-name">@appt.PatientName</h4>
+                                            <span class="status-badge @GetStatusClass(appt.Status)">@appt.Status</span>
+                                        </div>
+                                        <p class="appointment-service">@appt.ServiceName</p>
+                                        <div class="appointment-meta">
+                                            <span class="meta-item">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                    <circle cx="12" cy="7" r="4"></circle>
+                                                </svg>
+                                                Dr. @appt.DentistName
+                                            </span>
+                                            <span class="meta-item">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path
+                                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                                    </path>
+                                                </svg>
+                                                @appt.PatientPhone
+                                            </span>
+                                            @if (!string.IsNullOrEmpty(appt.Notes))
+                                            {
+                                                <span class="meta-item note-item">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                                    </svg>
+                                                    @appt.Notes
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="appointment-actions">
+                                        @if (appt.Status == "Scheduled" || appt.Status == "Pending")
+                                        {
+                                            <button class="btn-checkin" @onclick="() => ConfirmAppointment(appt)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                                Check In
+                                            </button>
+                                        }
+                                        <button class="action-icon-btn" title="Edit" @onclick="() => OpenEditModal(appt)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                        @if (appt.Status != "Cancelled")
+                                        {
+                                            <button class="action-icon-btn btn-cancel-appt" title="Cancel"
+                                                @onclick="() => CancelAppointment(appt)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
                     }
                 }
             </div>
@@ -218,13 +237,16 @@
                 <button class="close-btn" @onclick="CloseModal">×</button>
             </div>
             <div class="modal-body">
-                @if (!isEditing)
-                {
-                    <div class="form-group">
-                        <label class="form-label">Patient ID</label>
-                        <input type="number" class="form-input" @bind="editingModel.PatientID" placeholder="Enter patient ID" />
-                    </div>
-                }
+                <div class="form-group">
+                    <label class="form-label">Patient</label>
+                    <select class="form-input" @bind="editingModel.PatientID">
+                        <option value="0">Select Patient</option>
+                        @foreach (var p in patients)
+                        {
+                            <option value="@p.PatientID">@p.FullName</option>
+                        }
+                    </select>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Dentist</label>
                     <select class="form-input" @bind="editingModel.DentistID">
@@ -236,13 +258,48 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Service ID</label>
-                    <input type="number" class="form-input" @bind="editingModel.ServiceID" placeholder="Enter service ID" />
+                    <label class="form-label">Service</label>
+                    <select class="form-input" @bind="editingModel.ServiceID">
+                        <option value="0">Select Service</option>
+                        @foreach (var s in services)
+                        {
+                            <option value="@s.ServiceID">@s.ServiceName</option>
+                        }
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Date</label>
                     <input type="date" class="form-input" @bind="editingModel.AppointmentDate" />
                 </div>
+                <div class="form-group slot-actions">
+                    <button class="btn-refresh" @onclick="async () => await LoadTimeSlotsAsync()" disabled="@(isSlotsLoading || editingModel.ServiceID == 0)">
+                        @(isSlotsLoading ? "Loading slots..." : "Check Availability")
+                    </button>
+                    <span class="slot-hint">Select service and date, then check availability.</span>
+                </div>
+                @if (!string.IsNullOrEmpty(slotError))
+                {
+                    <div class="error-message" style="margin-bottom:10px;">@slotError</div>
+                }
+                @if (timeSlots.Count > 0)
+                {
+                    <div class="slots-grid">
+                        @foreach (var slot in timeSlots.OrderBy(s => s.StartTime))
+                        {
+                            var isSelected = selectedSlot?.StartTime == slot.StartTime && selectedSlot?.DentistID == slot.DentistID;
+                            <button class="slot-chip @(slot.IsAvailable ? "available" : "unavailable") @(isSelected ? "selected" : string.Empty)"
+                                    disabled="@(!slot.IsAvailable)"
+                                    @onclick="() => SelectSlot(slot)">
+                                <div class="slot-time">@slot.FormattedTime</div>
+                                <div class="slot-dentist">Dr. @slot.DentistName</div>
+                                @if (!slot.IsAvailable)
+                                {
+                                    <div class="slot-status">Booked</div>
+                                }
+                            </button>
+                        }
+                    </div>
+                }
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Start Time</label>
@@ -290,13 +347,28 @@
 
 @code {
     private List<Appointment> appointments = new();
+    private IEnumerable<IGrouping<DateTime, Appointment>> groupedAppointments => appointments
+        .OrderBy(a => a.AppointmentDate)
+        .ThenBy(a => a.StartTime)
+        .GroupBy(a => a.AppointmentDate.Date);
     private List<DentistAvailability> dentists = new();
+    private List<DatabaseService.PatientDetailedModel> patients = new();
+    private List<Service> services = new();
+    private List<TimeSlotModel> timeSlots = new();
+    private TimeSlotModel? selectedSlot;
+    private bool isSlotsLoading = false;
+    private string slotError = string.Empty;
     private bool isLoading = true;
     private bool showModal = false;
     private bool isEditing = false;
     private CreateAppointmentModel editingModel = new();
     private int? editingAppointmentId = null;
     private DateTime selectedDate = DateTime.Today;
+    private string viewMode = "Day";
+    private DateTime rangeStart;
+    private DateTime rangeEnd;
+    private string rangeLabel = string.Empty;
+    private string rangeSubLabel = string.Empty;
     private bool isOffline = false;
     
     // Success Modal State
@@ -377,8 +449,10 @@
             errorMessage = null;
             isOffline = AppointmentService.IsOffline;
 
+            (rangeStart, rangeEnd, rangeLabel, rangeSubLabel) = CalculateRange(selectedDate, viewMode);
+
             // Get appointments for selected date
-            appointments = await AppointmentService.GetAppointmentsInRangeAsync(selectedDate, selectedDate) ?? new();
+            appointments = await AppointmentService.GetAppointmentsInRangeAsync(rangeStart, rangeEnd) ?? new();
 
             if (appointments.Count == 0 && !string.IsNullOrEmpty(AppointmentService.LastError))
             {
@@ -386,6 +460,14 @@
             }
 
             dentists = await AppointmentService.GetAvailableDentistsAsync(selectedDate) ?? new();
+            if (patients.Count == 0)
+            {
+                patients = await DatabaseService.GetAllPatientsDetailedAsync();
+            }
+            if (services.Count == 0)
+            {
+                services = await AppointmentService.GetAllServicesAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -403,6 +485,99 @@
         // Guarded refresh after date change
         await LoadDataAsync();
     }
+
+    private async Task OnDateChangedForSlots()
+    {
+        await LoadTimeSlotsAsync();
+    }
+
+    private (DateTime Start, DateTime End, string Label, string SubLabel) CalculateRange(DateTime anchor, string mode)
+    {
+        var start = anchor.Date;
+        var end = anchor.Date;
+        switch (mode)
+        {
+            case "Week":
+                var diff = (int)anchor.DayOfWeek == 0 ? 6 : (int)anchor.DayOfWeek - 1; // Monday start
+                start = anchor.Date.AddDays(-diff);
+                end = start.AddDays(6);
+                break;
+            case "Month":
+                start = new DateTime(anchor.Year, anchor.Month, 1);
+                end = start.AddMonths(1).AddDays(-1);
+                break;
+            default:
+                start = anchor.Date;
+                end = anchor.Date;
+                break;
+        }
+
+        var label = mode switch
+        {
+            "Week" => $"{start:MMM dd} - {end:MMM dd}",
+            "Month" => anchor.ToString("MMMM yyyy"),
+            _ => anchor.ToString("MMM dd, yyyy")
+        };
+
+        var sub = mode switch
+        {
+            "Week" => $"Week of {start:MMMM dd, yyyy}",
+            "Month" => $"{start:MMM dd} - {end:MMM dd, yyyy}",
+            _ => anchor.ToString("dddd, MMMM dd, yyyy")
+        };
+
+        return (start, end, label, sub);
+    }
+
+    private async Task ChangeViewMode(string mode)
+    {
+        if (viewMode == mode) return;
+        viewMode = mode;
+        await LoadDataAsync();
+    }
+
+    private async Task LoadTimeSlotsAsync()
+    {
+        try
+        {
+            slotError = string.Empty;
+            timeSlots.Clear();
+            selectedSlot = null;
+
+            if (editingModel.ServiceID == 0)
+            {
+                slotError = "Select a service first.";
+                return;
+            }
+
+            isSlotsLoading = true;
+            timeSlots = await AppointmentService.GetAvailableTimeSlotsAsync(editingModel.AppointmentDate, editingModel.ServiceID) ?? new();
+
+            if (timeSlots.Count == 0)
+            {
+                slotError = "No available slots for this date.";
+            }
+        }
+        catch (Exception ex)
+        {
+            slotError = ex.Message;
+        }
+        finally
+        {
+            isSlotsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SelectSlot(TimeSlotModel slot)
+    {
+        if (!slot.IsAvailable) return;
+        selectedSlot = slot;
+        editingModel.StartTime = slot.StartTime;
+        editingModel.EndTime = slot.EndTime;
+        editingModel.DentistID = slot.DentistID;
+    }
+
 
     private async Task RetryConnection()
     {
@@ -441,6 +616,9 @@
             StartTime = new TimeSpan(9, 0, 0),
             EndTime = new TimeSpan(10, 0, 0)
         };
+        timeSlots.Clear();
+        selectedSlot = null;
+        slotError = string.Empty;
         showModal = true;
     }
 
@@ -459,6 +637,9 @@
             Notes = appt.Notes,
             PatientName = appt.PatientName
         };
+        timeSlots.Clear();
+        selectedSlot = null;
+        slotError = string.Empty;
         showModal = true;
     }
 
@@ -466,6 +647,18 @@
 
     private async Task SaveAppointment()
     {
+        if (editingModel.ServiceID == 0)
+        {
+            slotError = "Please select a service.";
+            return;
+        }
+
+        if (editingModel.DentistID == 0 || editingModel.StartTime == TimeSpan.Zero || editingModel.EndTime == TimeSpan.Zero)
+        {
+            slotError = "Please pick an available slot (dentist + time).";
+            return;
+        }
+
         if (isEditing && editingAppointmentId.HasValue)
         {
             var result = await AppointmentService.UpdateAppointmentAsync(
