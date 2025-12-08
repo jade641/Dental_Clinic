@@ -58,7 +58,8 @@
         <div class="modal-content billing-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Walk-in Billing</h3>
-                <button type="button" class="close-btn" @onclick="CloseBillingModal" aria-label="Close" tabindex="0">×</button>
+                <button type="button" class="close-btn" @onclick="CloseBillingModal" aria-label="Close"
+                    tabindex="0">×</button>
             </div>
             <div class="modal-body">
                 @if (isProcessingPayment && !string.IsNullOrEmpty(paymentLinkUrl))
@@ -67,13 +68,15 @@
                     <div class="payment-waiting-state" style="text-align: center; padding: 30px 0;">
                         <div class="spinner"></div>
                         <h4 style="margin-top: 20px; color: #333;">Waiting for Payment...</h4>
-                        <p style="color: #666; margin-bottom: 20px;">Please ask the patient to scan the QR code or use the link.</p>
-                        
-                        <div class="qr-container" style="background: white; padding: 15px; border: 1px solid #eee; border-radius: 8px; display: inline-block; margin-bottom: 20px;">
+                        <p style="color: #666; margin-bottom: 20px;">Please ask the patient to scan the QR code or use the link.
+                        </p>
+
+                        <div class="qr-container"
+                            style="background: white; padding: 15px; border: 1px solid #eee; border-radius: 8px; display: inline-block; margin-bottom: 20px;">
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=@System.Net.WebUtility.UrlEncode(paymentLinkUrl)"
                                 alt="Payment QR Code" style="width: 200px; height: 200px;" />
                         </div>
-                        
+
                         <div style="margin-bottom: 20px;">
                             <a href="@paymentLinkUrl" target="_blank" class="payment-link-btn">Open Payment Link Manually</a>
                         </div>
@@ -121,7 +124,8 @@
                     <!-- Appointment Selection -->
                     <div class="form-group">
                         <label>Select Appointment to Pay</label>
-                        <select @onchange="OnBillingAppointmentChanged" disabled="@(billingAppointments.Count == 0)" class="form-control">
+                        <select @onchange="OnBillingAppointmentChanged" disabled="@(billingAppointments.Count == 0)"
+                            class="form-control">
                             <option value="">Select Appointment...</option>
                             @foreach (var app in billingAppointments)
                             {
@@ -182,7 +186,8 @@
                             </div>
                             <div class="form-group">
                                 <label>Remaining Balance</label>
-                                <div class="amount-display small">₱@((billingTotalAmount - billingDownpaymentAmount).ToString("N2"))</div>
+                                <div class="amount-display small">₱@((billingTotalAmount - billingDownpaymentAmount).ToString("N2"))
+                                </div>
                             </div>
                         }
                     </div>
@@ -192,13 +197,14 @@
             <div class="modal-footer">
                 @if (isProcessingPayment && !string.IsNullOrEmpty(paymentLinkUrl))
                 {
-                     <button class="btn-secondary" @onclick="CloseBillingModal">Cancel Payment</button>
-                     <button class="btn-secondary small" @onclick="CheckPaymentStatus">Check Status Manually</button>
+                    <button class="btn-secondary" @onclick="CloseBillingModal">Cancel Payment</button>
+                    <button class="btn-secondary small" @onclick="CheckPaymentStatus">Check Status Manually</button>
                 }
                 else
                 {
                     <button class="btn-secondary" @onclick="CloseBillingModal">Cancel</button>
-                    <button class="btn-primary emerald" @onclick="ProcessBilling" disabled="@(!CanProcessBilling || isProcessingPayment)">
+                    <button class="btn-primary emerald" @onclick="ProcessBilling"
+                        disabled="@(!CanProcessBilling || isProcessingPayment)">
                         @(isProcessingPayment ? "Processing..." : "Process Payment")
                     </button>
                 }
@@ -218,6 +224,7 @@
         border-radius: 6px;
         margin-top: 5px;
     }
+
     .patient-icon {
         background: #0ea5e9;
         color: white;
@@ -228,11 +235,13 @@
         align-items: center;
         justify-content: center;
     }
+
     .payment-options-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 15px;
     }
+
     .radio-group-styled {
         display: flex;
         gap: 5px;
@@ -240,6 +249,7 @@
         padding: 4px;
         border-radius: 6px;
     }
+
     .radio-group-styled label {
         flex: 1;
         text-align: center;
@@ -249,15 +259,18 @@
         font-size: 14px;
         transition: all 0.2s;
     }
+
     .radio-group-styled label.active {
         background: white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         font-weight: 600;
         color: #0f172a;
     }
+
     .radio-group-styled input {
         display: none;
     }
+
     .amount-summary-box {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -265,15 +278,18 @@
         border-radius: 8px;
         margin-top: 10px;
     }
+
     .amount-display {
         font-size: 24px;
         font-weight: bold;
         color: #10b981;
     }
+
     .amount-display.small {
         font-size: 18px;
         color: #64748b;
     }
+
     .payment-link-btn {
         display: inline-block;
         padding: 8px 16px;
@@ -283,9 +299,11 @@
         border-radius: 6px;
         font-size: 14px;
     }
+
     .payment-link-btn:hover {
         background: #2563eb;
     }
+
     .spinner {
         border: 4px solid #f3f3f3;
         border-top: 4px solid #10b981;
@@ -295,9 +313,15 @@
         animation: spin 1s linear infinite;
         margin: 0 auto;
     }
+
     @@keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>
 
@@ -336,7 +360,8 @@
                     </div>
                     <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <span style="color: #666;">Reference #:</span>
-                        <span style="font-weight: 500;">@(string.IsNullOrEmpty(lastTransaction.ReferenceNumber) ? "N/A" : lastTransaction.ReferenceNumber)</span>
+                        <span style="font-weight: 500;">@(string.IsNullOrEmpty(lastTransaction.ReferenceNumber) ? "N/A" :
+                                                    lastTransaction.ReferenceNumber)</span>
                     </div>
                 </div>
                 <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;" />
@@ -364,7 +389,8 @@
         <div class="modal-content schedule-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Schedule New Appointment</h3>
-                <button type="button" class="close-btn" @onclick="CloseScheduleModal" aria-label="Close" tabindex="0">×</button>
+                <button type="button" class="close-btn" @onclick="CloseScheduleModal" aria-label="Close"
+                    tabindex="0">×</button>
             </div>
             <p class="modal-subtitle">Fill in the details to schedule a new appointment</p>
             <div class="modal-body">
@@ -430,7 +456,8 @@
         <div class="modal-content register-modal" @onclick:stopPropagation>
             <div class="modal-header">
                 <h3>Register New Patient</h3>
-                <button type="button" class="close-btn" @onclick="CloseRegisterModal" aria-label="Close" tabindex="0">×</button>
+                <button type="button" class="close-btn" @onclick="CloseRegisterModal" aria-label="Close"
+                    tabindex="0">×</button>
             </div>
             <p class="modal-subtitle">Enter patient information to create a new record</p>
             <div class="modal-body">
@@ -507,7 +534,8 @@
                     </svg>
                     <h3>Waiting Room - 1 Patient(s) Waiting</h3>
                 </div>
-                <button type="button" class="close-btn" @onclick="CloseWaitingRoomModal" aria-label="Close" tabindex="0">×</button>
+                <button type="button" class="close-btn" @onclick="CloseWaitingRoomModal" aria-label="Close"
+                    tabindex="0">×</button>
             </div>
             <p class="modal-subtitle">Manage patients currently in the waiting room</p>
             <div class="modal-body waiting-room-body">
@@ -697,27 +725,23 @@
     }
 
     private bool isProcessingPayment = false;
-    private string paymentStatusMessage = "";
 
     private async Task ProcessBilling()
     {
         if (!CanProcessBilling) return;
 
         isProcessingPayment = true;
-        paymentStatusMessage = "Processing...";
         decimal amountToPay = billingPaymentType == "Full" ? billingTotalAmount : billingDownpaymentAmount;
 
         if (billingPaymentMethod == "GCash" || billingPaymentMethod == "Maya" || billingPaymentMethod == "Credit Card")
         {
             // Create PayMongo Link
-            paymentStatusMessage = "Generating Payment Link...";
             var result = await PayMongoService.CreatePaymentLinkAsync(amountToPay, $"{selectedAppointment?.ServiceName} for {selectedBillingPatient?.Name}");
-            
+
             if (!string.IsNullOrEmpty(result.Url))
             {
                 paymentLinkUrl = result.Url;
                 paymentLinkId = result.Id;
-                paymentStatusMessage = "Waiting for payment...";
                 StateHasChanged();
 
                 // Start Polling
@@ -730,7 +754,6 @@
                     if (status == "paid")
                     {
                         isPaid = true;
-                        paymentStatusMessage = "Payment Verified!";
                         StateHasChanged();
                         await Task.Delay(1000); // Brief delay to show success message
                         await RecordPayment(amountToPay, "Paid");
@@ -740,7 +763,6 @@
 
                 if (!isPaid && showBillingModal)
                 {
-                    paymentStatusMessage = "Payment timed out. Please try again or check status manually.";
                     isProcessingPayment = false;
                 }
             }
@@ -784,8 +806,9 @@
             Amount = amount,
             PaymentDate = DateTime.Now,
             PaymentMethod = billingPaymentMethod,
-            ReferenceNumber = !string.IsNullOrEmpty(paymentLinkId) ? paymentLinkId : $"CASH-{DateTime.Now.Ticks}", // Set Reference Number
-            Remarks = $"{selectedAppointment.ServiceName} - {billingPaymentType} ({status})"
+            ReferenceNumber = !string.IsNullOrEmpty(paymentLinkId) ? paymentLinkId : $"CASH-{DateTime.Now.Ticks}", // Set Reference
+            Number
+        Remarks = $"{selectedAppointment.ServiceName} - {billingPaymentType} ({status})"
         };
 
         bool success = await DatabaseService.RecordPaymentAsync(payment);

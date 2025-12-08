@@ -332,7 +332,6 @@
 </div>
 
 @code {
-    private string searchQuery = "";
     private string activeTab = "inbox";
     private string selectedCategory = "";
     private string selectedRating = "";
@@ -340,7 +339,6 @@
     private bool showPromoModal = false;
     private string replyMessage = "";
     private string promoTitle = "";
-    private int promoDiscount = 0;
     private DateTime promoValidUntil = DateTime.Now.AddMonths(1);
     private string promoDescription = "";
     private int currentFeedbackId = 0;
@@ -350,7 +348,6 @@
     private string selectedAudience = "All Patients";
     private IBrowserFile? selectedImageFile;
     private string uploadedImageUrl = "";
-    private bool showSuccessMessage = false;
 
     private double averageRating = 0;
     private int happyPatients = 0;
@@ -482,7 +479,6 @@
         showPromoModal = false;
         replyMessage = "";
         promoTitle = "";
-        promoDiscount = 0;
         promoDescription = "";
         isSending = false;
     }

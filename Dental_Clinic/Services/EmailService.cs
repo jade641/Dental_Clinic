@@ -152,15 +152,15 @@ namespace Dental_Clinic.Services
             try
             {
                 if (string.IsNullOrWhiteSpace(email)) return null;
-                // Generate a secure random token
-                var token = GenerateSecureToken();
-                var expiryTime = DateTime.UtcNow.AddHours(1); // Token valid for1 hour
+                // Generate a 6-digit code
+                var token = new Random().Next(100000, 999999).ToString();
+                var expiryTime = DateTime.UtcNow.AddHours(1); // Token valid for 1 hour
 
                 // Store token in database
                 await StoreResetTokenAsync(email, token, expiryTime, databaseService);
 
-                // Send email
-                var emailSent = await SendPasswordResetEmailAsync(email, token);
+                // Send email with code
+                var emailSent = await SendVerificationCodeAsync(email, token, "Password Reset Code");
 
                 return emailSent ? token : null;
             }
@@ -169,6 +169,41 @@ namespace Dental_Clinic.Services
                 Debug.WriteLine($"[EmailService] Error generating reset token: {ex.Message}");
                 return null;
             }
+        }
+
+        public async Task<bool> SendVerificationCodeAsync(string toEmail, string code, string subject = "Verification Code")
+        {
+            var body = $@"<!DOCTYPE html>
+<html>
+<head>
+ <style>
+ body {{ font-family: Arial, sans-serif; line-height:1.6; color:#333; }}
+ .container {{ max-width:600px; margin:0 auto; padding:20px; border:1px solid #ddd; border-radius:8px; }}
+ .header {{ background:#0066FF; color:#fff; padding:20px; text-align:center; border-radius:8px 8px 0 0; }}
+ .content {{ padding:20px; text-align:center; }}
+ .code {{ font-size:32px; font-weight:bold; color:#0066FF; letter-spacing:5px; margin:20px 0; }}
+ .footer {{ text-align:center; font-size:12px; color:#666; margin-top:20px; }}
+ </style>
+</head>
+<body>
+ <div class='container'>
+  <div class='header'>
+   <h1>Jade Dental Clinic</h1>
+  </div>
+  <div class='content'>
+   <h2>{subject}</h2>
+   <p>Please use the following code to verify your request:</p>
+   <div class='code'>{code}</div>
+   <p>This code will expire in 1 hour.</p>
+   <p>If you didn't request this, please ignore this email.</p>
+  </div>
+  <div class='footer'>
+   <p>2025 Jade Dental Clinic. All rights reserved.</p>
+  </div>
+ </div>
+</body>
+</html>";
+            return await SendEmailAsync(toEmail, subject, body);
         }
 
         private string GenerateSecureToken()

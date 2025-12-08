@@ -11,7 +11,6 @@ namespace Dental_Clinic.Components.Layout
         private bool showLoginPassword = false;
         private bool showSignupPassword = false;
         private bool isLoading = false;
-        private bool showSyncModal = false;
         private bool isAuthenticatingWithGoogle = false; // NEW: Track Google auth state
 
         private string errorMessage = string.Empty;
@@ -31,6 +30,11 @@ namespace Dental_Clinic.Components.Layout
         [Inject] private SyncService SyncService { get; set; } = default!;
         [Inject] private GoogleAuthService GoogleAuthService { get; set; } = default!;
         [Inject] private SessionService SessionService { get; set; } = default!;
+        [Inject] private EmailService EmailService { get; set; } = default!; // Added EmailService
+
+        private bool isVerifying = false;
+        private string verificationCode = string.Empty;
+        private string generatedCode = string.Empty;
 
         protected override async Task OnInitializedAsync()
         {
@@ -75,7 +79,6 @@ namespace Dental_Clinic.Components.Layout
         private void OnSyncCompleted(object? sender, SyncCompletedEventArgs e)
         {
             syncMessage = e.Result.Message;
-            showSyncModal = false;
             InvokeAsync(StateHasChanged);
         }
 
@@ -131,7 +134,6 @@ namespace Dental_Clinic.Components.Layout
             try
             {
                 if (SyncService == null) return;
-                showSyncModal = true;
                 syncMessage = "Starting sync...";
                 syncProgress = 0;
 
@@ -140,7 +142,6 @@ namespace Dental_Clinic.Components.Layout
             catch (Exception ex)
             {
                 errorMessage = $"Sync error: {ex.Message}";
-                showSyncModal = false;
             }
         }
 
@@ -151,7 +152,6 @@ namespace Dental_Clinic.Components.Layout
                 errorMessage = "Cannot upload: No internet connection";
                 return;
             }
-            showSyncModal = true;
             syncMessage = "Uploading pending changes...";
             syncProgress = 0;
 
@@ -178,7 +178,7 @@ namespace Dental_Clinic.Components.Layout
                 {
                     // Save session
                     await SessionService.SaveSessionAsync(session);
-                    
+
                     // Navigate based on role
                     string dashboardRoute = GetDashboardRoute(session.Role);
                     Navigation.NavigateTo(dashboardRoute, forceLoad: true);
@@ -207,28 +207,54 @@ namespace Dental_Clinic.Components.Layout
 
             try
             {
-                if (AuthService == null)
+                if (!isVerifying)
                 {
-                    errorMessage = "Authentication service not available";
-                    return;
-                }
+                    // Step 1: Send Verification Code
+                    generatedCode = new Random().Next(100000, 999999).ToString();
+                    bool sent = await EmailService.SendVerificationCodeAsync(signUpModel.Email, generatedCode);
 
-                var result = await AuthService.RegisterAsync(signUpModel);
-
-                if (result.Success)
-                {
-                    successMessage = result.Message;
-
-                    // Auto-login after successful registration
-                    await Task.Delay(2000); // Show success message for 2 seconds
-
-                    loginModel.EmailOrUsername = signUpModel.Email;
-                    loginModel.Password = signUpModel.Password;
-                    await HandleLogin();
+                    if (sent)
+                    {
+                        isVerifying = true;
+                        successMessage = "Verification code sent to your email.";
+                    }
+                    else
+                    {
+                        errorMessage = "Failed to send verification email.";
+                    }
                 }
                 else
                 {
-                    errorMessage = result.Message;
+                    // Step 2: Verify Code and Register
+                    if (verificationCode != generatedCode)
+                    {
+                        errorMessage = "Invalid verification code.";
+                        return;
+                    }
+
+                    if (AuthService == null)
+                    {
+                        errorMessage = "Authentication service not available";
+                        return;
+                    }
+
+                    var result = await AuthService.RegisterAsync(signUpModel);
+
+                    if (result.Success)
+                    {
+                        successMessage = result.Message;
+
+                        // Auto-login after successful registration
+                        await Task.Delay(2000); // Show success message for 2 seconds
+
+                        loginModel.EmailOrUsername = signUpModel.Email;
+                        loginModel.Password = signUpModel.Password;
+                        await HandleLogin();
+                    }
+                    else
+                    {
+                        errorMessage = result.Message;
+                    }
                 }
             }
             catch (Exception ex)

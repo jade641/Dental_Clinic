@@ -132,7 +132,7 @@ namespace Dental_Clinic.Services
       try
       {
         string query = @"
-          SELECT s.ServiceID, s.CategoryID, s.ServiceName, s.Description, s.Duration, s.IsActive,
+          SELECT s.ServiceID, s.CategoryID, s.ServiceName, s.Description, s.Duration, s.Cost, s.IsActive,
    sc.CategoryName
               FROM Services s
     LEFT JOIN ServiceCategory sc ON s.CategoryID = sc.CategoryID
@@ -153,13 +153,41 @@ namespace Dental_Clinic.Services
         if (dt.Rows.Count > 0)
         {
           var row = dt.Rows[0];
+
+          // Parse Duration
+          int duration = 60;
+          var durationValue = row["Duration"];
+          if (durationValue != DBNull.Value)
+          {
+            var durationStr = durationValue.ToString()?.Trim();
+            if (!string.IsNullOrEmpty(durationStr))
+            {
+              durationStr = System.Text.RegularExpressions.Regex.Replace(durationStr, @"[^\d]", "");
+              if (int.TryParse(durationStr, out int parsedDuration))
+              {
+                duration = parsedDuration;
+              }
+            }
+          }
+
+          // Parse Cost
+          decimal cost = 0;
+          if (row.Table.Columns.Contains("Cost") && row["Cost"] != DBNull.Value)
+          {
+            if (decimal.TryParse(row["Cost"].ToString(), out decimal parsedCost))
+            {
+              cost = parsedCost;
+            }
+          }
+
           return new Service
           {
             ServiceID = Convert.ToInt32(row["ServiceID"]),
             CategoryID = row["CategoryID"] != DBNull.Value ? Convert.ToInt32(row["CategoryID"]) : null,
             ServiceName = row["ServiceName"] != DBNull.Value ? row["ServiceName"].ToString() ?? string.Empty : string.Empty,
             Description = row["Description"] != DBNull.Value ? row["Description"].ToString() ?? string.Empty : string.Empty,
-            Duration = Convert.ToInt32(row["Duration"]),
+            Duration = duration,
+            Cost = cost,
             IsActive = Convert.ToBoolean(row["IsActive"]),
             CategoryName = row["CategoryName"] != DBNull.Value && row["CategoryName"] != null ? row["CategoryName"].ToString() ?? string.Empty : string.Empty
           };
@@ -877,6 +905,81 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
       catch (Exception ex)
       {
         return (false, $"Failed to update: {ex.Message}");
+      }
+    }
+
+    public async Task<bool> UpdateAppointmentAsync(int appointmentId, DateTime date, TimeSpan time, int serviceId, int dentistId, string notes)
+    {
+      try
+      {
+        var service = await GetServiceByIdAsync(serviceId);
+        if (service == null) return false;
+
+        DateTime startTime = date.Date.Add(time);
+        DateTime endTime = startTime.AddMinutes(service.Duration);
+
+        string query = @"
+                UPDATE Appointments 
+                SET AppointmentDate = @Date,
+                    StartTime = @StartTime,
+                    EndTime = @EndTime,
+                    ServiceID = @ServiceID,
+                    DentistID = @DentistID,
+                    Notes = @Notes,
+                    Status = 'Rescheduled'
+                WHERE AppointmentID = @AppointmentID";
+
+        var parameters = new[]
+        {
+                new SqlParameter("@AppointmentID", appointmentId),
+                new SqlParameter("@Date", date),
+                new SqlParameter("@StartTime", startTime),
+                new SqlParameter("@EndTime", endTime),
+                new SqlParameter("@ServiceID", serviceId),
+                new SqlParameter("@DentistID", dentistId),
+                new SqlParameter("@Notes", notes ?? (object)DBNull.Value)
+            };
+
+        if (IsOffline)
+        {
+          return await _localDb.ExecuteNonQueryAsync(query, parameters) > 0;
+        }
+        else
+        {
+          return await _onlineDb.ExecuteNonQueryAsync(query, parameters) > 0;
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error updating appointment: {ex.Message}");
+        return false;
+      }
+    }
+
+    public async Task<string> GetPatientEmailAsync(int patientId)
+    {
+      try
+      {
+        string query = "SELECT Email FROM Users WHERE UserID = @UserID";
+        var parameters = new[] { new SqlParameter("@UserID", patientId) };
+
+        object result;
+        if (IsOffline)
+        {
+          var dt = await _localDb.GetDataTableAsync(query, parameters);
+          result = dt.Rows.Count > 0 ? dt.Rows[0]["Email"] : null;
+        }
+        else
+        {
+          result = await _onlineDb.ExecuteScalarAsync(query, parameters);
+        }
+
+        return result?.ToString() ?? string.Empty;
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting patient email: {ex.Message}");
+        return string.Empty;
       }
     }
 

@@ -146,6 +146,8 @@
             }
             else
             {
+                @if (!isVerifying)
+                {
                 <!-- Sign Up Form -->
                 <div class="form-header">
                     <h3>Join Our Family</h3>
@@ -255,6 +257,38 @@
                         }
                     </button>
                 </EditForm>
+                }
+                else
+                {
+                    <div class="form-header">
+                        <h3>Verify Email</h3>
+                        <p>Enter the code sent to @signUpModel.Email</p>
+                    </div>
+
+                    <div class="input-field">
+                        <label>Verification Code</label>
+                        <div class="input-with-icon">
+                            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                            <InputText @bind-Value="verificationCode" placeholder="Enter 6-digit code" />
+                        </div>
+                    </div>
+
+                    <button type="button" class="primary-btn" @onclick="HandleSignUp" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="loading-spinner"></span>
+                            <span>Verifying...</span>
+                        }
+                        else
+                        {
+                            <span>Verify & Create Account</span>
+                        }
+                    </button>
+                    
+                    <button type="button" class="btn-secondary" @onclick="@(() => isVerifying = false)" style="margin-top: 10px;">Back</button>
+                }
             }
 
             <!-- Divider -->

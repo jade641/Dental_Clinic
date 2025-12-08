@@ -235,6 +235,26 @@ namespace Dental_Clinic.Services
 
     #endregion
 
+    private string HashPassword(string password)
+    {
+      using (var sha256 = SHA256.Create())
+      {
+        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+        var builder = new StringBuilder();
+        for (int i = 0; i < bytes.Length; i++)
+        {
+          builder.Append(bytes[i].ToString("x2"));
+        }
+        return builder.ToString();
+      }
+    }
+
+    private bool VerifyPassword(string inputPassword, string storedHash)
+    {
+      var hashOfInput = HashPassword(inputPassword);
+      return StringComparer.OrdinalIgnoreCase.Compare(hashOfInput, storedHash) == 0;
+    }
+
     #region User Authentication
 
     public async Task<User?> AuthenticateUserAsync(string emailOrUsername, string password)
@@ -257,10 +277,13 @@ namespace Dental_Clinic.Services
             if (await reader.ReadAsync())
             {
               var storedPassword = reader.GetString(3); // Password column
-              var inputPassword = password; // Store plain text for now, or hash if your DB stores hashes
+              var inputPassword = password;
 
-              // Check password (plain text comparison - adjust if you hash passwords)
-              if (storedPassword == inputPassword)
+              // Check password (hash comparison with fallback to plain text for legacy)
+              bool isMatch = VerifyPassword(inputPassword, storedPassword);
+              if (!isMatch && storedPassword == inputPassword) isMatch = true;
+
+              if (isMatch)
               {
                 var user = new User
                 {
@@ -367,7 +390,7 @@ namespace Dental_Clinic.Services
             {
               command.Parameters.AddWithValue("@RoleName", model.Role);
               command.Parameters.AddWithValue("@UserName", model.UserName);
-              command.Parameters.AddWithValue("@Password", model.Password); // Store plain text (or hash if needed)
+              command.Parameters.AddWithValue("@Password", HashPassword(model.Password)); // Hash the password
               command.Parameters.AddWithValue("@FirstName", model.FirstName);
               command.Parameters.AddWithValue("@LastName", model.LastName);
               command.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber ?? (object)DBNull.Value);
@@ -561,7 +584,7 @@ namespace Dental_Clinic.Services
 
               if (!string.IsNullOrEmpty(model.Password))
               {
-                command.Parameters.AddWithValue("@Password", model.Password);
+                command.Parameters.AddWithValue("@Password", HashPassword(model.Password));
               }
 
               await command.ExecuteNonQueryAsync();
@@ -796,7 +819,7 @@ namespace Dental_Clinic.Services
         }
 
         // Create all tables for offline mode (simplified version)
-        string createTablesQuery = @"
+        string createTablesQuery = $@"
    -- Create Users table
    CREATE TABLE Users (
        UserID INT PRIMARY KEY IDENTITY(1,1),
@@ -855,7 +878,7 @@ ProfileImg NVARCHAR(MAX),
 
       -- Insert default admin
      INSERT INTO Users (RoleName, UserName, Password, FirstName, LastName, Email, PhoneNumber)
-VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com', '+639123456789');
+VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@dentalclinic.com', '+639123456789');
 
        DECLARE @AdminUserID INT = SCOPE_IDENTITY();
        INSERT INTO Admin (UserID) VALUES (@AdminUserID);";
@@ -921,7 +944,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
 
             using (var command = new SqlCommand(updateQuery, connection, transaction))
             {
-              command.Parameters.AddWithValue("@NewPassword", newPassword); // In production, hash this
+              command.Parameters.AddWithValue("@NewPassword", HashPassword(newPassword));
               command.Parameters.AddWithValue("@Email", email);
               await command.ExecuteNonQueryAsync();
             }
@@ -2653,7 +2676,7 @@ VALUES ('Admin', 'admin', 'admin123', 'Admin', 'User', 'admin@dentalclinic.com',
             using (var cmd = new SqlCommand(userQuery, conn, transaction))
             {
               cmd.Parameters.AddWithValue("@Email", model.Email);
-              cmd.Parameters.AddWithValue("@Password", password); // Should be hashed in real app
+              cmd.Parameters.AddWithValue("@Password", HashPassword(password));
               cmd.Parameters.AddWithValue("@FirstName", model.FirstName);
               cmd.Parameters.AddWithValue("@LastName", model.LastName);
               cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);

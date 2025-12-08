@@ -29,9 +29,9 @@ namespace Dental_Clinic.Components.Pages
 
         protected override void OnInitialized()
         {
-            if (string.IsNullOrEmpty(ResetToken) || string.IsNullOrEmpty(Email))
+            if (string.IsNullOrEmpty(Email))
             {
-                errorMessage = "Invalid or expired reset link.";
+                errorMessage = "Invalid request. Email is missing.";
             }
         }
 
@@ -56,12 +56,19 @@ namespace Dental_Clinic.Components.Pages
                 return;
             }
 
+            var tokenToUse = !string.IsNullOrEmpty(ResetToken) ? ResetToken : resetPasswordModel.VerificationCode;
+            if (string.IsNullOrEmpty(tokenToUse))
+            {
+                errorMessage = "Verification code is required.";
+                return;
+            }
+
             errorMessage = string.Empty;
             successMessage = string.Empty;
 
             try
             {
-                var result = await DatabaseService.ResetPasswordAsync(Email, ResetToken, resetPasswordModel.NewPassword);
+                var result = await DatabaseService.ResetPasswordAsync(Email, tokenToUse, resetPasswordModel.NewPassword);
 
                 if (result.Success)
                 {
@@ -81,6 +88,8 @@ namespace Dental_Clinic.Components.Pages
 
         public class ResetPasswordModel
         {
+            public string VerificationCode { get; set; } = string.Empty;
+
             [Required(ErrorMessage = "New password is required")]
             [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
             public string NewPassword { get; set; } = string.Empty;

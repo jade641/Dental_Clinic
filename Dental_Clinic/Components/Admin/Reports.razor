@@ -85,9 +85,7 @@
 }
 
 @code {
-    private string searchQuery = "";
     private bool showGenerateModal = false;
-    private bool showSuccessMessage = false;
     private string selectedReportType = "financial";
     private string reportFormat = "pdf";
     private DateTime startDate = DateTime.Now.AddMonths(-1);
@@ -163,7 +161,6 @@
             await JSRuntime.InvokeVoidAsync("downloadFileFromText", fileName, csvContent);
             
             showGenerateModal = false;
-            showSuccessMessage = true;
             
             // Add to reports list
             reports.Insert(0, new ReportItem 

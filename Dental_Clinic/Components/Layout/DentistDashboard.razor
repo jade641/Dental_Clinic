@@ -1,6 +1,5 @@
 @page "/dentist-dashboard"
 @using Microsoft.AspNetCore.Components.Routing
-@using Microsoft.AspNetCore.Components.Routing
 @inject NavigationManager Navigation
 @implements IDisposable
 
@@ -95,7 +94,7 @@
                             </div>
                             <div class="appt-details">
                                 <div class="patient-name">@appointment.PatientName</div>
-                                <div class="treatment-info">@appointment.Treatment • @appointment.Duration min</div>
+                                <div class="treatment-info">@appointment.Treatment ï¿½ @appointment.Duration min</div>
                             </div>
                             <div class="appt-actions">
                                 <span class="status-badge status-@appointment.StatusClass">@appointment.Status</span>
