@@ -488,7 +488,8 @@ SELECT a.AppointmentID, a.PatientID, a.DentistID, a.ServiceID, a.AppointmentDate
  CONCAT(du.FirstName, ' ', du.LastName) AS DentistName,
  CONCAT(pu.FirstName, ' ', pu.LastName) AS PatientName,
  pu.Email AS PatientEmail,
- pu.PhoneNumber AS PatientPhone
+ pu.PhoneNumber AS PatientPhone,
+ pu.Avatar AS PatientAvatar
 FROM Appointments a
 LEFT JOIN Services s ON a.ServiceID = s.ServiceID
 LEFT JOIN Dentist d ON a.DentistID = d.DentistID
@@ -1006,6 +1007,7 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
         PatientName = row.Table.Columns.Contains("PatientName") && row["PatientName"] != DBNull.Value ? row["PatientName"].ToString() ?? string.Empty : string.Empty,
         PatientPhone = row.Table.Columns.Contains("PatientPhone") && row["PatientPhone"] != DBNull.Value ? row["PatientPhone"].ToString() ?? string.Empty : string.Empty,
         PatientEmail = row.Table.Columns.Contains("PatientEmail") && row["PatientEmail"] != DBNull.Value ? row["PatientEmail"].ToString() ?? string.Empty : string.Empty,
+        PatientAvatar = row.Table.Columns.Contains("PatientAvatar") && row["PatientAvatar"] != DBNull.Value ? row["PatientAvatar"].ToString() : null,
         ServiceCost = row.Table.Columns.Contains("Cost") && row["Cost"] != DBNull.Value ? Convert.ToDecimal(row["Cost"]) : 0
       };
       return appt;

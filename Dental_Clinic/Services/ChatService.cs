@@ -158,6 +158,7 @@ namespace Dental_Clinic.Services
             public DateTime? LastMessageTime { get; set; }
             public int UnreadCount { get; set; }
             public string Status { get; set; } = string.Empty;
+            public string Avatar { get; set; }
         }
 
         public async Task<List<ConversationViewModel>> GetReceptionistConversationsAsync()
@@ -170,7 +171,8 @@ namespace Dental_Clinic.Services
                     c.Status,
                     (SELECT TOP 1 MessageText FROM ChatMessages m WHERE m.ConversationID = c.ConversationID ORDER BY Timestamp DESC) as LastMessage,
                     (SELECT TOP 1 Timestamp FROM ChatMessages m WHERE m.ConversationID = c.ConversationID ORDER BY Timestamp DESC) as LastMessageTime,
-                    (SELECT COUNT(*) FROM ChatMessages m WHERE m.ConversationID = c.ConversationID AND IsRead = 0 AND SenderUserID = c.PatientID) as UnreadCount
+                    (SELECT COUNT(*) FROM ChatMessages m WHERE m.ConversationID = c.ConversationID AND IsRead = 0 AND SenderUserID = c.PatientID) as UnreadCount,
+                    u.Avatar
                 FROM ChatBotConversation c
                 LEFT JOIN Patient p ON c.PatientID = p.PatientID
                 LEFT JOIN Users u ON p.UserID = u.UserID
@@ -189,7 +191,8 @@ namespace Dental_Clinic.Services
                     Status = row["Status"]?.ToString() ?? "",
                     LastMessage = row["LastMessage"]?.ToString() ?? "",
                     LastMessageTime = row["LastMessageTime"] as DateTime?,
-                    UnreadCount = row["UnreadCount"] != DBNull.Value ? Convert.ToInt32(row["UnreadCount"]) : 0
+                    UnreadCount = row["UnreadCount"] != DBNull.Value ? Convert.ToInt32(row["UnreadCount"]) : 0,
+                    Avatar = row["Avatar"] != DBNull.Value ? row["Avatar"].ToString() : null
                 });
             }
 

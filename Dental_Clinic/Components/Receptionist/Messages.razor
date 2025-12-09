@@ -92,8 +92,16 @@
                         <div class="message-card @(conv.Status == "Escalated" ? "red-border" : "yellow-border")">
                             <div class="message-header">
                                 <div class="patient-info-msg">
-                                    <div class="patient-avatar-msg">@(conv.PatientName.Length > 0 ?
-                                                                        conv.PatientName.Substring(0, 1).ToUpper() : "?")</div>
+                                    <div class="patient-avatar-msg">
+                                        @if (!string.IsNullOrEmpty(conv.Avatar))
+                                        {
+                                            <img src="@conv.Avatar" alt="@conv.PatientName" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
+                                        }
+                                        else
+                                        {
+                                            @(conv.PatientName.Length > 0 ? conv.PatientName.Substring(0, 1).ToUpper() : "?")
+                                        }
+                                    </div>
                                     <div class="patient-meta">
                                         <h3 class="patient-name-msg">@conv.PatientName</h3>
                                         <span class="message-time">@(conv.LastMessageTime?.ToString("MMM dd, h:mm tt") ?? "No                                    messages")</span>

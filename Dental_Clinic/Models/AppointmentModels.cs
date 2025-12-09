@@ -48,6 +48,7 @@ namespace Dental_Clinic.Models
     public string PatientName { get; set; } = string.Empty;
     public string PatientPhone { get; set; } = string.Empty;
     public string PatientEmail { get; set; } = string.Empty;
+    public string? PatientAvatar { get; set; }
     public decimal ServiceCost { get; set; } // Added for billing
   }
 

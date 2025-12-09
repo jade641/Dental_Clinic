@@ -2383,6 +2383,7 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
       public string InsurancePolicyNumber { get; set; } = "";
       public DateTime? LastVisit { get; set; }
       public DateTime? NextVisit { get; set; }
+      public string Avatar { get; set; }
 
       public string FullName => $"{FirstName} {LastName}";
       public string Initials => $"{(string.IsNullOrEmpty(FirstName) ? "" : FirstName[0].ToString())}{(string.IsNullOrEmpty(LastName) ? "" : LastName[0].ToString())}";
@@ -2396,7 +2397,7 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
         string query = @"
                 SELECT 
                     p.PatientID, p.UserID, p.BirthDate, p.Address, p.MaritalStatus, p.MedicalHistory, p.MedicalAlerts, p.InsuranceProvider, p.InsurancePolicyNumber,
-                    u.FirstName, u.LastName, u.Email, u.PhoneNumber, u.Sex,
+                    u.FirstName, u.LastName, u.Email, u.PhoneNumber, u.Sex, u.Avatar,
                     (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID AND AppointmentDate < GETDATE() AND Status = 'Completed' ORDER BY AppointmentDate DESC) as LastVisit,
                     (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID AND AppointmentDate >= GETDATE() AND Status IN ('Pending', 'Confirmed') ORDER BY AppointmentDate ASC) as NextVisit
                 FROM Patient p
@@ -2429,7 +2430,8 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
                   InsuranceProvider = reader.IsDBNull(reader.GetOrdinal("InsuranceProvider")) ? "" : reader.GetString(reader.GetOrdinal("InsuranceProvider")),
                   InsurancePolicyNumber = reader.IsDBNull(reader.GetOrdinal("InsurancePolicyNumber")) ? "" : reader.GetString(reader.GetOrdinal("InsurancePolicyNumber")),
                   LastVisit = reader.IsDBNull(reader.GetOrdinal("LastVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("LastVisit")),
-                  NextVisit = reader.IsDBNull(reader.GetOrdinal("NextVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("NextVisit"))
+                  NextVisit = reader.IsDBNull(reader.GetOrdinal("NextVisit")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("NextVisit")),
+                  Avatar = reader.IsDBNull(reader.GetOrdinal("Avatar")) ? null : reader.GetString(reader.GetOrdinal("Avatar"))
                 });
               }
             }
@@ -2602,6 +2604,7 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
       public string Email { get; set; } = string.Empty;
       public string Phone { get; set; } = string.Empty;
       public DateTime LastVisit { get; set; }
+      public string Avatar { get; set; }
     }
 
     public async Task<List<TransactionReportModel>> GetTransactionsAsync()
@@ -2696,8 +2699,10 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
                     SELECT p.FirstName + ' ' + p.LastName as Name,
                            p.Email,
                            p.PhoneNumber,
-                           (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID ORDER BY AppointmentDate DESC) as LastVisit
+                           (SELECT TOP 1 AppointmentDate FROM Appointments WHERE PatientID = p.PatientID ORDER BY AppointmentDate DESC) as LastVisit,
+                           u.Avatar
                     FROM Patient p
+                    LEFT JOIN Users u ON p.UserID = u.UserID
                     ORDER BY p.LastName";
 
           using (var cmd = new SqlCommand(query, conn))
@@ -2710,7 +2715,8 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
                 Name = reader.GetString(0),
                 Email = reader.IsDBNull(1) ? "" : reader.GetString(1),
                 Phone = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                LastVisit = reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3)
+                LastVisit = reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3),
+                Avatar = reader.IsDBNull(4) ? null : reader.GetString(4)
               });
             }
           }

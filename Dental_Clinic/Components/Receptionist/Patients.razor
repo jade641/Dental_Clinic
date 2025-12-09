@@ -59,7 +59,16 @@
                     {
                         <div class="patient-card">
                             <div class="patient-info">
-                                <div class="patient-avatar">@patient.Initials</div>
+                                <div class="patient-avatar">
+                                    @if (!string.IsNullOrEmpty(patient.Avatar))
+                                    {
+                                        <img src="@patient.Avatar" alt="@patient.FullName" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
+                                    }
+                                    else
+                                    {
+                                        @patient.Initials
+                                    }
+                                </div>
                                 <div class="patient-details">
                                     <h3 class="patient-name">@patient.FullName</h3>
                                     <div class="contact-info">
