@@ -7,6 +7,7 @@
 @inject DatabaseService DatabaseService
 @inject EmailService EmailService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 <link href="css/receptionistdashboard.css" rel="stylesheet" />
 <link href="css/ReceptPatients.css" rel="stylesheet" />
 
@@ -267,6 +268,20 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadPatients();
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!string.IsNullOrEmpty(uri.Query))
+        {
+            var query = uri.Query.TrimStart('?');
+            foreach (var part in query.Split('&'))
+            {
+                var kv = part.Split('=');
+                if (kv.Length == 2 && kv[0] == "search")
+                {
+                    searchTerm = Uri.UnescapeDataString(kv[1]);
+                    break;
+                }
+            }
+        }
     }
 
     private async Task LoadPatients()

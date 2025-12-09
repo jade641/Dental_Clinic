@@ -129,7 +129,16 @@
                     @foreach (var feedback in FilteredFeedbacks)
                     {
                         <div class="feedback-item">
-                            <div class="feedback-avatar @feedback.AvatarClass">@feedback.Initials</div>
+                            <div class="feedback-avatar @feedback.AvatarClass">
+                                @if (!string.IsNullOrEmpty(feedback.AvatarUrl))
+                                {
+                                    <img src="@feedback.AvatarUrl" alt="@feedback.Name" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    @feedback.Initials
+                                }
+                            </div>
                             <div class="feedback-content">
                                 <div class="feedback-top">
                                     <div class="feedback-author">
@@ -361,6 +370,7 @@
         public string Email { get; set; } = "";
         public string Initials { get; set; } = "";
         public string AvatarClass { get; set; } = "";
+        public string AvatarUrl { get; set; } = "";
         public int Rating { get; set; }
         public string BadgeText { get; set; } = "";
         public string BadgeClass { get; set; } = "";
@@ -400,6 +410,7 @@
             Email = f.PatientEmail,
             Initials = GetInitials(f.PatientName),
             AvatarClass = GetAvatarClass(f.FeedbackID),
+            AvatarUrl = f.PatientAvatar,
             Rating = f.Rating,
             BadgeText = GetBadgeText(f.Rating),
             BadgeClass = GetBadgeClass(f.Rating),

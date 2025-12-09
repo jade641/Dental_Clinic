@@ -542,6 +542,49 @@ namespace Dental_Clinic.Services
       return users;
     }
 
+    public async Task<SignUpModel?> GetPatientDetailsByUserIdAsync(int userId)
+    {
+      using (var conn = GetConnection())
+      {
+        await conn.OpenAsync();
+        string query = @"
+                SELECT u.FirstName, u.LastName, u.UserName, u.Email, u.PhoneNumber, u.Age, u.Sex,
+                       p.BirthDate, p.Address, p.MaritalStatus, p.MedicalHistory, p.InsuranceProvider, p.InsurancePolicyNumber
+                FROM Users u
+                LEFT JOIN Patient p ON u.UserID = p.UserID
+                WHERE u.UserID = @UserID";
+
+        using (var cmd = new SqlCommand(query, conn))
+        {
+          cmd.Parameters.AddWithValue("@UserID", userId);
+          using (var reader = await cmd.ExecuteReaderAsync())
+          {
+            if (await reader.ReadAsync())
+            {
+              return new SignUpModel
+              {
+                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                UserName = reader.GetString(reader.GetOrdinal("UserName")),
+                Email = reader.GetString(reader.GetOrdinal("Email")),
+                PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? "" : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                Age = reader.IsDBNull(reader.GetOrdinal("Age")) ? null : reader.GetInt32(reader.GetOrdinal("Age")),
+                Sex = reader.IsDBNull(reader.GetOrdinal("Sex")) ? "" : reader.GetString(reader.GetOrdinal("Sex")),
+                BirthDate = reader.IsDBNull(reader.GetOrdinal("BirthDate")) ? null : reader.GetDateTime(reader.GetOrdinal("BirthDate")),
+                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? "" : reader.GetString(reader.GetOrdinal("Address")),
+                MaritalStatus = reader.IsDBNull(reader.GetOrdinal("MaritalStatus")) ? "" : reader.GetString(reader.GetOrdinal("MaritalStatus")),
+                MedicalHistory = reader.IsDBNull(reader.GetOrdinal("MedicalHistory")) ? "" : reader.GetString(reader.GetOrdinal("MedicalHistory")),
+                InsuranceProvider = reader.IsDBNull(reader.GetOrdinal("InsuranceProvider")) ? "" : reader.GetString(reader.GetOrdinal("InsuranceProvider")),
+                InsurancePolicyNumber = reader.IsDBNull(reader.GetOrdinal("InsurancePolicyNumber")) ? "" : reader.GetString(reader.GetOrdinal("InsurancePolicyNumber")),
+                Role = "Patient"
+              };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
     public async Task<(bool Success, string Message)> UpdateUserAsync(SignUpModel model, int userId)
     {
       using (var connection = GetConnection())
@@ -1583,7 +1626,7 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
         // Join Feedback, Patient, Users to get names
         string query = @"
                 SELECT f.FeedbackID, f.PatientID, f.RatingValue, f.FeedbackText, f.SubmissionDate,
-                       u.FirstName, u.LastName, u.Email
+                       u.FirstName, u.LastName, u.Email, u.Avatar
                 FROM Feedback f
                 JOIN Patient p ON f.PatientID = p.PatientID
                 JOIN Users u ON p.UserID = u.UserID
@@ -1606,6 +1649,7 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
                   PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
                   PatientName = $"{fname} {lname}",
                   PatientEmail = reader.GetString(reader.GetOrdinal("Email")),
+                  PatientAvatar = reader.IsDBNull(reader.GetOrdinal("Avatar")) ? "" : reader.GetString(reader.GetOrdinal("Avatar")),
                   Rating = reader.IsDBNull(reader.GetOrdinal("RatingValue")) ? 0 : reader.GetInt32(reader.GetOrdinal("RatingValue")),
                   FeedbackText = reader.IsDBNull(reader.GetOrdinal("FeedbackText")) ? "" : reader.GetString(reader.GetOrdinal("FeedbackText")),
                   Date = reader.GetDateTime(reader.GetOrdinal("SubmissionDate")),
@@ -1629,7 +1673,7 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
     {
       try
       {
-        string query = "SELECT SUM(Amount) FROM Payments";
+        string query = "SELECT SUM(TotalAmount) FROM ServiceTransactions";
         using (var conn = GetConnection())
         {
           await conn.OpenAsync();
@@ -1696,11 +1740,11 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
       try
       {
         string query = @"
-                SELECT FORMAT(PaymentDate, 'MMM') as Month, SUM(Amount) as Total
-                FROM Payments
-                WHERE PaymentDate >= DATEADD(month, -@Months, GETDATE())
-                GROUP BY FORMAT(PaymentDate, 'MMM'), MONTH(PaymentDate)
-                ORDER BY MONTH(PaymentDate)";
+                SELECT FORMAT(TransactionDate, 'MMM') as Month, SUM(TotalAmount) as Total
+                FROM ServiceTransactions
+                WHERE TransactionDate >= DATEADD(month, -@Months, GETDATE())
+                GROUP BY FORMAT(TransactionDate, 'MMM'), MONTH(TransactionDate)
+                ORDER BY MONTH(TransactionDate)";
 
         using (var conn = GetConnection())
         {
@@ -1768,12 +1812,12 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
         string query = @"
                 SET DATEFIRST 1;
                 SELECT 
-                    FORMAT(DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE)), 'MM/dd') as WeekStart,
-                    SUM(Amount) as Total
-                FROM Payments
-                WHERE PaymentDate >= DATEADD(week, -@Weeks, GETDATE())
-                GROUP BY DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE))
-                ORDER BY DATEADD(day, 1 - DATEPART(weekday, PaymentDate), CAST(PaymentDate AS DATE))";
+                    FORMAT(DATEADD(day, 1 - DATEPART(weekday, TransactionDate), CAST(TransactionDate AS DATE)), 'MM/dd') as WeekStart,
+                    SUM(TotalAmount) as Total
+                FROM ServiceTransactions
+                WHERE TransactionDate >= DATEADD(week, -@Weeks, GETDATE())
+                GROUP BY DATEADD(day, 1 - DATEPART(weekday, TransactionDate), CAST(TransactionDate AS DATE))
+                ORDER BY DATEADD(day, 1 - DATEPART(weekday, TransactionDate), CAST(TransactionDate AS DATE))";
 
         using (var conn = GetConnection())
         {
@@ -1806,15 +1850,14 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
         decimal totalRevenue = 0;
 
         // First get total revenue for percentage calculation
-        string totalQuery = "SELECT SUM(Amount) FROM Payments WHERE PaymentDate >= DATEADD(day, -@Days, GETDATE())";
+        string totalQuery = "SELECT SUM(TotalAmount) FROM ServiceTransactions WHERE TransactionDate >= DATEADD(day, -@Days, GETDATE())";
 
         // Then get breakdown
         string query = @"
-                SELECT TOP 5 s.ServiceName, SUM(p.Amount) as TotalRevenue
-                FROM Payments p
-                JOIN Appointments a ON p.AppointmentID = a.AppointmentID
-                JOIN Services s ON a.ServiceID = s.ServiceID
-                WHERE p.PaymentDate >= DATEADD(day, -@Days, GETDATE())
+                SELECT TOP 5 s.ServiceName, SUM(st.TotalAmount) as TotalRevenue
+                FROM ServiceTransactions st
+                JOIN Services s ON st.ServiceID = s.ServiceID
+                WHERE st.TransactionDate >= DATEADD(day, -@Days, GETDATE())
                 GROUP BY s.ServiceName
                 ORDER BY TotalRevenue DESC";
 
@@ -1950,7 +1993,8 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
                         ISNULL(SUM(st.TotalAmount), 0) as Revenue,
                         ISNULL(AVG(CAST(f.RatingValue as FLOAT)), 0) as Rating
                     FROM Users u
-                    JOIN ServiceTransactions st ON u.UserID = st.DentistID
+                    JOIN Dentist d ON u.UserID = d.UserID
+                    JOIN ServiceTransactions st ON d.DentistID = st.DentistID
                     LEFT JOIN Feedback f ON st.AppointmentID = f.AppointmentID
                     WHERE u.RoleName = 'Dentist'
                     GROUP BY u.UserID, u.FirstName, u.LastName
@@ -2605,6 +2649,29 @@ VALUES ('Admin', 'admin', '{HashPassword("admin123")}', 'Admin', 'User', 'admin@
       public string Phone { get; set; } = string.Empty;
       public DateTime LastVisit { get; set; }
       public string Avatar { get; set; }
+    }
+
+    public async Task<int> GetTotalCompletedAppointmentsForDentistAsync(int dentistId)
+    {
+      try
+      {
+        string query = "SELECT COUNT(*) FROM Appointments WHERE DentistID = @DentistID AND Status = 'Completed'";
+        using (var conn = GetConnection())
+        {
+          await conn.OpenAsync();
+          using (var cmd = new SqlCommand(query, conn))
+          {
+            cmd.Parameters.AddWithValue("@DentistID", dentistId);
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+          }
+        }
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting completed appointments: {ex.Message}");
+        return 0;
+      }
     }
 
     public async Task<List<TransactionReportModel>> GetTransactionsAsync()

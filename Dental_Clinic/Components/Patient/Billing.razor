@@ -6,9 +6,46 @@
 @inject DatabaseService DatabaseService
 @inject PayMongoService PayMongoService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <link href="css/patientdashboard.css" rel="stylesheet" />
 <link href="css/PatientBilling.css" rel="stylesheet" />
+
+<style>
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        .receipt-modal, .receipt-modal * {
+            visibility: visible;
+        }
+        .receipt-modal {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+            box-shadow: none;
+            border: none;
+        }
+        .modal-overlay {
+            background: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex !important;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-footer, .close-btn {
+            display: none !important;
+        }
+    }
+</style>
 
 <div class="dashboard-page">
     <!-- Shared Patient Navbar with notifications and settings -->
@@ -146,6 +183,61 @@
         </div>
     </div>
 </div>
+
+@if (showReceiptModal && selectedPaymentForReceipt != null)
+{
+    <div class="modal-overlay" @onclick="CloseReceiptModal">
+        <div class="modal-content receipt-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3>Payment Receipt</h3>
+                <button class="close-btn" @onclick="CloseReceiptModal">×</button>
+            </div>
+            <div class="modal-body receipt-body">
+                <div class="receipt-header" style="text-align: center; margin-bottom: 20px;">
+                    <h4>Jade Dental Clinic</h4>
+                    <p style="margin: 5px 0; color: #666;">123 Main St, City, Country</p>
+                    <p style="margin: 5px 0; color: #666;">Tel: (123) 456-7890</p>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;" />
+                <div class="receipt-details">
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Date:</span>
+                        <span style="font-weight: 500;">@selectedPaymentForReceipt.PaymentDate.ToString("MMM dd, yyyy hh:mm tt")</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Patient:</span>
+                        <span style="font-weight: 500;">@patientName</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Service/Remarks:</span>
+                        <span style="font-weight: 500;">@selectedPaymentForReceipt.Remarks</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Payment Method:</span>
+                        <span style="font-weight: 500;">@selectedPaymentForReceipt.PaymentMethod</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #666;">Reference #:</span>
+                        <span style="font-weight: 500;">@(string.IsNullOrEmpty(selectedPaymentForReceipt.ReferenceNumber) ? "N/A" : selectedPaymentForReceipt.ReferenceNumber)</span>
+                    </div>
+                </div>
+                <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;" />
+                <div class="receipt-total" style="display: flex; justify-content: space-between; align-items: center; font-size: 1.2em; font-weight: bold;">
+                    <span>Amount Paid:</span>
+                    <span class="amount" style="color: #10b981;">₱@selectedPaymentForReceipt.Amount.ToString("N0")</span>
+                </div>
+                <div class="receipt-footer" style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
+                    <p>Thank you for your visit!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @onclick="CloseReceiptModal">Close</button>
+                <button class="btn-outline-primary" @onclick="PrintReceipt" style="margin-right: 10px;">Download PDF</button>
+                <button class="btn-primary" @onclick="PrintReceipt">Print Receipt</button>
+            </div>
+        </div>
+    </div>
+}
 
 @if (showPaymentModal && selectedAppointment != null)
 {
@@ -491,8 +583,26 @@
         StateHasChanged();
     }
 
+    private bool showReceiptModal = false;
+    private PaymentTransaction? selectedPaymentForReceipt;
+
     private void DownloadReceipt(int paymentId)
     {
-        Debug.WriteLine($"Download receipt for payment {paymentId}");
+        selectedPaymentForReceipt = recentPayments.FirstOrDefault(p => p.PaymentID == paymentId);
+        if (selectedPaymentForReceipt != null)
+        {
+            showReceiptModal = true;
+        }
+    }
+
+    private void CloseReceiptModal()
+    {
+        showReceiptModal = false;
+        selectedPaymentForReceipt = null;
+    }
+
+    private async Task PrintReceipt()
+    {
+        await JSRuntime.InvokeVoidAsync("print");
     }
 }

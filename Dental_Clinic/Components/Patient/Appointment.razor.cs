@@ -1,16 +1,19 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Dental_Clinic.Models;
 using Dental_Clinic.Services;
 
 namespace Dental_Clinic.Components.Patient
 {
-   public partial class Appointment
+   public partial class Appointment : IDisposable
    {
       [Inject] private AppointmentService AppointmentService { get; set; } = default!;
       [Inject] private SessionService SessionService { get; set; } = default!;
       [Inject] private NavigationManager Navigation { get; set; } = default!;
 
       private List<Models.Appointment> appointments = new();
+      private List<Models.Appointment> filteredAppointments = new();
+      private string searchQuery = "";
       private bool showBookingModal = false;
       private int currentStep = 1;
       private bool isLoading = false;
@@ -67,6 +70,8 @@ namespace Dental_Clinic.Components.Patient
             _defaultPatientName = patientName;
             _defaultPatientEmail = patientEmail;
 
+            Navigation.LocationChanged += OnLocationChanged;
+
             // Load patient appointments
             await LoadAppointmentsAsync();
          }
@@ -83,6 +88,7 @@ namespace Dental_Clinic.Components.Patient
          {
             isLoading = true;
             appointments = await AppointmentService.GetPatientAppointmentsAsync(currentPatientId);
+            FilterAppointments();
          }
          catch (Exception ex)
          {
@@ -93,6 +99,51 @@ namespace Dental_Clinic.Components.Patient
             isLoading = false;
             StateHasChanged();
          }
+      }
+
+      private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+      {
+          FilterAppointments();
+          StateHasChanged();
+      }
+
+      private void FilterAppointments()
+      {
+          var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+          string? search = null;
+          
+          if (!string.IsNullOrEmpty(uri.Query))
+          {
+              var query = uri.Query.TrimStart('?');
+              foreach (var part in query.Split('&'))
+              {
+                  var kv = part.Split('=');
+                  if (kv.Length == 2 && kv[0] == "search")
+                  {
+                      search = Uri.UnescapeDataString(kv[1]);
+                      break;
+                  }
+              }
+          }
+
+          if (!string.IsNullOrWhiteSpace(search))
+          {
+              searchQuery = search;
+              filteredAppointments = appointments.Where(a => 
+                  (a.ServiceName?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                  (a.DentistName?.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ?? false)
+              ).ToList();
+          }
+          else
+          {
+              searchQuery = "";
+              filteredAppointments = appointments;
+          }
+      }
+
+      public void Dispose()
+      {
+          Navigation.LocationChanged -= OnLocationChanged;
       }
 
       private async Task BookNewAppointment()

@@ -134,7 +134,7 @@
                 <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
                 <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
-            <input type="text" placeholder="Search services, appointments..." />
+            <input type="text" placeholder="Search services, appointments..." @bind="searchQuery" @bind:event="oninput" @onkeypress="HandleSearch" />
         </div>
 
         <div class="settings-wrapper">
@@ -163,7 +163,7 @@
                         {
                             @foreach (var notif in notifications)
                             {
-                                <div class="settings-item" style="flex-direction: column; align-items: flex-start; gap: 4px; background: @(notif.IsRead ? "white" : "#f0f9ff"); cursor: default;">
+                                <div class="settings-item" @onclick="() => MarkAsRead(notif)" style="flex-direction: column; align-items: flex-start; gap: 4px; background: @(notif.IsRead ? "white" : "#f0f9ff"); cursor: pointer;">
                                     <div style="font-size: 13px; color: #0f172a; line-height: 1.4;">@notif.Message</div>
                                     <div style="font-size: 11px; color: #94a3b8;">@notif.DateCreated.ToString("MMM dd, h:mm tt")</div>
                                 </div>
@@ -260,6 +260,15 @@
     private string patientName = "Patient";
     private bool showSettings = false;
     private bool appointmentReminders = true;
+    private string searchQuery = "";
+
+    private void HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(searchQuery))
+        {
+            Navigation.NavigateTo($"/appointments?search={Uri.EscapeDataString(searchQuery)}");
+        }
+    }
     
     // Notifications
     private List<Dental_Clinic.Models.Notification> notifications = new();
@@ -267,6 +276,15 @@
     private int unreadCount => notifications.Count(n => !n.IsRead);
     
     private string? userAvatar;
+
+    private async Task MarkAsRead(Dental_Clinic.Models.Notification notif)
+    {
+        if (!notif.IsRead)
+        {
+            await DatabaseService.MarkNotificationAsReadAsync(notif.NotificationID);
+            notif.IsRead = true;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

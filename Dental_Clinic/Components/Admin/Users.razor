@@ -317,6 +317,20 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadUsers();
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!string.IsNullOrEmpty(uri.Query))
+        {
+            var query = uri.Query.TrimStart('?');
+            foreach (var part in query.Split('&'))
+            {
+                var kv = part.Split('=');
+                if (kv.Length == 2 && kv[0] == "search")
+                {
+                    tableSearchQuery = Uri.UnescapeDataString(kv[1]);
+                    break;
+                }
+            }
+        }
     }
 
     private async Task LoadUsers()

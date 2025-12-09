@@ -32,9 +32,9 @@
                 else
                 {
                     <div class="appointments-list">
-                        @if (appointments.Any())
+                        @if (filteredAppointments.Any())
                         {
-                            @foreach (var a in appointments.Where(a => a.AppointmentDate >= DateTime.Today))
+                            @foreach (var a in filteredAppointments.Where(a => a.AppointmentDate >= DateTime.Today))
                             {
                                 <div class="appointment-card">
                                     <div class="appointment-details">

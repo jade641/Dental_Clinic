@@ -1,6 +1,11 @@
 @page "/dentist-dashboard"
 @using Microsoft.AspNetCore.Components.Routing
+@using Dental_Clinic.Services
+@using Dental_Clinic.Models
 @inject NavigationManager Navigation
+@inject AppointmentService AppointmentService
+@inject DatabaseService DatabaseService
+@inject SessionService SessionService
 @implements IDisposable
 
 <link href="css/dentistdashboard.css" rel="stylesheet" />
@@ -14,7 +19,7 @@
     <div class="hero-card">
         <div class="hero-content">
             <div class="hero-text">
-                <h1>Good morning, Dr. Dr.!</h1>
+                <h1>Good morning, Dr.!</h1>
                 <p class="subtitle">Ready to make smiles brighter today?</p>
             </div>
 
@@ -89,16 +94,28 @@
                                     </svg>
                                 </div>
                                 <div class="time-info">
-                                    <div class="time">@appointment.Time</div>
+                                    <div class="time">@(DateTime.Today.Add(appointment.StartTime ?? TimeSpan.Zero).ToString("h:mm tt"))</div>
                                 </div>
                             </div>
                             <div class="appt-details">
-                                <div class="patient-name">@appointment.PatientName</div>
-                                <div class="treatment-info">@appointment.Treatment � @appointment.Duration min</div>
+                                <div class="patient-info-row">
+                                    @if (!string.IsNullOrEmpty(appointment.PatientAvatar))
+                                    {
+                                        <img src="@appointment.PatientAvatar" alt="@appointment.PatientName" class="patient-avatar-small" />
+                                    }
+                                    else
+                                    {
+                                        <div class="patient-avatar-placeholder-small">
+                                            @appointment.PatientName.Substring(0, 1).ToUpper()
+                                        </div>
+                                    }
+                                    <div class="patient-name">@appointment.PatientName</div>
+                                </div>
+                                <div class="treatment-info">@appointment.ServiceName • @((appointment.EndTime - appointment.StartTime)?.TotalMinutes ?? 0) min</div>
                             </div>
                             <div class="appt-actions">
-                                <span class="status-badge status-@appointment.StatusClass">@appointment.Status</span>
-                                <button class="menu-btn" @onclick="() => ShowAppointmentMenu(appointment.Id)" title="More options">
+                                <span class="status-badge status-@appointment.Status.ToLower()">@appointment.Status</span>
+                                <button class="menu-btn" @onclick="() => ShowAppointmentMenu(appointment.AppointmentID)" title="More options">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                         <circle cx="12" cy="5" r="2" />
                                         <circle cx="12" cy="12" r="2" />
@@ -117,17 +134,17 @@
 @code {
     private string searchQuery = string.Empty;
     private string currentUrl = string.Empty;
-    private int todayAppointmentsCount = 4;
-    private int completedCount = 1;
-    private int totalPatientsCount = 156;
-    private int pendingTreatmentsCount = 12;
+    private int todayAppointmentsCount = 0;
+    private int completedCount = 0;
+    private int totalPatientsCount = 0;
+    private int pendingTreatmentsCount = 0;
     private List<Appointment> appointments = new List<Appointment>();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        LoadAppointments();
         currentUrl = Navigation.Uri;
         Navigation.LocationChanged += OnLocationChanged;
+        await LoadDashboardData();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -136,54 +153,38 @@
         StateHasChanged();
     }
 
-    private void LoadAppointments()
+    private async Task LoadDashboardData()
     {
-        appointments = new List<Appointment>
+        // Get current session to filter by dentist
+        var session = await SessionService.GetCurrentSessionAsync();
+        int? dentistId = null;
+        
+        if (session != null && session.Role == "Dentist")
         {
-            new Appointment
-            {
-                Id = 1,
-                Time = "9:00 AM",
-                PatientName = "Maria Rodriguez",
-                Treatment = "Teeth Cleaning",
-                Duration = 60,
-                Status = "confirmed",
-                StatusClass = "confirmed"
-            },
-            new Appointment
-            {
-                Id = 2,
-                Time = "10:30 AM",
-                PatientName = "Juan Santos",
-                Treatment = "Root Canal Follow-up",
-                Duration = 45,
-                Status = "in-progress",
-                StatusClass = "progress"
-            },
-            new Appointment
-            {
-                Id = 3,
-                Time = "2:00 PM",
-                PatientName = "Ana Dela Cruz",
-                Treatment = "Dental Consultation",
-                Duration = 30,
-                Status = "confirmed",
-                StatusClass = "confirmed"
-            },
-            new Appointment
-            {
-                Id = 4,
-                Time = "3:30 PM",
-                PatientName = "Carlos Martinez",
-                Treatment = "Dental Check-up",
-                Duration = 30,
-                Status = "confirmed",
-                StatusClass = "confirmed"
-            }
-        };
+            dentistId = session.RoleSpecificId;
+        }
 
+        // Load Today's Appointments
+        appointments = await AppointmentService.GetAppointmentsInRangeAsync(DateTime.Today, DateTime.Today, dentistId);
         todayAppointmentsCount = appointments.Count;
-        completedCount = appointments.Count(a => a.Status == "completed");
+        
+        // Calculate stats from loaded appointments
+        // completedCount = appointments.Count(a => a.Status == "Completed"); // Only counts today's completed
+        if (dentistId.HasValue)
+        {
+            completedCount = await DatabaseService.GetTotalCompletedAppointmentsForDentistAsync(dentistId.Value);
+        }
+        else
+        {
+            completedCount = appointments.Count(a => a.Status == "Completed");
+        }
+        
+        pendingTreatmentsCount = appointments.Count(a => a.Status == "Scheduled" || a.Status == "Confirmed");
+
+        // Load Total Patients Count
+        // Note: Currently fetching all patients. Ideally should filter by dentist's patients if that relationship exists.
+        var patients = await DatabaseService.GetAllPatientsDetailedAsync();
+        totalPatientsCount = patients.Count;
     }
 
     private void ShowAppointmentMenu(int appointmentId)
@@ -194,16 +195,5 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
-    }
-
-    public class Appointment
-    {
-        public int Id { get; set; }
-        public string Time { get; set; } = string.Empty;
-        public string PatientName { get; set; } = string.Empty;
-        public string Treatment { get; set; } = string.Empty;
-        public int Duration { get; set; }
-        public string Status { get; set; } = string.Empty;
-        public string StatusClass { get; set; } = string.Empty;
     }
 }
