@@ -295,7 +295,7 @@ body {
 .action-button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); }
 .action-button svg { width: 20px; height: 20px; }
 .action-button.blue { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); }
-.action-button.teal { background: linear-gradient(135deg, #20c997 0%, #17a673 100%); }
+.action-button.teal { background: linear-gradient(135deg, #8B5CF6 0%, #8B5CF6 100%); }
 .action-button.purple { background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); }
 
 /* APPOINTMENTS SECTION */

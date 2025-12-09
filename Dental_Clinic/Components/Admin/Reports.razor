@@ -7,7 +7,6 @@
 @inject IJSRuntime JSRuntime
 
 <link rel="stylesheet" href="css/AdminReports.css" />
-
 <AdminNavBar />
 
 <div class="reports-main-content">
@@ -44,7 +43,46 @@
         {
             <div class="report-card">
                 <div class="report-icon-wrapper @report.Type.ToLower()">
-                    <i class="fas @GetReportIcon(report.Type)"></i>
+                    @if (report.Type.ToLower() == "financial")
+                    {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="currentColor" opacity="0.3"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    }
+                    else if (report.Type.ToLower() == "patient")
+                    {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    }
+                    else if (report.Type.ToLower() == "service")
+                    {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14.7 6.3C15.3075 6.90754 15.6485 7.72197 15.6485 8.57C15.6485 9.41803 15.3075 10.2325 14.7 10.84L12 13.54L6.3 7.84C5.69246 7.23246 5.35151 6.41803 5.35151 5.57C5.35151 4.72197 5.69246 3.90754 6.3 3.3C6.90754 2.69246 7.72197 2.35151 8.57 2.35151C9.41803 2.35151 10.2325 2.69246 10.84 3.3L12 4.46L13.16 3.3C13.7675 2.69246 14.582 2.35151 15.43 2.35151C16.278 2.35151 17.0925 2.69246 17.7 3.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M9.2 13.12L2.4 19.92C2.06863 20.2514 1.88111 20.6978 1.88111 21.1635C1.88111 21.6292 2.06863 22.0756 2.4 22.407C2.73137 22.7384 3.17782 22.9259 3.6435 22.9259C4.10918 22.9259 4.55563 22.7384 4.887 22.407L11.687 15.607" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14.5 11L16.5 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 8.5L14 10.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    }
+                    else if (report.Type.ToLower() == "staff")
+                    {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    }
+                    else if (report.Type.ToLower() == "audit")
+                    {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    }
                 </div>
                 <h3 class="report-title">@report.Title</h3>
                 <p class="report-description">@report.Description</p>
