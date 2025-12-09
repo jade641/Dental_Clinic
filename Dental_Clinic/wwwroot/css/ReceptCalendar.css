@@ -90,6 +90,63 @@
     flex-wrap: wrap;
 }
 
+/* View Toggle Buttons */
+.view-toggle-group {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.view-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: transparent;
+    color: #64748b;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    white-space: nowrap;
+}
+
+.view-toggle-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover:not(.active) {
+    color: #475569;
+    background: #f8fafc;
+}
+
+.view-toggle-btn.active {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.view-toggle-btn.active svg {
+    stroke-width: 2.5;
+}
+
+.view-toggle-btn:active {
+    transform: translateY(0);
+}
+
 .date-input {
     padding: 11px 16px;
     background: #ffffff;
@@ -697,6 +754,96 @@ textarea.form-input {
 }
 
 /* ============================================ */
+/* TIME SLOT SELECTION STYLES */
+/* ============================================ */
+.slot-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.slot-actions .btn-refresh {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 18px;
+    font-weight: 600;
+}
+
+.slot-hint {
+    font-size: 13px;
+    color: #64748b;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+    margin-bottom: 20px;
+}
+
+.slot-chip {
+    position: relative;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.slot-chip:hover:not(.unavailable) {
+    border-color: #0d6efd;
+    background: #eff6ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+}
+
+.slot-chip.selected {
+    border-color: #0d6efd;
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+}
+
+.slot-chip.unavailable {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.slot-time {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.slot-chip.unavailable .slot-time {
+    color: #94a3b8;
+}
+
+.slot-dentist {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.slot-status {
+    font-size: 11px;
+    color: #dc2626;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* ============================================ */
 /* RESPONSIVE DESIGN */
 /* ============================================ */
 @media (max-width: 1200px) {
@@ -729,6 +876,11 @@ textarea.form-input {
 
     .page-main-title {
         font-size: 24px;
+    }
+
+    .view-toggle-btn {
+        padding: 9px 14px;
+        font-size: 13px;
     }
 
     .section-header-appointments {
@@ -775,28 +927,45 @@ textarea.form-input {
 }
 
 @media (max-width: 480px) {
-    .dashboard-main {
-        padding: 16px;
-    }
+.dashboard-main {
+    padding: 16px;
+}
 
-    .page-main-title {
-        font-size: 22px;
-    }
+.page-main-title {
+    font-size: 22px;
+}
 
-    .header-actions {
-        width: 100%;
-    }
+.header-actions {
+    width: 100%;
+}
 
-    .date-input,
-    .btn-refresh,
-    .btn-new-appointment {
-        flex: 1;
-        justify-content: center;
-    }
+.view-toggle-group {
+    width: 100%;
+    justify-content: space-between;
+}
 
-    .section-header-appointments {
-        padding: 16px 20px;
-    }
+.view-toggle-btn {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 6px;
+}
+
+.view-toggle-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.date-input,
+.btn-refresh,
+.btn-new-appointment {
+    flex: 1;
+    justify-content: center;
+}
+
+.section-header-appointments {
+    padding: 16px 20px;
+}
 
     .section-title-group h3 {
         font-size: 17px;
@@ -832,5 +1001,14 @@ textarea.form-input {
 
     .modal-title {
         font-size: 20px;
+    }
+
+    .slots-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .slot-chip {
+        padding: 14px;
     }
 }

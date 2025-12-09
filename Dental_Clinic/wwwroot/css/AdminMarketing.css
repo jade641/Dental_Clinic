@@ -187,10 +187,11 @@ body {
 
 /* Stats Grid */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    justify-content: center;
     gap: 16px;
     margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
 .stat-card {
@@ -201,35 +202,20 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    border-left: none;
-    min-height: auto;
-    justify-content: flex-start;
-    position: relative;
-    overflow: hidden;
+    border-left: 4px solid #e5e7eb;
 }
 
-/* Left border accent for stat cards */
-.stat-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: #e5e7eb; /* neutral default */
+/* Specific card border colors */
+.stat-card.yellow-border {
+    border-left-color: #fbbf24;
 }
 
-/* Specific card type accents */
-.stat-card.rating::before { /* Average Rating */
-    background: #f59e0b; /* amber/yellow */
+.stat-card.green-border {
+    border-left-color: #10b981;
 }
 
-.stat-card.happy::before { /* Happy Patients */
-    background: #10b981; /* green/teal */
-}
-
-.stat-card.pending::before { /* Pending Replies */
-    background: #3b82f6; /* blue */
+.stat-card.blue-border {
+    border-left-color: #3b82f6;
 }
 
 .stat-left {
@@ -267,6 +253,7 @@ body {
     height: 48px;
     border-radius: 10px;
     display: flex;
+
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
@@ -761,13 +748,14 @@ body {
 /* Responsive Design */
 @media (max-width: 1200px) {
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        flex-wrap: wrap;
     }
 }
 
 @media (max-width: 768px) {
     .stats-grid {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: center;
     }
 
     .feedback-header {

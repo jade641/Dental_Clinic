@@ -284,8 +284,7 @@
     gap: 10px;
 }
 
-.btn-book,
-.btn-call {
+.btn-book {
     display: flex;
     align-items: center;
     gap: 7px;
@@ -296,9 +295,6 @@
     cursor: pointer;
     transition: all 0.3s ease;
     border: none;
-}
-
-.btn-book {
     background: rgba(255, 255, 255, 0.94);
     color: #3b82f6;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -310,20 +306,9 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-book svg, .btn-call svg {
+.btn-book svg {
     width: 16px;
     height: 16px;
-}
-
-.btn-call {
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
-}
-
-.btn-call:hover {
-    background: rgba(255, 255, 255, 0.28);
-    border-color: rgba(255, 255, 255, 0.55);
 }
 
 /* ============================================
