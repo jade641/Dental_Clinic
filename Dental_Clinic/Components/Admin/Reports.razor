@@ -2,6 +2,7 @@
 @using Dental_Clinic.Services
 @using Dental_Clinic.Models
 @using Microsoft.JSInterop
+@using System.IO
 @inject DatabaseService DbService
 @inject IJSRuntime JSRuntime
 
@@ -21,6 +22,23 @@
         </button>
     </div>
 
+    @if (showSuccessMessage)
+    {
+        <div class="success-alert">
+            <i class="fas fa-check-circle"></i> Report generated and downloaded successfully!
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-overlay">
+            <div class="spinner-container">
+                <div class="spinner-large"></div>
+                <p>Processing...</p>
+            </div>
+        </div>
+    }
+
     <div class="reports-grid">
         @foreach (var report in reports)
         {
@@ -35,7 +53,7 @@
                         <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    Generate
+                    @(report.GeneratedDate == default ? "Generate" : "Download Again")
                 </button>
             </div>
         }
@@ -55,9 +73,10 @@
                     <label>Report Type</label>
                     <select @bind="selectedReportType">
                         <option value="Financial">Financial Report</option>
-                        <option value="Appointments">Appointment Summary</option>
-                        <option value="Patients">Patient Demographics</option>
-                        <option value="Inventory">Inventory Status</option>
+                        <option value="Service">Service Report</option>
+                        <option value="Patient">Patient Report</option>
+                        <option value="Staff">Staff Report</option>
+                        <option value="Audit">Audit Trail</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -77,15 +96,92 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" @onclick="CloseModal">Cancel</button>
-                <button class="btn-primary-modal" @onclick="GenerateAndDownloadReport">Generate</button>
+                <button class="btn-secondary" @onclick="CloseModal" disabled="@isLoading">Cancel</button>
+                <button class="btn-primary-modal" @onclick="GenerateAndDownloadReport" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner"></span>
+                        <span>Generating...</span>
+                    }
+                    else
+                    {
+                        <span>Generate</span>
+                    }
+                </button>
             </div>
         </div>
     </div>
 }
 
+<style>
+    .success-alert {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 0.5rem;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @@keyframes slideIn {
+        from { transform: translateY(-10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+
+    .spinner-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .spinner-large {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+</style>
+
 @code {
     private bool showGenerateModal = false;
+    private bool isLoading = false;
+    private bool showSuccessMessage = false;
     private string selectedReportType = "financial";
     private string reportFormat = "pdf";
     private DateTime startDate = DateTime.Now.AddMonths(-1);
@@ -152,13 +248,28 @@
 
     private async Task GenerateAndDownloadReport()
     {
+        if (isLoading) return;
+
+        isLoading = true;
+        showSuccessMessage = false;
+        StateHasChanged();
+
+        // Yield to UI thread to ensure spinner renders
+        await Task.Delay(100);
+
         try
         {
             var csvContent = await GenerateReport(selectedReportType);
+            
+            if (string.IsNullOrWhiteSpace(csvContent) || csvContent.StartsWith("Error"))
+            {
+                throw new Exception(csvContent ?? "Report generation failed.");
+            }
+
             var fileName = $"{selectedReportType}_Report_{DateTime.Now:yyyyMMdd}.csv";
             
-            // Invoke JS to download file
-            await JSRuntime.InvokeVoidAsync("downloadFileFromText", fileName, csvContent);
+            // Use native file handling instead of JS
+            await SaveAndOpenReport(fileName, csvContent);
             
             showGenerateModal = false;
             
@@ -168,13 +279,60 @@
                 Title = $"{selectedReportType} Report",
                 Type = selectedReportType,
                 GeneratedDate = DateTime.Now,
-                Description = $"Generated on {DateTime.Now:MMM dd, yyyy}"
+                Description = $"Generated on {DateTime.Now:MMM dd, yyyy}",
+                IconClass = selectedReportType.ToLower()
             });
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error generating report: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("alert", $"Error generating report: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Failed to generate report: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SaveAndOpenReport(string fileName, string content)
+    {
+        try
+        {
+            string path = string.Empty;
+            
+            // Determine path based on platform
+            if (DeviceInfo.Platform == DevicePlatform.WinUI)
+            {
+                // On Windows, save to Documents folder for easy access
+                string docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                path = Path.Combine(docsPath, fileName);
+            }
+            else
+            {
+                // On Mobile, save to Cache
+                path = Path.Combine(FileSystem.CacheDirectory, fileName);
+            }
+
+            // Write content
+            await File.WriteAllTextAsync(path, content);
+
+            // Open file
+            await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                Title = "Open Report",
+                File = new ReadOnlyFile(path)
+            });
+            
+            showSuccessMessage = true;
+            _ = Task.Delay(3000).ContinueWith(t => { 
+                showSuccessMessage = false; 
+                InvokeAsync(StateHasChanged); 
+            });
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Failed to save report: {ex.Message}");
         }
     }
 
@@ -187,49 +345,83 @@
             switch (type.ToLower())
             {
                 case "financial":
-                    sb.AppendLine("Date,Description,Amount,Type");
-                    var transactions = await DbService.GetTransactionsAsync();
-                    if (transactions == null || !transactions.Any())
+                    sb.AppendLine("Year,Month,Total Transactions,Total Revenue,Total Cost,Gross Profit,Payment Method");
+                    var financials = await DbService.GetFinancialReportAsync();
+                    if (financials == null || !financials.Any())
                     {
-                        sb.AppendLine("No transactions found for the selected period.");
+                        sb.AppendLine("No financial data found.");
                     }
                     else
                     {
-                        foreach (var t in transactions)
+                        foreach (var f in financials)
                         {
-                            sb.AppendLine($"{t.Date:yyyy-MM-dd},{EscapeCsv(t.Description)},{t.Amount},{EscapeCsv(t.Type)}");
+                            sb.AppendLine($"{f.Year},{f.Month},{f.TotalTransactions},{f.TotalRevenue},{f.TotalStandardCost},{f.GrossProfit},{EscapeCsv(f.PaymentMethod)}");
                         }
                     }
                     break;
 
-                case "appointments":
-                    sb.AppendLine("Date,Patient,Dentist,Service,Status");
-                    var appointments = await DbService.GetAppointmentsAsync();
-                    if (appointments == null || !appointments.Any())
+                case "service":
+                case "appointments": // Handle both if needed
+                    sb.AppendLine("Service Name,Category,Times Performed,Total Revenue,Avg Price,Est Duration");
+                    var services = await DbService.GetServiceReportAsync();
+                    if (services == null || !services.Any())
                     {
-                        sb.AppendLine("No appointments found.");
+                        sb.AppendLine("No service data found.");
                     }
                     else
                     {
-                        foreach (var a in appointments)
+                        foreach (var s in services)
                         {
-                            sb.AppendLine($"{a.Date:yyyy-MM-dd},{EscapeCsv(a.PatientName)},{EscapeCsv(a.DentistName)},{EscapeCsv(a.ServiceName)},{a.Status}");
+                            sb.AppendLine($"{EscapeCsv(s.ServiceName)},{EscapeCsv(s.CategoryName)},{s.TimesPerformed},{s.TotalRevenueGenerated},{s.AveragePrice},{s.EstDuration}");
                         }
                     }
                     break;
 
+                case "patient":
                 case "patients":
-                    sb.AppendLine("Name,Email,Phone,Last Visit");
-                    var patients = await DbService.GetPatientsAsync();
+                    sb.AppendLine("Patient ID,Full Name,Sex,Age,Address,Total Visits,Last Visit,Outstanding Balance,Status");
+                    var patients = await DbService.GetPatientReportAsync();
                     if (patients == null || !patients.Any())
                     {
-                        sb.AppendLine("No patients found.");
+                        sb.AppendLine("No patient data found.");
                     }
                     else
                     {
                         foreach (var p in patients)
                         {
-                            sb.AppendLine($"{EscapeCsv(p.Name)},{EscapeCsv(p.Email)},{EscapeCsv(p.Phone)},{p.LastVisit:yyyy-MM-dd}");
+                            sb.AppendLine($"{p.PatientID},{EscapeCsv(p.FullName)},{p.Sex},{p.Age},{EscapeCsv(p.Address)},{p.TotalVisits},{p.LastVisitDate:yyyy-MM-dd},{p.OutstandingBalance},{p.AccountStatus}");
+                        }
+                    }
+                    break;
+
+                case "staff":
+                    sb.AppendLine("Dentist ID,Name,Specialization,Assigned Appts,Completed,Cancelled,Revenue Generated");
+                    var staff = await DbService.GetStaffReportAsync();
+                    if (staff == null || !staff.Any())
+                    {
+                        sb.AppendLine("No staff data found.");
+                    }
+                    else
+                    {
+                        foreach (var s in staff)
+                        {
+                            sb.AppendLine($"{s.DentistID},{EscapeCsv(s.DentistName)},{EscapeCsv(s.Specialization)},{s.TotalAppointmentsAssigned},{s.CompletedAppointments},{s.CancelledAppointments},{s.RevenueGenerated}");
+                        }
+                    }
+                    break;
+
+                case "audit":
+                    sb.AppendLine("Activity Type,Description,Performed By,Date");
+                    var audit = await DbService.GetAuditTrailAsync();
+                    if (audit == null || !audit.Any())
+                    {
+                        sb.AppendLine("No audit trail data found.");
+                    }
+                    else
+                    {
+                        foreach (var a in audit)
+                        {
+                            sb.AppendLine($"{EscapeCsv(a.ActivityType)},{EscapeCsv(a.Description)},{EscapeCsv(a.PerformedBy)},{a.ActivityDate:yyyy-MM-dd HH:mm:ss}");
                         }
                     }
                     break;
@@ -282,10 +474,36 @@
 
     private async Task DownloadReport(ReportItem report)
     {
-        // Re-generate report content for download
-        var content = await GenerateReport(report.Type);
-        var fileName = $"{report.Type}_Report_{report.GeneratedDate:yyyyMMdd}.csv";
-        await JSRuntime.InvokeVoidAsync("downloadFileFromText", fileName, content);
+        if (isLoading) return;
+
+        isLoading = true;
+        showSuccessMessage = false;
+        StateHasChanged();
+        await Task.Delay(100); // Yield to UI thread
+
+        try
+        {
+            // Re-generate report content for download
+            var content = await GenerateReport(report.Type);
+            
+            if (string.IsNullOrWhiteSpace(content) || content.StartsWith("Error"))
+            {
+                 await JSRuntime.InvokeVoidAsync("alert", content ?? "Report generation failed.");
+                 return;
+            }
+
+            var fileName = $"{report.Type}_Report_{report.GeneratedDate:yyyyMMdd}.csv";
+            await SaveAndOpenReport(fileName, content);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Failed to download report: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private void DeleteReport(ReportItem report)

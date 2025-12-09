@@ -399,7 +399,7 @@ namespace Dental_Clinic.Services
         string query = @"
         SELECT a.AppointmentID, a.PatientID, a.DentistID, a.ServiceID, a.AppointmentDate,
   a.StartTime, a.EndTime, a.Status, a.Notes,
-           s.ServiceName,
+           s.ServiceName, s.Cost,
     CONCAT(u.FirstName, ' ', u.LastName) as DentistName
       FROM Appointments a
          LEFT JOIN Services s ON a.ServiceID = s.ServiceID
@@ -1006,6 +1006,7 @@ WHERE CAST(a.AppointmentDate AS DATE) BETWEEN @Start AND @End";
         PatientName = row.Table.Columns.Contains("PatientName") && row["PatientName"] != DBNull.Value ? row["PatientName"].ToString() ?? string.Empty : string.Empty,
         PatientPhone = row.Table.Columns.Contains("PatientPhone") && row["PatientPhone"] != DBNull.Value ? row["PatientPhone"].ToString() ?? string.Empty : string.Empty,
         PatientEmail = row.Table.Columns.Contains("PatientEmail") && row["PatientEmail"] != DBNull.Value ? row["PatientEmail"].ToString() ?? string.Empty : string.Empty,
+        ServiceCost = row.Table.Columns.Contains("Cost") && row["Cost"] != DBNull.Value ? Convert.ToDecimal(row["Cost"]) : 0
       };
       return appt;
     }

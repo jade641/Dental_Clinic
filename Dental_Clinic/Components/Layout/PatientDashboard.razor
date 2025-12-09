@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @inject Dental_Clinic.Services.AppointmentService AppointmentService
 @inject Dental_Clinic.Services.ChatService ChatService
+@inject Dental_Clinic.Services.DatabaseService DatabaseService
 
 <link href="css/patientdashboard.css" rel="stylesheet" />
 
@@ -301,12 +302,13 @@
 @code {
     private string patientName = "Patient";
     private int currentPatientId = 0;
-    private int completedCount = 3;
-    private decimal outstanding = 2500;
-    private decimal totalSpent = 15800;
+    private int completedCount = 0;
+    private decimal outstanding = 0;
+    private decimal totalSpent = 0;
 
     private Models.Appointment? nextAppointment;
     private List<Models.Appointment> upcoming = new();
+    private List<Treatment> recentTreatments = new();
 
     // Settings state
     private bool showSettings = false;
@@ -331,14 +333,44 @@
                 return;
             }
 
-            upcoming = (await AppointmentService.GetPatientAppointmentsAsync(currentPatientId))
-                .Where(a => a.AppointmentDate >= DateTime.Today)
+            // Load Appointments
+            var allAppointments = await AppointmentService.GetPatientAppointmentsAsync(currentPatientId);
+            
+            // Upcoming Appointments (Limit to 5)
+            upcoming = allAppointments
+                .Where(a => a.AppointmentDate >= DateTime.Today && a.Status != "Cancelled" && a.Status != "Completed")
                 .OrderBy(a => a.AppointmentDate)
                 .ThenBy(a => a.StartTime)
-                .Take(10)
+                .Take(5)
                 .ToList();
 
             nextAppointment = upcoming.FirstOrDefault();
+
+            // Completed Appointments & Recent Treatments
+            var completedAppointments = allAppointments
+                .Where(a => a.Status == "Completed")
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToList();
+
+            completedCount = completedAppointments.Count;
+
+            recentTreatments = completedAppointments
+                .Take(5)
+                .Select(a => new Treatment 
+                { 
+                    Title = a.ServiceName, 
+                    Provider = a.DentistName, 
+                    Date = a.AppointmentDate, 
+                    Price = (int)a.ServiceCost 
+                })
+                .ToList();
+
+            // Outstanding Balance
+            outstanding = await DatabaseService.GetPatientBalanceAsync(currentPatientId);
+
+            // Total Spent
+            var payments = await DatabaseService.GetPaymentsByPatientIdAsync(currentPatientId);
+            totalSpent = payments.Sum(p => p.Amount);
         }
         catch (Exception ex)
         {
@@ -390,12 +422,6 @@
         if (hours == 0) hours = 12;
         return $"{hours}:{minutes:00} {ampm}";
     }
-
-    private List<Treatment> recentTreatments = new List<Treatment>
-    {
-        new Treatment { Title = "Initial Consultation", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 8, 15), Price = 1500 },
-        new Treatment { Title = "X-Ray", Provider = "Dr. Maria Santos", Date = new DateTime(2025, 8, 15), Price = 800 }
-    };
 
     private class Treatment 
     { 

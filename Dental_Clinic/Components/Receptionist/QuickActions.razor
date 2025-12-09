@@ -807,8 +807,7 @@
             PaymentDate = DateTime.Now,
             PaymentMethod = billingPaymentMethod,
             ReferenceNumber = !string.IsNullOrEmpty(paymentLinkId) ? paymentLinkId : $"CASH-{DateTime.Now.Ticks}", // Set Reference
-            Number
-        Remarks = $"{selectedAppointment.ServiceName} - {billingPaymentType} ({status})"
+            Remarks = $"{selectedAppointment.ServiceName} - {billingPaymentType} ({status})"
         };
 
         bool success = await DatabaseService.RecordPaymentAsync(payment);

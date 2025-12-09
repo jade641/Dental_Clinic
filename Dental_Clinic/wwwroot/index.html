@@ -33,19 +33,29 @@
         // Downloads string content (CSV/text) as a file using a Blob for reliability across platforms
         window.downloadFileFromText = (filename, content) => {
             try {
-                const blob = new Blob([content ?? ''], { type: 'text/csv;charset=utf-8;' });
+                if (!content) {
+                    console.warn('downloadFileFromText: Content is empty');
+                    return;
+                }
+                const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 const url = URL.createObjectURL(blob);
                 link.href = url;
                 link.download = filename;
-                link.style.visibility = 'hidden';
+                link.target = "_blank"; // Force open in new context to prevent WebView navigation
+                link.style.display = 'none';
                 document.body.appendChild(link);
+                
                 link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
+                
+                // Increased timeout to 2000ms to ensure WebView2 has time to process the download
+                // Moved removeChild inside timeout to ensure the element exists during the click processing
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 2000);
             } catch (e) {
-                console.error('downloadFileFromText failed', e);
-                alert('Unable to download the file. Please try again.');
+                console.error('Download failed:', e);
             }
         };
 

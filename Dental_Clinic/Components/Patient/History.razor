@@ -1,6 +1,7 @@
 ﻿@page "/history"
 @inject NavigationManager Navigation
 @inject Dental_Clinic.Services.SessionService SessionService
+@inject Dental_Clinic.Services.AppointmentService AppointmentService
 
 <link href="css/patientdashboard.css" rel="stylesheet" />
 <link href="css/PatientHistory.css" rel="stylesheet" />
@@ -19,7 +20,8 @@
                     Filter
                 </button>
                 <button class="export-btn" @onclick="ExportHistory">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -81,20 +83,23 @@
                                 <div class="appointment-icon @GetIconColorClass(treatment.Status)">
                                     @if (treatment.Status == "completed")
                                     {
-                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2.5">
                                             <polyline points="20 6 9 17 4 12"></polyline>
                                         </svg>
                                     }
                                     else if (treatment.Status == "pending")
                                     {
-                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2">
                                             <circle cx="12" cy="12" r="10"></circle>
                                             <polyline points="12 6 12 12 16 14"></polyline>
                                         </svg>
                                     }
                                     else
                                     {
-                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2">
                                             <line x1="18" y1="6" x2="6" y2="18"></line>
                                             <line x1="6" y1="6" x2="18" y2="18"></line>
                                         </svg>
@@ -128,8 +133,11 @@
                     else
                     {
                         <div class="empty-state">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z"></path>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z">
+                                </path>
                             </svg>
                             <p>No treatment history found</p>
                         </div>
@@ -177,7 +185,8 @@
 
                 <div class="detail-group">
                     <label>Status</label>
-                    <p><span class="status-badge @GetStatusClass(selectedTreatment.Status)">@selectedTreatment.Status</span></p>
+                    <p><span class="status-badge @GetStatusClass(selectedTreatment.Status)">@selectedTreatment.Status</span>
+                    </p>
                 </div>
 
                 @if (selectedTreatment.Rating > 0)
@@ -243,70 +252,26 @@
                 return;
             }
             patientName = session.UserName ?? "Patient";
+            int currentPatientId = session.RoleSpecificId ?? 0;
+
+            if (currentPatientId > 0)
+            {
+                var appointments = await AppointmentService.GetPatientAppointmentsAsync(currentPatientId);
+                treatments = appointments.Select(a => new TreatmentRecord
+                {
+                    Id = a.AppointmentID,
+                    Name = a.ServiceName,
+                    DoctorName = a.DentistName,
+                    Date = a.AppointmentDate,
+                    Price = a.ServiceCost,
+                    Status = a.Status,
+                    Rating = 0, // Placeholder as Feedback is separate
+                    Notes = a.Notes,
+                    Prescription = "" // Placeholder
+                }).ToList();
+            }
         }
         catch { patientName = "Patient"; }
-
-        // Sample treatment history data
-        treatments = new List<TreatmentRecord>
-        {
-            new TreatmentRecord
-            {
-                Id = 1,
-                Name = "Initial Consultation",
-                DoctorName = "Maria Santos",
-                Date = new DateTime(2025, 8, 15),
-                Price = 1500,
-                Status = "completed",
-                Rating = 5,
-                Notes = "Comprehensive dental examination completed. Patient shows good oral hygiene.",
-                Prescription = "No prescription needed at this time."
-            },
-            new TreatmentRecord
-            {
-                Id = 2,
-                Name = "X-Ray",
-                DoctorName = "Maria Santos",
-                Date = new DateTime(2025, 8, 15),
-                Price = 800,
-                Status = "completed",
-                Rating = 5,
-                Notes = "Full mouth X-ray taken for comprehensive assessment."
-            },
-            new TreatmentRecord
-            {
-                Id = 3,
-                Name = "Cavity Filling",
-                DoctorName = "Juan Dela Cruz",
-                Date = new DateTime(2025, 8, 22),
-                Price = 3500,
-                Status = "completed",
-                Rating = 4,
-                Notes = "Composite filling on tooth #14. Patient tolerated procedure well.",
-                Prescription = "Take Ibuprofen 400mg as needed for pain. Avoid hard foods for 24 hours."
-            },
-            new TreatmentRecord
-            {
-                Id = 4,
-                Name = "Teeth Cleaning",
-                DoctorName = "Sarah Johnson",
-                Date = new DateTime(2025, 9, 10),
-                Price = 2500,
-                Status = "completed",
-                Rating = 5,
-                Notes = "Deep cleaning completed. Minimal tartar buildup noted."
-            },
-            new TreatmentRecord
-            {
-                Id = 5,
-                Name = "Root Canal Treatment",
-                DoctorName = "Maria Santos",
-                Date = new DateTime(2025, 12, 5),
-                Price = 15000,
-                Status = "pending",
-                Rating = 0,
-                Notes = "Scheduled for next month. Pre-treatment consultation completed."
-            }
-        };
     }
 
     private void ToggleSettings() => showSettings = !showSettings;
