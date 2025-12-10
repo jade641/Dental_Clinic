@@ -119,6 +119,8 @@ body {
     padding: 32px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border);
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .section-title {

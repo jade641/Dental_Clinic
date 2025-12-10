@@ -19,7 +19,7 @@
     <!-- Main Content -->
     <main class="dashboard-main main-content">
         <!-- Stats Cards -->
-        <div class="stats-grid">
+        <div class="stats-grid marketing-center">
             <div class="stat-card yellow-border">
                 <div class="stat-left">
                     <div class="stat-label">Average Rating</div>
@@ -217,21 +217,7 @@
                                 <div class="campaign-preview">
                                     @((MarkupString)campaign.Description)
                                 </div>
-                                <div class="campaign-stats">
-                                    <div class="stat">
-                                        <span class="stat-label">Sent</span>
-                                        <span class="stat-value">@campaign.Sent</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-label">Opened</span>
-                                        <span class="stat-value">@campaign.Opened</span>
-                                    </div>
-                                    <div class="stat">
-                                        <span class="stat-label">Clicked</span>
-                                        <span class="stat-value">@campaign.Clicked</span>
-                                    </div>
-                                </div>
-                                <div class="campaign-actions" style="display: flex; gap: 10px; margin-top: 15px;">
+                                <div class="campaign-actions" style="display: flex; gap: 10px; margin-top: 1rem;">
                                     <button class="btn-view" @onclick="() => ViewCampaign(campaign.Id)">View Details</button>
                                     <button class="btn-secondary" @onclick="() => ResendCampaign(campaign.Id)"
                                         style="padding: 8px 16px; font-size: 0.9em;">Resend</button>

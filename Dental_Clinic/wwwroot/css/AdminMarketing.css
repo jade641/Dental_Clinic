@@ -187,11 +187,20 @@ body {
 
 /* Stats Grid */
 .stats-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 300px);
     justify-content: center;
+    justify-items: center;
+    align-items: stretch;
     gap: 16px;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+    margin: 0 auto 2rem;
+    width: 100%;
+}
+
+.marketing-center {
+    max-width: calc(3 * 300px + 2 * 16px); /* three cards plus gaps */
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .stat-card {
@@ -202,21 +211,31 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    border-left: 4px solid #e5e7eb;
+    min-width: 280px;
+    max-width: 320px;
+    flex: 0 0 300px;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Rounded left accent bar */
+.stat-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background-color: transparent;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
 }
 
 /* Specific card border colors */
-.stat-card.yellow-border {
-    border-left-color: #fbbf24;
-}
-
-.stat-card.green-border {
-    border-left-color: #10b981;
-}
-
-.stat-card.blue-border {
-    border-left-color: #3b82f6;
-}
+.stat-card.yellow-border::before { background-color: #fbbf24; }
+.stat-card.green-border::before { background-color: #10b981; }
+.stat-card.blue-border::before { background-color: #3b82f6; }
 
 .stat-left {
     display: flex;
@@ -257,6 +276,8 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    order: -1; /* move icon to the left side */
+    margin-right: 0.5rem; /* keep spacing between icon and text */
 }
 
 .yellow-bg {
@@ -539,35 +560,42 @@ body {
     border-radius: 12px;
     padding: 1.5rem;
     transition: all 0.2s;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
     .campaign-card:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border-color: #d1d5db;
+        transform: translateY(-2px);
     }
 
 .campaign-icon {
     width: 56px;
     height: 56px;
-    background: #dbeafe;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.25rem;
 }
 
 .campaign-card h4 {
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: #1f2937;
     margin-bottom: 0.5rem;
+    line-height: 1.4;
 }
 
 .campaign-card p {
     font-size: 0.875rem;
     color: #6b7280;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
+    flex: 1;
 }
 
 .campaign-stats {
@@ -598,9 +626,9 @@ body {
     }
 
 .btn-view {
-    width: 100%;
-    padding: 0.625rem;
-    border: 1px solid #e5e7eb;
+    flex: 1;
+    padding: 0.625rem 1rem;
+    border: 1px solid #3b82f6;
     background: white;
     border-radius: 8px;
     font-size: 0.875rem;
@@ -611,8 +639,8 @@ body {
 }
 
     .btn-view:hover {
-        background-color: #eff6ff;
-        border-color: #3b82f6;
+        background-color: #3b82f6;
+        color: white;
     }
 
 /* Modal Styles */
@@ -623,10 +651,22 @@ body {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .modal-content {
@@ -634,7 +674,22 @@ body {
     border-radius: 12px;
     width: 90%;
     max-width: 500px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-header {
@@ -643,6 +698,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
     .modal-header h3 {
@@ -666,7 +722,28 @@ body {
 
 .modal-body {
     padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
+
+    .modal-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
 
 .form-group {
     margin-bottom: 1rem;
@@ -710,6 +787,8 @@ body {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
+    flex-shrink: 0;
+    background: white;
 }
 
 .btn-primary {
@@ -738,11 +817,13 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+    flex: 1;
 }
 
     .btn-secondary:hover {
         background: #f9fafb;
-        border-color: #d1d5db;
+        border-color: #9ca3af;
+        color: #4b5563;
     }
 
 /* Responsive Design */
@@ -756,6 +837,14 @@ body {
     .stats-grid {
         flex-direction: column;
         align-items: center;
+        width: 100%;
+    }
+
+    .stat-card {
+        flex: 1 1 100%;
+        max-width: none;
+        min-width: 0;
+        width: 100%;
     }
 
     .feedback-header {
@@ -785,17 +874,26 @@ body {
 }
 
 .campaign-preview {
-    max-height: 100px;
+    max-height: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 5;
     -webkit-box-orient: vertical;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-    color: #666;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.6;
+    flex: 1;
 }
 
     .campaign-preview img {
         display: none;
     }
+
+.campaign-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+}

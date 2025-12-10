@@ -9,77 +9,6 @@
 @implements IDisposable
 
 <link href="css/dentistschedule.css" rel="stylesheet" />
-<style>
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .modal-content {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        width: 500px;
-        max-width: 90%;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 2rem;
-    }
-
-    .btn-cancel {
-        padding: 0.75rem 1.5rem;
-        background: #f3f4f6;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-
-    .btn-save {
-        padding: 0.75rem 1.5rem;
-        background: #0ea5e9;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-</style>
 
 <div class="page-wrapper">
     <DentistNavBar />
@@ -156,12 +85,11 @@
                                 @foreach (var appt in GetAppointmentsForSlot(currentDayDate, timeSpan))
                                 {
                                     <div class="appointment-block @(appt.Status == "Completed" ? "completed-appt" : "")" 
-                                         title="@appt.PatientName - @appt.ServiceName"
-                                         style="@(appt.Status == "Completed" ? "background-color: #dcfce7; border-left: 3px solid #22c55e;" : "")">
+                                         title="@appt.PatientName - @appt.ServiceName">
                                         <div class="appointment-patient">@appt.PatientName</div>
                                         <div class="appointment-treatment">
                                             @appt.ServiceName
-                                            @if(appt.Status == "Completed") { <span style="font-size: 10px; color: #15803d;">(Done)</span> }
+                                            @if(appt.Status == "Completed") { <span class="completed-badge">(Done)</span> }
                                         </div>
                                     </div>
                                 }
@@ -184,8 +112,7 @@
                 <div class="modal-body">
                     @if (hasPastDue)
                     {
-                        <div class="alert alert-warning"
-                            style="background-color: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <div class="alert alert-warning">
                             <strong>Warning:</strong> This patient has a past due balance of
                             ₱@patientCurrentBalance.ToString("N2").
                             Please remind them to settle their account.
@@ -201,16 +128,14 @@
                         <input type="text" class="form-control" value="@selectedAppointment.ServiceName" readonly />
                     </div>
 
-                    <div class="form-row" style="display: flex; gap: 1rem;">
+                    <div class="form-row">
                         <div class="form-group" style="flex: 1;">
                             <label>Base Service Fee</label>
-                            <input type="text" class="form-control" value="₱@baseServiceCost.ToString("N2")" readonly
-                                style="background-color: #f3f4f6;" />
+                            <input type="text" class="form-control readonly" value="₱@baseServiceCost.ToString("N2")" readonly />
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label>Current Balance</label>
-                            <input type="text" class="form-control" value="₱@patientCurrentBalance.ToString("N2")" readonly
-                                style="background-color: #f3f4f6;" />
+                            <input type="text" class="form-control readonly" value="₱@patientCurrentBalance.ToString("N2")" readonly />
                         </div>
                     </div>
 
@@ -221,7 +146,7 @@
                     </div>
                     <div class="form-group">
                         <label>Treatment Notes (Procedures done)</label>
-                        <textarea class="form-control" @bind="treatmentNotes" rows="3"
+                        <textarea class="form-control" @bind="treatmentNotes" rows="2"
                             placeholder="e.g., 2 surfaces on Tooth 14..."></textarea>
                     </div>
                     <div class="form-group">
@@ -250,17 +175,17 @@
 
     @if (showSuccessModal)
     {
-        <div class="modal-backdrop" style="z-index: 2000;" @onclick="CloseSuccessModal">
-            <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;" @onclick:stopPropagation>
-                <div style="margin-bottom: 20px; color: #10b981; display: flex; justify-content: center;">
+        <div class="modal-backdrop success-modal-backdrop" @onclick="CloseSuccessModal">
+            <div class="modal-content success-modal-content" @onclick:stopPropagation>
+                <div class="success-icon">
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <h3 style="margin-bottom: 10px; color: #0f172a; font-size: 18px; font-weight: 600;">Transaction Successful!</h3>
-                <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">The appointment has been completed and the patient's balance has been updated.</p>
-                <button class="btn-save" @onclick="CloseSuccessModal" style="width: 100%; justify-content: center;">OK</button>
+                <h3 class="success-title">Transaction Successful!</h3>
+                <p class="success-message">The appointment has been completed and the patient's balance has been updated.</p>
+                <button class="btn-save btn-full-width" @onclick="CloseSuccessModal">OK</button>
             </div>
         </div>
     }

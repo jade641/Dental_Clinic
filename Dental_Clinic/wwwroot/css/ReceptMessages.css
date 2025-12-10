@@ -29,7 +29,7 @@ body {
     padding: 22px 24px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 24px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
     border: 1px solid #e2e8f0;
     min-width: 220px;
@@ -67,25 +67,26 @@ body {
 .stat-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    padding-left: 12px;
     order: 1;
 }
 
 .stat-label {
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
     font-weight: 500;
 }
 
 .stat-value {
-    font-size: 36px;
+    font-size: 32px;
     font-weight: 700;
     color: #1a1a1a;
 }
 
 .stat-icon {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -93,6 +94,7 @@ body {
     font-size: 28px;
     flex-shrink: 0;
     order: -1;
+    margin-right: 6px;
 }
 
 .yellow-icon {
@@ -116,15 +118,16 @@ body {
 
 .messages-header {
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
     .messages-header h2 {
         font-size: 20px;
         font-weight: 600;
         color: #1a1a1a;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        display: block;
     }
 
 .messages-controls {

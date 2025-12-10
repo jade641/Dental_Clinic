@@ -365,7 +365,7 @@
         </div>
 
         <nav class="nav-tabs">
-            <NavLink href="/admin-dashboard" class="nav-tab" Match="NavLinkMatch.All">
+            <NavLink href="/admin-dashboard" class="nav-tab" Match="NavLinkMatch.All" ActiveClass="active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"
@@ -373,14 +373,14 @@
                 </svg>
                 Overview
             </NavLink>
-            <NavLink href="/admin-analytics" class="nav-tab">
+            <NavLink href="/admin-analytics" class="nav-tab" ActiveClass="active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 17V13M10 17V7M17 17V10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" />
                 </svg>
                 Analytics
             </NavLink>
-            <NavLink href="/admin/reports" class="nav-tab">
+            <NavLink href="/admin/reports" class="nav-tab" ActiveClass="active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z"
@@ -388,7 +388,7 @@
                 </svg>
                 Reports
             </NavLink>
-            <NavLink href="/admin-users" class="nav-tab">
+            <NavLink href="/admin-users" class="nav-tab" ActiveClass="active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"
@@ -399,7 +399,7 @@
                 </svg>
                 Users
             </NavLink>
-            <NavLink href="/admin-marketing" class="nav-tab">
+            <NavLink href="/admin-marketing" class="nav-tab" ActiveClass="active">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round" />
@@ -452,16 +452,6 @@
                         <div class="settings-user-name">Dr. Admin</div>
                         <div class="settings-user-role">Administrator</div>
                     </div>
-                    <div class="settings-item" @onclick="EditProfile">
-                        <span class="settings-item-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </span>
-                        <span class="settings-item-text">Edit Profile</span>
-                    </div>
                     <div class="settings-item logout" @onclick="Logout">
                         <span class="settings-item-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -500,11 +490,6 @@
     }
 
     private void ToggleSettings() => showSettings = !showSettings;
-    private void EditProfile()
-    {
-        showSettings = false;
-        Navigation.NavigateTo("/admin-profile");
-    }
 
     private void Logout()
     {

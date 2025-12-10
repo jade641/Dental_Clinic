@@ -186,13 +186,13 @@ body {
 .stat-card {
     background: #ffffff;
     border-radius: 14px;
-    padding: 22px 24px;
+    padding: 16px 18px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
     border: 1px solid #e2e8f0;
     min-height: 100px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
     position: relative;
     overflow: hidden;
     width: 220px;
@@ -227,8 +227,8 @@ body {
 }
 
 .stat-icon { 
-    width: 56px; 
-    height: 56px; 
+    width: 48px; 
+    height: 48px; 
     border-radius: 12px; 
     display: flex; 
     align-items: center; 
@@ -262,27 +262,37 @@ body {
 }
 
 .stat-content {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    display: block;
 }
 
 .stat-label { 
-    font-size: 13.5px; 
+    font-size: 13px; 
     color: #64748b; 
-    font-weight: 500; 
+    font-weight: 600; 
     margin: 0; 
-    line-height: 1.2;
-    letter-spacing: 0.01em;
+    line-height: 1.15;
+    letter-spacing: 0.005em;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: calc(100% - 24px);
 }
 
 .stat-value { 
-    font-size: 28px; 
+    font-size: 24px; 
     font-weight: 700; 
     color: #212529; 
     margin: 0; 
-    line-height: 1;
-    letter-spacing: -0.6px;
+    line-height: 1.1;
+    letter-spacing: -0.3px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: calc(100% - 24px);
 }
 
 /* QUICK ACTIONS SECTION */
